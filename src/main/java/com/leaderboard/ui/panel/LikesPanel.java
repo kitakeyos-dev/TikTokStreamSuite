@@ -23,6 +23,7 @@ public class LikesPanel extends JPanel {
     private JButton btnUpdateTarget;
     private JButton btnResetLikes;
     private JButton btnToggleLikeOverlayTab4;
+    private JButton btnToggleTopLikeOverlayTab4;
 
     public LikesPanel(DashboardFrame parent) {
         this.parent = parent;
@@ -110,7 +111,7 @@ public class LikesPanel extends JPanel {
         // Goal Config Action Buttons
         gbc.gridy = 7;
         gbc.insets = new Insets(10, 0, 0, 0);
-        JPanel pnlTargetControls = new JPanel(new GridLayout(1, 2, 12, 0));
+        JPanel pnlTargetControls = new JPanel(new GridLayout(1, 3, 12, 0));
         pnlTargetControls.setOpaque(false);
 
         btnUpdateTarget = new JButton("Cập Nhật Mục Tiêu");
@@ -124,6 +125,10 @@ public class LikesPanel extends JPanel {
         btnToggleLikeOverlayTab4 = new JButton();
         btnToggleLikeOverlayTab4.addActionListener(e -> parent.toggleLikeOverlayWindow());
         pnlTargetControls.add(btnToggleLikeOverlayTab4);
+
+        btnToggleTopLikeOverlayTab4 = new JButton();
+        btnToggleTopLikeOverlayTab4.addActionListener(e -> parent.toggleTopLikeOverlayWindow());
+        pnlTargetControls.add(btnToggleTopLikeOverlayTab4);
 
         pnlStatsLayout.add(pnlTargetControls, gbc);
         cardStats.add(pnlStatsLayout, BorderLayout.CENTER);
@@ -260,6 +265,10 @@ public class LikesPanel extends JPanel {
 
     public JButton getBtnToggleLikeOverlayTab4() {
         return btnToggleLikeOverlayTab4;
+    }
+
+    public JButton getBtnToggleTopLikeOverlayTab4() {
+        return btnToggleTopLikeOverlayTab4;
     }
 
     // High-tech anti-aliased dual gradient progress bar class

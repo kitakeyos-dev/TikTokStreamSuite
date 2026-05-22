@@ -15,14 +15,16 @@ public class OverviewPanel extends JPanel {
     private JPasswordField txtApiKey;
     private StatusBadge statusBadge;
     private JButton btnConnect;
-    
+
     private JButton btnToggleOverlay;
     private JButton btnToggleChatOverlay;
     private JButton btnToggleLikeOverlay;
+    private JButton btnToggleTopLikeOverlay;
 
     private JCheckBox chkLeaderboardOnTop;
     private JCheckBox chkChatOnTop;
     private JCheckBox chkLikeOnTop;
+    private JCheckBox chkTopLikeOnTop;
 
     // Dynamic system diagnostics labels
     private JLabel lblWebSocketDiag;
@@ -41,7 +43,7 @@ public class OverviewPanel extends JPanel {
     private void initComponents() {
         // Column 1: Connection configurations & Status card
         ModernCard cardConfig = new ModernCard("CẤU HÌNH KẾT NỐI", null, null);
-        
+
         JPanel pnlLeftLayout = new JPanel(new GridBagLayout());
         pnlLeftLayout.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
@@ -61,7 +63,7 @@ public class OverviewPanel extends JPanel {
         txtUsername.setFont(FontUtil.getDashboardLabelFont());
         txtUsername.putClientProperty("JTextField.placeholderText", "Ví dụ: streamer_live");
         txtUsername.putClientProperty("JTextField.showClearButton", true);
-        
+
         JLabel lblAt = new JLabel("  @  ");
         lblAt.setFont(FontUtil.getDashboardLabelFont());
         lblAt.setForeground(new Color(161, 161, 170));
@@ -81,7 +83,7 @@ public class OverviewPanel extends JPanel {
         txtApiKey.putClientProperty("JTextField.placeholderText", "Nhập API Key để livestream ổn định...");
         txtApiKey.putClientProperty("JTextField.showClearButton", true);
         txtApiKey.putClientProperty("JPasswordField.showRevealButton", true);
-        
+
         // API key field — SVG key icon as leading component
         JLabel lblKeyIcon = IconUtil.iconLabel("ic_key", 14, new Color(100, 100, 110));
         lblKeyIcon.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 4));
@@ -133,18 +135,19 @@ public class OverviewPanel extends JPanel {
         JPanel pnlDiagnostics = new JPanel(new GridLayout(3, 1, 0, 10));
         pnlDiagnostics.setOpaque(false);
         pnlDiagnostics.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
-        
+
         lblWebSocketDiag = createDiagRow(pnlDiagnostics, "WebSocket", "CHƯA KẾT NỐI", new Color(254, 44, 85));
         lblLatencyDiag = createDiagRow(pnlDiagnostics, "Độ trễ kết nối (Latency)", "--", Color.WHITE);
-        lblSyncDiag = createDiagRow(pnlDiagnostics, "Đồng bộ mắt xem (Viewer Sync)", "INACTIVE", new Color(161, 161, 170));
-        
+        lblSyncDiag = createDiagRow(pnlDiagnostics, "Đồng bộ mắt xem (Viewer Sync)", "INACTIVE",
+                new Color(161, 161, 170));
+
         pnlLeftLayout.add(pnlDiagnostics, gbc);
         cardConfig.add(pnlLeftLayout, BorderLayout.CENTER);
 
         // Column 2: Quick OBS Overlays toggles card (Bento Widget Layout)
         ModernCard cardWidgets = new ModernCard("ĐIỀU KHIỂN WIDGETS OBS", null, null);
-        
-        JPanel pnlWidgets = new JPanel(new GridLayout(3, 1, 0, 18));
+
+        JPanel pnlWidgets = new JPanel(new GridLayout(4, 1, 0, 12));
         pnlWidgets.setOpaque(false);
         pnlWidgets.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
 
@@ -152,19 +155,29 @@ public class OverviewPanel extends JPanel {
         btnToggleOverlay = new JButton();
         btnToggleOverlay.addActionListener(e -> parent.toggleOverlayWindow());
         chkLeaderboardOnTop = createOnTopCheckbox(ConfigManager.getConfig().isOverlayLeaderboardOnTop());
-        pnlWidgets.add(createWidgetBento("BẢNG XẾP HẠNG LIVE OBS", "Hiển thị Top nhà tài trợ và quà tặng.", "ic_ranking", new Color(37, 244, 238), btnToggleOverlay, chkLeaderboardOnTop));
+        pnlWidgets.add(createWidgetBento("BẢNG XẾP HẠNG LIVE", "Hiển thị Top nhà tài trợ và quà tặng.", "ic_ranking",
+                new Color(37, 244, 238), btnToggleOverlay, chkLeaderboardOnTop));
 
         // Bento 2: Chat Overlay
         btnToggleChatOverlay = new JButton();
         btnToggleChatOverlay.addActionListener(e -> parent.toggleChatOverlayWindow());
         chkChatOnTop = createOnTopCheckbox(ConfigManager.getConfig().isOverlayChatOnTop());
-        pnlWidgets.add(createWidgetBento("KHUNG CHAT TRONG SUỐT OBS", "Hiển thị dòng chat game capture trực tiếp.", "ic_chat", new Color(168, 85, 247), btnToggleChatOverlay, chkChatOnTop));
+        pnlWidgets.add(createWidgetBento("KHUNG CHAT TRONG SUỐT", "Hiển thị dòng chat game capture trực tiếp.",
+                "ic_chat", new Color(168, 85, 247), btnToggleChatOverlay, chkChatOnTop));
 
         // Bento 3: Like Goal Overlay
         btnToggleLikeOverlay = new JButton();
         btnToggleLikeOverlay.addActionListener(e -> parent.toggleLikeOverlayWindow());
         chkLikeOnTop = createOnTopCheckbox(ConfigManager.getConfig().isOverlayLikeOnTop());
-        pnlWidgets.add(createWidgetBento("MỤC TIÊU THẢ TIM OBS", "Thanh tim bay lơ lửng và đếm tim.", "ic_goal", new Color(254, 44, 85), btnToggleLikeOverlay, chkLikeOnTop));
+        pnlWidgets.add(createWidgetBento("MỤC TIÊU THẢ TIM", "Thanh tim bay lơ lửng và đếm tim.", "ic_goal",
+                new Color(254, 44, 85), btnToggleLikeOverlay, chkLikeOnTop));
+
+        // Bento 4: Top Like Overlay
+        btnToggleTopLikeOverlay = new JButton();
+        btnToggleTopLikeOverlay.addActionListener(e -> parent.toggleTopLikeOverlayWindow());
+        chkTopLikeOnTop = createOnTopCheckbox(ConfigManager.getConfig().isOverlayTopLikeOnTop());
+        pnlWidgets.add(createWidgetBento("TOP THẢ TIM", "Bảng xếp hạng thả tim thời gian thực.", "ic_ranking",
+                new Color(254, 44, 85), btnToggleTopLikeOverlay, chkTopLikeOnTop));
 
         cardWidgets.add(pnlWidgets, BorderLayout.CENTER);
 
@@ -175,19 +188,19 @@ public class OverviewPanel extends JPanel {
     private JLabel createDiagRow(JPanel parent, String label, String value, Color valueColor) {
         JPanel row = new JPanel(new BorderLayout());
         row.setOpaque(false);
-        
+
         JLabel lblLabel = new JLabel(label);
         lblLabel.setFont(FontUtil.getDashboardLabelFont().deriveFont(Font.PLAIN, 11f));
         lblLabel.setForeground(new Color(161, 161, 170));
-        
+
         JLabel lblValue = new JLabel(value);
         lblValue.setFont(FontUtil.getDashboardLabelFont().deriveFont(Font.BOLD, 11f));
         lblValue.setForeground(valueColor);
-        
+
         row.add(lblLabel, BorderLayout.WEST);
         row.add(lblValue, BorderLayout.EAST);
         parent.add(row);
-        
+
         return lblValue;
     }
 
@@ -201,13 +214,13 @@ public class OverviewPanel extends JPanel {
         return chk;
     }
 
-    private JPanel createWidgetBento(String title, String desc, String iconName, Color iconColor, JButton toggleBtn, JCheckBox onTopChk) {
+    private JPanel createWidgetBento(String title, String desc, String iconName, Color iconColor, JButton toggleBtn,
+            JCheckBox onTopChk) {
         JPanel panel = new JPanel(new BorderLayout(15, 0));
         panel.setOpaque(false);
         panel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(255, 255, 255, 12)),
-            BorderFactory.createEmptyBorder(8, 5, 12, 5)
-        ));
+                BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(255, 255, 255, 12)),
+                BorderFactory.createEmptyBorder(8, 5, 12, 5)));
 
         // SVG icon box
         final Color fIconColor = iconColor;
@@ -314,6 +327,10 @@ public class OverviewPanel extends JPanel {
         return btnToggleLikeOverlay;
     }
 
+    public JButton getBtnToggleTopLikeOverlay() {
+        return btnToggleTopLikeOverlay;
+    }
+
     public JCheckBox getChkLeaderboardOnTop() {
         return chkLeaderboardOnTop;
     }
@@ -324,6 +341,10 @@ public class OverviewPanel extends JPanel {
 
     public JCheckBox getChkLikeOnTop() {
         return chkLikeOnTop;
+    }
+
+    public JCheckBox getChkTopLikeOnTop() {
+        return chkTopLikeOnTop;
     }
 
     public JLabel getLblSyncDiag() {

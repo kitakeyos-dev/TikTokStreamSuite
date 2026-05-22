@@ -24,7 +24,7 @@ public class TikTokConnector {
     }
     
     public interface LikeListener {
-        void onNewLike(String uniqueId, String nickname, int likeCount, int totalLikes);
+        void onNewLike(String uniqueId, String nickname, int likeCount, int totalLikes, String avatarUrl);
     }
 
     public interface RoomInfoListener {
@@ -112,12 +112,19 @@ public class TikTokConnector {
                         .onLike((client, event) -> {
                             String userId = event.getUser().getName();
                             String nickname = event.getUser().getProfileName();
-                            int likesSent = 1;
+                            int likesSent = event.getLikes(); // Use real likes chunk count
                             int totalLikes = event.getTotalLikes();
+                            
+                            String avatarUrl = null;
+                            if (event.getUser().getPicture() != null) {
+                                avatarUrl = event.getUser().getPicture().getLink();
+                            }
+                            
+                            final String finalAvatarUrl = avatarUrl;
                             SwingUtilities.invokeLater(() -> {
                                 synchronized (TikTokConnector.class) {
                                     if (likeListener != null) {
-                                        likeListener.onNewLike(userId, nickname, likesSent, totalLikes);
+                                        likeListener.onNewLike(userId, nickname, likesSent, totalLikes, finalAvatarUrl);
                                     }
                                 }
                             });

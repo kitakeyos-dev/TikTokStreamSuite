@@ -4,6 +4,7 @@ import com.leaderboard.service.TikTokConnector;
 import com.leaderboard.ui.overlay.GiftLeaderboardOverlay;
 import com.leaderboard.ui.overlay.LikeGoalOverlay;
 import com.leaderboard.ui.overlay.LiveChatOverlay;
+import com.leaderboard.ui.overlay.TopLikeOverlay;
 import com.leaderboard.ui.panel.ChatPanel;
 import com.leaderboard.ui.panel.LeaderboardPanel;
 import com.leaderboard.ui.panel.LikesPanel;
@@ -28,6 +29,7 @@ public class DashboardFrame extends JFrame {
     private GiftLeaderboardOverlay overlayFrame;
     private LiveChatOverlay chatOverlay;
     private LikeGoalOverlay likeOverlay;
+    private TopLikeOverlay topLikeOverlay;
 
     private JLabel lblSubtitle;
 
@@ -175,6 +177,12 @@ public class DashboardFrame extends JFrame {
             ConfigManager.save();
             if (likeOverlay != null) likeOverlay.setAlwaysOnTop(v);
         });
+        overviewPanel.getChkTopLikeOnTop().addItemListener(e -> {
+            boolean v = overviewPanel.getChkTopLikeOnTop().isSelected();
+            ConfigManager.getConfig().setOverlayTopLikeOnTop(v);
+            ConfigManager.save();
+            if (topLikeOverlay != null) topLikeOverlay.setAlwaysOnTop(v);
+        });
 
         // Window Closing hook
         addWindowListener(new WindowAdapter() {
@@ -185,6 +193,7 @@ public class DashboardFrame extends JFrame {
                 if (overlayFrame != null) overlayFrame.dispose();
                 if (chatOverlay != null) chatOverlay.dispose();
                 if (likeOverlay != null) likeOverlay.dispose();
+                if (topLikeOverlay != null) topLikeOverlay.dispose();
             }
         });
     }
@@ -222,7 +231,7 @@ public class DashboardFrame extends JFrame {
             }
         });
 
-        TikTokConnector.setLikeListener((uniqueId, nickname, likesSent, totalLikesVal) -> {
+        TikTokConnector.setLikeListener((uniqueId, nickname, likesSent, totalLikesVal, avatarUrl) -> {
             String time = LocalTime.now().format(TIME_FORMATTER);
             likesPanel.getLikeTableModel().insertRow(0, new Object[]{time, uniqueId, nickname, likesSent});
             if (likesPanel.getLikeTableModel().getRowCount() > 100) {
@@ -238,6 +247,14 @@ public class DashboardFrame extends JFrame {
             // Update Like Goal Overlay if visible
             if (likeOverlay != null) {
                 likeOverlay.setLikes(totalLikesVal);
+            }
+
+            // Update Liker and save to data.json
+            DataManager.addLike(uniqueId, nickname, avatarUrl, likesSent);
+
+            // Update Top Like Overlay
+            if (topLikeOverlay != null) {
+                topLikeOverlay.updateLeaderboard();
             }
         });
     }
@@ -327,6 +344,18 @@ public class DashboardFrame extends JFrame {
         updateOverlayButtonStates();
     }
 
+    public void toggleTopLikeOverlayWindow() {
+        if (topLikeOverlay == null) {
+            topLikeOverlay = new TopLikeOverlay();
+            topLikeOverlay.setAlwaysOnTop(overviewPanel.getChkTopLikeOnTop().isSelected());
+            topLikeOverlay.setVisible(true);
+        } else {
+            topLikeOverlay.dispose();
+            topLikeOverlay = null;
+        }
+        updateOverlayButtonStates();
+    }
+
     public void updateOverlayButtonStates() {
         boolean isLeaderboardOpen = (overlayFrame != null);
         styleToggleButton(overviewPanel.getBtnToggleOverlay(), "", "", "Bảng Xếp Hạng", isLeaderboardOpen);
@@ -339,6 +368,10 @@ public class DashboardFrame extends JFrame {
         boolean isLikeOpen = (likeOverlay != null);
         styleToggleButton(overviewPanel.getBtnToggleLikeOverlay(), "", "", "Mục Tiêu Tim", isLikeOpen);
         styleToggleButton(likesPanel.getBtnToggleLikeOverlayTab4(), "", "", "Mục Tiêu Tim", isLikeOpen);
+
+        boolean isTopLikeOpen = (topLikeOverlay != null);
+        styleToggleButton(overviewPanel.getBtnToggleTopLikeOverlay(), "", "", "Top Thả Tim", isTopLikeOpen);
+        styleToggleButton(likesPanel.getBtnToggleTopLikeOverlayTab4(), "", "", "Top Thả Tim", isTopLikeOpen);
     }
 
     public void updateLeaderboardOverlay() {
@@ -384,12 +417,12 @@ public class DashboardFrame extends JFrame {
         button.setMargin(new Insets(8, 14, 8, 14)); // consistent padding — no setBorder override
 
         if (isActive) {
-            button.setText("TẮT " + title.toUpperCase() + " OBS");
+            button.setText("TẮT " + title.toUpperCase());
             button.setBackground(new Color(254, 44, 85)); // Solid TikTok Pink fill
             button.setForeground(Color.WHITE);
             button.putClientProperty("JButton.focusedBackground", new Color(230, 30, 65));
         } else {
-            button.setText("BẬT " + title.toUpperCase() + " OBS");
+            button.setText("BẬT " + title.toUpperCase());
             button.setBackground(new Color(37, 244, 238, 20)); // Very subtle cyan tint
             button.setForeground(new Color(37, 244, 238));   // Cyan text
             button.putClientProperty("JButton.focusedBackground", new Color(37, 244, 238, 40));

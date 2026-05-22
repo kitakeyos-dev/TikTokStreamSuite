@@ -17,6 +17,7 @@ public class ConfigManager {
         private boolean overlayLeaderboardOnTop = true;
         private boolean overlayChatOnTop = true;
         private boolean overlayLikeOnTop = true;
+        private boolean overlayTopLikeOnTop = true;
 
         public String getStreamerUsername() { return streamerUsername; }
         public void setStreamerUsername(String v) { this.streamerUsername = v; }
@@ -38,6 +39,9 @@ public class ConfigManager {
 
         public boolean isOverlayLikeOnTop() { return overlayLikeOnTop; }
         public void setOverlayLikeOnTop(boolean v) { this.overlayLikeOnTop = v; }
+
+        public boolean isOverlayTopLikeOnTop() { return overlayTopLikeOnTop; }
+        public void setOverlayTopLikeOnTop(boolean v) { this.overlayTopLikeOnTop = v; }
     }
 
     private static AppConfig currentConfig = new AppConfig();
