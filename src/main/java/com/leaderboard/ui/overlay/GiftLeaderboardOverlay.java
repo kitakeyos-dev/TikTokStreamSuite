@@ -2,6 +2,7 @@ package com.leaderboard.ui.overlay;
 
 import com.leaderboard.model.Gifter;
 import com.leaderboard.util.DataManager;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -16,7 +17,9 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.util.Duration;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class GiftLeaderboardOverlay extends Stage {
@@ -25,6 +28,10 @@ public class GiftLeaderboardOverlay extends Stage {
     private final VBox rowsContainer;
     private double xOffset = 0;
     private double yOffset = 0;
+
+    // Throttle + snapshot for flicker-free updates
+    private final PauseTransition updateThrottle = new PauseTransition(Duration.millis(600));
+    private List<String> lastSnapshotIds = new ArrayList<>();  // ordered IDs of last render
 
     public GiftLeaderboardOverlay() {
         setTitle("Bảng Xếp Hạng"); // Title needed for OBS Window Capture detection
@@ -138,14 +145,53 @@ public class GiftLeaderboardOverlay extends Stage {
     }
 
     public void updateLeaderboard() {
-        Platform.runLater(this::rebuildRows);
+        // Throttle: collapse rapid events into one update per 600ms
+        updateThrottle.setOnFinished(e -> Platform.runLater(this::smartUpdate));
+        updateThrottle.playFromStart();
     }
 
-    private void rebuildRows() {
-        rowsContainer.getChildren().clear();
-
+    private void smartUpdate() {
         List<Gifter> list = DataManager.getGifters();
         int limit = Math.min(list.size(), 10);
+
+        // Build current snapshot IDs
+        List<String> currentIds = new ArrayList<>(limit);
+        for (int i = 0; i < limit; i++) {
+            currentIds.add(list.get(i).getUniqueId().toLowerCase());
+        }
+
+        // Check if structure changed (different people or different order)
+        boolean structureChanged = !currentIds.equals(lastSnapshotIds);
+
+        if (structureChanged) {
+            // Full rebuild only when top-10 set/order changes
+            rebuildRows(list, limit);
+            lastSnapshotIds = currentIds;
+        } else {
+            // Just update labels in-place — no flicker at all
+            updateRowsInPlace(list, limit);
+        }
+    }
+
+    private void updateRowsInPlace(List<Gifter> list, int limit) {
+        // rowsContainer children are HBox row cards
+        // Each spotlight card (rank 1-3) has points label at index 3, compact cards at index 2
+        List<javafx.scene.Node> rows = rowsContainer.getChildren();
+        for (int i = 0; i < limit && i < rows.size(); i++) {
+            Gifter g = list.get(i);
+            int rank = i + 1;
+            HBox card = (HBox) rows.get(i);
+            List<javafx.scene.Node> cells = card.getChildren();
+            // Points label is last child before coinStack (second-to-last)
+            int pointsIdx = cells.size() - 2;
+            if (pointsIdx >= 0 && cells.get(pointsIdx) instanceof Label) {
+                ((Label) cells.get(pointsIdx)).setText(String.format("%,d", g.getPoints()));
+            }
+        }
+    }
+
+    private void rebuildRows(List<Gifter> list, int limit) {
+        rowsContainer.getChildren().clear();
 
         for (int i = 0; i < limit; i++) {
             Gifter g = list.get(i);

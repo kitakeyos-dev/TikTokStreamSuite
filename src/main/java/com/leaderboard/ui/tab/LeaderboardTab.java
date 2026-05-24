@@ -18,6 +18,10 @@ import org.kordamp.ikonli.feather.Feather;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.HashMap;
+import java.util.Map;
+import javafx.animation.PauseTransition;
+import javafx.util.Duration;
 
 public class LeaderboardTab extends BorderPane {
     private final DashboardStage parent;
@@ -34,10 +38,16 @@ public class LeaderboardTab extends BorderPane {
     private Button btnAddManual;
     private Button btnToggleOverlayTab2;
 
+    // Throttle: limit refreshes to once per 500ms to avoid flicker from rapid events
+    private final PauseTransition refreshThrottle = new PauseTransition(Duration.millis(500));
+    private boolean pendingRefresh = false;
+
     public LeaderboardTab(DashboardStage parent) {
         this.parent = parent;
         setPadding(new Insets(15, 5, 15, 5));
         setStyle("-fx-background-color: transparent;");
+        // Setup throttle: when it fires, do the actual refresh
+        refreshThrottle.setOnFinished(e -> doRefreshTableData());
         initComponents();
         refreshTableData();
     }
@@ -255,25 +265,58 @@ public class LeaderboardTab extends BorderPane {
     }
 
     public void refreshTableData() {
-        gifterList.clear();
-        List<Gifter> list = DataManager.getGifters();
-        
-        int rank = 1;
+        // Throttle rapid calls — restart the 500ms timer each time
+        pendingRefresh = true;
+        refreshThrottle.playFromStart();
+    }
+
+    private void doRefreshTableData() {
+        pendingRefresh = false;
+        List<Gifter> source = DataManager.getGifters();
         int totalDiamonds = 0;
-        
-        for (Gifter g : list) {
-            g.setRank(rank);
-            gifterList.add(g);
-            totalDiamonds += g.getPoints();
-            rank++;
+
+        // --- Incremental update: avoid clear() to prevent TableView flicker ---
+        Map<String, Gifter> currentMap = new HashMap<>();
+        for (Gifter g : gifterList) {
+            currentMap.put(g.getUniqueId().toLowerCase(), g);
         }
+
+        // Pass 1: update existing or add new items
+        int rank = 1;
+        for (Gifter fresh : source) {
+            fresh.setRank(rank++);
+            totalDiamonds += fresh.getPoints();
+            String key = fresh.getUniqueId().toLowerCase();
+            Gifter existing = currentMap.get(key);
+            if (existing != null) {
+                // Update in-place
+                existing.setRank(fresh.getRank());
+                existing.setPoints(fresh.getPoints());
+                existing.setNickname(fresh.getNickname());
+                existing.setAvatarUrl(fresh.getAvatarUrl());
+                currentMap.remove(key);
+            } else {
+                gifterList.add(fresh);
+            }
+        }
+
+        // Pass 2: remove items no longer in source
+        if (!currentMap.isEmpty()) {
+            gifterList.removeIf(g -> currentMap.containsKey(g.getUniqueId().toLowerCase()));
+        }
+
+        // Pass 3: re-sort to match points desc order
+        FXCollections.sort(gifterList);
+
+        // Pass 4: force TableView redraw (plain fields, not JavaFX Properties)
+        tblGifters.refresh();
 
         // Update statistics cards
         if (lblTotalDiamondsVal != null) {
             lblTotalDiamondsVal.setText(String.format("%,d", totalDiamonds));
         }
         if (lblActiveDonorsVal != null) {
-            lblActiveDonorsVal.setText(String.format("%,d", list.size()));
+            lblActiveDonorsVal.setText(String.format("%,d", source.size()));
         }
     }
 

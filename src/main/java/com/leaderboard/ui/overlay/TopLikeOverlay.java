@@ -2,6 +2,7 @@ package com.leaderboard.ui.overlay;
 
 import com.leaderboard.model.Liker;
 import com.leaderboard.util.DataManager;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -16,7 +17,9 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.util.Duration;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class TopLikeOverlay extends Stage {
@@ -26,6 +29,10 @@ public class TopLikeOverlay extends Stage {
     private final VBox rowsContainer;
     private double xOffset = 0;
     private double yOffset = 0;
+
+    // Throttle + snapshot for flicker-free updates
+    private final PauseTransition updateThrottle = new PauseTransition(Duration.millis(600));
+    private List<String> lastSnapshotIds = new ArrayList<>();
 
     public TopLikeOverlay() {
         setTitle("Top Thả Tim"); // Title needed for OBS Window Capture detection
@@ -141,14 +148,45 @@ public class TopLikeOverlay extends Stage {
     }
 
     public void updateLeaderboard() {
-        Platform.runLater(this::rebuildRows);
+        updateThrottle.setOnFinished(e -> Platform.runLater(this::smartUpdate));
+        updateThrottle.playFromStart();
     }
 
-    private void rebuildRows() {
-        rowsContainer.getChildren().clear();
-
+    private void smartUpdate() {
         List<Liker> list = DataManager.getLikers();
         int limit = Math.min(list.size(), 10);
+
+        // Build current snapshot
+        List<String> currentIds = new ArrayList<>(limit);
+        for (int i = 0; i < limit; i++) {
+            currentIds.add(list.get(i).getUniqueId().toLowerCase());
+        }
+
+        boolean structureChanged = !currentIds.equals(lastSnapshotIds);
+        if (structureChanged) {
+            rebuildRows(list, limit);
+            lastSnapshotIds = currentIds;
+        } else {
+            updateRowsInPlace(list, limit);
+        }
+    }
+
+    private void updateRowsInPlace(List<Liker> list, int limit) {
+        List<javafx.scene.Node> rows = rowsContainer.getChildren();
+        for (int i = 0; i < limit && i < rows.size(); i++) {
+            Liker l = list.get(i);
+            HBox card = (HBox) rows.get(i);
+            List<javafx.scene.Node> cells = card.getChildren();
+            // Points label is second-to-last (before coinStack/heartStack)
+            int pointsIdx = cells.size() - 2;
+            if (pointsIdx >= 0 && cells.get(pointsIdx) instanceof Label) {
+                ((Label) cells.get(pointsIdx)).setText(String.format("%,d", l.getLikes()));
+            }
+        }
+    }
+
+    private void rebuildRows(List<Liker> list, int limit) {
+        rowsContainer.getChildren().clear();
 
         for (int i = 0; i < limit; i++) {
             Liker l = list.get(i);
