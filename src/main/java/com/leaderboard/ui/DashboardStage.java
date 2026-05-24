@@ -6,6 +6,8 @@ import com.leaderboard.ui.overlay.LikeGoalOverlay;
 import com.leaderboard.ui.overlay.LiveChatOverlay;
 import com.leaderboard.ui.overlay.TopLikeOverlay;
 import com.leaderboard.ui.tab.*;
+import com.leaderboard.util.BankConfigManager;
+import com.leaderboard.util.BankDataManager;
 import com.leaderboard.util.ConfigManager;
 import com.leaderboard.util.DataManager;
 import com.leaderboard.util.IconManager;
@@ -30,6 +32,7 @@ public class DashboardStage extends Stage {
     private TeamTab teamTab;
     private ChatTab chatTab;
     private LikesTab likesTab;
+    private BankTab bankTab;
 
     private GiftLeaderboardOverlay overlayStage;
     private LiveChatOverlay chatOverlayStage;
@@ -52,6 +55,8 @@ public class DashboardStage extends Stage {
         // Load configs and data
         ConfigManager.load();
         DataManager.load();
+        BankConfigManager.load();
+        BankDataManager.load();
 
         // Main Layout
         BorderPane root = new BorderPane();
@@ -76,6 +81,8 @@ public class DashboardStage extends Stage {
         setOnCloseRequest(e -> {
             saveInputSettings();
             TikTokConnector.disconnect();
+            if (bankTab != null)
+                bankTab.destroy();
             if (overlayStage != null)
                 overlayStage.dispose();
             if (chatOverlayStage != null)
@@ -147,6 +154,7 @@ public class DashboardStage extends Stage {
         teamTab = new TeamTab(this);
         chatTab = new ChatTab(this);
         likesTab = new LikesTab(this);
+        bankTab = new BankTab(this);
 
         // Add to TabPane
         addTab(tabPane, "Tổng Quan", overviewTab);
@@ -154,6 +162,7 @@ public class DashboardStage extends Stage {
         addTab(tabPane, "Thành Viên", teamTab);
         addTab(tabPane, "Trò Chuyện", chatTab);
         addTab(tabPane, "Mục Tiêu Tim", likesTab);
+        addTab(tabPane, "BankPusher", bankTab);
 
         root.setCenter(tabPane);
     }

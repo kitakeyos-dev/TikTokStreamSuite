@@ -104,7 +104,36 @@ public class ConfigManager {
             }
         }
 
+        migrateLegacyBankFile(targetFile, filename);
+
         return targetFile;
+    }
+
+    private static void migrateLegacyBankFile(File targetFile, String filename) {
+        if (targetFile.exists()) {
+            return;
+        }
+
+        String legacyName = switch (filename) {
+            case "bank_config.dat" -> "config.dat";
+            case "bank_deposits.json" -> "deposits.json";
+            default -> null;
+        };
+        if (legacyName == null) {
+            return;
+        }
+
+        File legacyFile = new File(
+                System.getProperty("user.home") + File.separator + ".bankpusher" + File.separator + legacyName);
+        if (legacyFile.exists()) {
+            try {
+                legacyFile.renameTo(targetFile);
+                System.out.println("Migrated " + legacyName + " from ~/.bankpusher to AppData: "
+                        + targetFile.getAbsolutePath());
+            } catch (Exception e) {
+                System.err.println("Failed to migrate " + legacyName + " from ~/.bankpusher: " + e.getMessage());
+            }
+        }
     }
 
     public static synchronized AppConfig getConfig() {
