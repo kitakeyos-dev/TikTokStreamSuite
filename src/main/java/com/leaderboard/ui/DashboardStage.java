@@ -51,8 +51,8 @@ public class DashboardStage extends Stage {
 
     public DashboardStage() {
         setTitle("TikTok Live Stream Suite - Bảng Điều Khiển");
-        setWidth(1100);
-        setHeight(800);
+        setWidth(1200);
+        setHeight(850);
 
         // Load application window icon
         IconManager.applyAppIcon(this);
