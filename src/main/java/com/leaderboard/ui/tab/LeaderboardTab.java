@@ -1,6 +1,7 @@
 package com.leaderboard.ui.tab;
 
 import com.leaderboard.model.Gifter;
+import com.leaderboard.ui.DashboardLayout;
 import com.leaderboard.ui.DashboardStage;
 import com.leaderboard.ui.Dialogs;
 import com.leaderboard.util.DataManager;
@@ -45,8 +46,7 @@ public class LeaderboardTab extends BorderPane {
 
     public LeaderboardTab(DashboardStage parent) {
         this.parent = parent;
-        setPadding(new Insets(15, 5, 15, 5));
-        setStyle("-fx-background-color: transparent;");
+        DashboardLayout.stylePage(this);
         // Setup throttle: when it fires, do the actual refresh
         refreshThrottle.setOnFinished(e -> doRefreshTableData());
         initComponents();
@@ -54,95 +54,31 @@ public class LeaderboardTab extends BorderPane {
     }
 
     private void initComponents() {
-        VBox cardLeaderboard = new VBox(15);
-        cardLeaderboard.setPadding(new Insets(15, 20, 15, 20));
-        cardLeaderboard.setStyle(
-            "-fx-background-color: #121214;" +
-            "-fx-background-radius: 12px;" +
-            "-fx-border-color: rgba(255, 255, 255, 0.05);" +
-            "-fx-border-radius: 12px;" +
-            "-fx-border-width: 1px;"
-        );
-
-        // --- SUBHEADER PANEL ---
-        HBox cardHeader = new HBox(15);
-        cardHeader.setAlignment(Pos.CENTER_LEFT);
-        cardHeader.setPadding(new Insets(0, 0, 10, 0));
-
-        // Left Side: Title & Subtitle
-        VBox titleArea = new VBox(2);
-        HBox.setHgrow(titleArea, Priority.ALWAYS);
-        
-        Label lblTitle = new Label("BẢNG XẾP HẠNG DONATE TÍCH LŨY");
-        lblTitle.setStyle("-fx-text-fill: #f4f4f5; -fx-font-weight: bold; -fx-font-size: 13px;");
-        
-        Label lblSubtitle = new Label("Quản lý danh sách người ủng hộ tích lũy và tổng số kim cương nhận được.");
-        lblSubtitle.setStyle("-fx-text-fill: #71717a; -fx-font-size: 10px;");
-        
-        titleArea.getChildren().addAll(lblTitle, lblSubtitle);
-        cardHeader.getChildren().add(titleArea);
-
-        // Right Side: Dynamic Stats Summary & OBS Button
-        HBox headerRight = new HBox(12);
-        headerRight.setAlignment(Pos.CENTER_RIGHT);
+        VBox cardLeaderboard = DashboardLayout.createPageContainer();
 
         lblTotalDiamondsVal = new Label("0");
-        VBox pnlStatDiamonds = createMiniStatCard("TỔNG KIM CƯƠNG", lblTotalDiamondsVal, "#818cf8");
-
         lblActiveDonorsVal = new Label("0");
-        VBox pnlStatDonors = createMiniStatCard("NHÀ TÀI TRỢ", lblActiveDonorsVal, "#e4e4e7");
-
-        btnToggleOverlayTab2 = new Button("BẬT BẢNG XẾP HẠNG");
-        btnToggleOverlayTab2.setPrefHeight(32);
-        
-        // Style initial state
-        btnToggleOverlayTab2.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #a1a1aa;" +
-            "-fx-font-weight: bold;" +
-            "-fx-border-color: rgba(255, 255, 255, 0.08);" +
-            "-fx-border-radius: 8px;" +
-            "-fx-background-radius: 8px;" +
-            "-fx-border-width: 1px;"
-        );
+        btnToggleOverlayTab2 = DashboardLayout.newButton("Bật bảng xếp hạng");
+        DashboardLayout.applySecondaryButton(btnToggleOverlayTab2);
         btnToggleOverlayTab2.setOnAction(e -> parent.toggleOverlayWindow());
 
-        headerRight.getChildren().addAll(pnlStatDiamonds, pnlStatDonors, btnToggleOverlayTab2);
-        cardHeader.getChildren().add(headerRight);
-        
-        cardLeaderboard.getChildren().add(cardHeader);
-
-        // --- ACTION FILTER BAR (Vercel styled Search) ---
-        HBox searchBox = new HBox(8);
-        searchBox.setAlignment(Pos.CENTER_LEFT);
-        searchBox.setPadding(new Insets(0, 10, 0, 10));
-        searchBox.setStyle(
-            "-fx-background-color: #18181b;" +
-            "-fx-background-radius: 8px;" +
-            "-fx-border-color: rgba(255, 255, 255, 0.08);" +
-            "-fx-border-width: 1px;"
+        HBox headerRight = DashboardLayout.createHeaderActions(
+                DashboardLayout.createMiniStatCard("TỔNG KIM CƯƠNG", lblTotalDiamondsVal, "#818cf8"),
+                DashboardLayout.createMiniStatCard("NHÀ TÀI TRỢ", lblActiveDonorsVal, "#e4e4e7"),
+                btnToggleOverlayTab2
         );
-        
-        FontIcon searchIcon = new FontIcon(Feather.SEARCH);
-        searchIcon.setIconColor(Color.web("#71717a"));
-        
-        txtSearch = new TextField();
-        txtSearch.setPromptText("Tìm kiếm TikTok ID hoặc Tên hiển thị...");
-        txtSearch.setPrefHeight(34);
-        txtSearch.setStyle("-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: #f4f4f5;");
-        HBox.setHgrow(txtSearch, Priority.ALWAYS);
-        searchBox.getChildren().addAll(searchIcon, txtSearch);
 
-        // --- TABLE CONTAINER ---
-        tblGifters = new TableView<>();
-        tblGifters.setPrefHeight(380);
-        tblGifters.setStyle(
-            "-fx-background-color: #121214;" +
-            "-fx-control-inner-background: #121214;" +
-            "-fx-border-color: rgba(255,255,255,0.05);" +
-            "-fx-border-radius: 8px;" +
-            "-fx-background-radius: 8px;"
-        );
+        cardLeaderboard.getChildren().add(DashboardLayout.createPageHeader(
+                "BẢNG XẾP HẠNG DONATE TÍCH LŨY",
+                "Quản lý danh sách người ủng hộ tích lũy và tổng số kim cương nhận được.",
+                headerRight
+        ));
+
+        txtSearch = DashboardLayout.newSearchField();
+        cardLeaderboard.getChildren().add(DashboardLayout.createSearchBox(
+                txtSearch, "Tìm kiếm TikTok ID hoặc Tên hiển thị..."));
+
+        tblGifters = DashboardLayout.createTable();
 
         TableColumn<Gifter, Integer> colRank = new TableColumn<>("Hạng");
         colRank.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getRank()).asObject());
@@ -177,92 +113,33 @@ public class LeaderboardTab extends BorderPane {
             });
         });
 
-        cardLeaderboard.getChildren().addAll(searchBox, tblGifters);
+        cardLeaderboard.getChildren().add(tblGifters);
 
-        // --- ACTIONS TOOLBAR ---
-        HBox actionsRow = new HBox(12);
-        actionsRow.setAlignment(Pos.CENTER_RIGHT);
-        actionsRow.setPadding(new Insets(10, 0, 0, 0));
-
-        btnDeleteSelected = new Button("Xoá Người Chọn");
-        btnDeleteSelected.setPrefHeight(32);
-        
+        btnDeleteSelected = DashboardLayout.newButton("Xoá Người Chọn");
         FontIcon trashIcon = new FontIcon(Feather.TRASH_2);
         trashIcon.setIconColor(Color.web("#a1a1aa"));
         btnDeleteSelected.setGraphic(trashIcon);
-        
-        btnDeleteSelected.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #a1a1aa;" +
-            "-fx-font-weight: bold;" +
-            "-fx-border-color: rgba(255, 255, 255, 0.08);" +
-            "-fx-border-radius: 8px;" +
-            "-fx-background-radius: 8px;" +
-            "-fx-border-width: 1px;"
-        );
+        DashboardLayout.applySecondaryButton(btnDeleteSelected);
         btnDeleteSelected.setOnAction(e -> deleteSelectedGifter());
 
-        btnResetAll = new Button("Xoá Hết Bảng");
-        btnResetAll.setPrefHeight(32);
-        
+        btnResetAll = DashboardLayout.newButton("Xoá Hết Bảng");
         FontIcon refreshIcon = new FontIcon(Feather.REFRESH_CW);
         refreshIcon.setIconColor(Color.web("#f87171"));
         btnResetAll.setGraphic(refreshIcon);
-        
-        btnResetAll.setStyle(
-            "-fx-background-color: rgba(239, 68, 68, 0.08);" +
-            "-fx-text-fill: #f87171;" +
-            "-fx-font-weight: bold;" +
-            "-fx-border-color: rgba(239, 68, 68, 0.4);" +
-            "-fx-border-radius: 8px;" +
-            "-fx-background-radius: 8px;" +
-            "-fx-border-width: 1px;"
-        );
+        DashboardLayout.applyDangerButton(btnResetAll);
         btnResetAll.setOnAction(e -> resetLeaderboard());
 
-        btnAddManual = new Button("Cộng Điểm Thủ Công");
-        btnAddManual.setPrefHeight(32);
-        
+        btnAddManual = DashboardLayout.newButton("Cộng Điểm Thủ Công");
         FontIcon plusIcon = new FontIcon(Feather.PLUS_CIRCLE);
         plusIcon.setIconColor(Color.web("#818cf8"));
         btnAddManual.setGraphic(plusIcon);
-        
-        btnAddManual.setStyle(
-            "-fx-background-color: rgba(99, 102, 241, 0.08);" +
-            "-fx-text-fill: #818cf8;" +
-            "-fx-font-weight: bold;" +
-            "-fx-border-color: rgba(99, 102, 241, 0.4);" +
-            "-fx-border-radius: 8px;" +
-            "-fx-background-radius: 8px;" +
-            "-fx-border-width: 1px;"
-        );
+        DashboardLayout.applyPrimaryButton(btnAddManual);
         btnAddManual.setOnAction(e -> addManualPoints());
 
-        actionsRow.getChildren().addAll(btnDeleteSelected, btnResetAll, btnAddManual);
-        cardLeaderboard.getChildren().add(actionsRow);
+        cardLeaderboard.getChildren().add(DashboardLayout.createActionsRow(
+                btnDeleteSelected, btnResetAll, btnAddManual));
 
         setCenter(cardLeaderboard);
-    }
-
-    private VBox createMiniStatCard(String label, Label valueLabel, String accentHex) {
-        VBox pnl = new VBox(2);
-        pnl.setPadding(new Insets(4, 12, 4, 12));
-        pnl.setAlignment(Pos.CENTER_LEFT);
-        pnl.setStyle(
-            "-fx-background-color: rgba(255, 255, 255, 0.02);" +
-            "-fx-background-radius: 10px;" +
-            "-fx-border-color: rgba(255, 255, 255, 0.06);" +
-            "-fx-border-radius: 10px;" +
-            "-fx-border-width: 1px;"
-        );
-
-        Label lblTitle = new Label(label);
-        lblTitle.setStyle("-fx-font-size: 8.5px; -fx-font-weight: bold; -fx-text-fill: #71717a;");
-
-        valueLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: " + accentHex + ";");
-
-        pnl.getChildren().addAll(lblTitle, valueLabel);
-        return pnl;
     }
 
     public void refreshTableData() {
@@ -396,28 +273,6 @@ public class LeaderboardTab extends BorderPane {
     }
 
     public void updateOverlayButtonState(boolean isOpen) {
-        if (isOpen) {
-            btnToggleOverlayTab2.setText("TẮT BẢNG XẾP HẠNG");
-            btnToggleOverlayTab2.setStyle(
-                "-fx-background-color: rgba(99, 102, 241, 0.12);" +
-                "-fx-text-fill: #818cf8;" +
-                "-fx-font-weight: bold;" +
-                "-fx-border-color: rgba(99, 102, 241, 0.4);" +
-                "-fx-border-radius: 8px;" +
-                "-fx-background-radius: 8px;" +
-                "-fx-border-width: 1px;"
-            );
-        } else {
-            btnToggleOverlayTab2.setText("BẬT BẢNG XẾP HẠNG");
-            btnToggleOverlayTab2.setStyle(
-                "-fx-background-color: transparent;" +
-                "-fx-text-fill: #a1a1aa;" +
-                "-fx-font-weight: bold;" +
-                "-fx-border-color: rgba(255, 255, 255, 0.08);" +
-                "-fx-border-radius: 8px;" +
-                "-fx-background-radius: 8px;" +
-                "-fx-border-width: 1px;"
-            );
-        }
+        DashboardLayout.applyToggleButton(btnToggleOverlayTab2, "bảng xếp hạng", isOpen);
     }
 }

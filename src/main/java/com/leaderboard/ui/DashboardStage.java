@@ -15,14 +15,16 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
+import javafx.scene.control.Separator;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
+import org.kordamp.ikonli.feather.Feather;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.time.format.DateTimeFormatter;
 
@@ -40,14 +42,17 @@ public class DashboardStage extends Stage {
     private TopLikeOverlay topLikeOverlayStage;
 
     private Label lblSubtitle;
+    private Label lblPageTitle;
+    private StackPane contentArea;
+    private Button activeNavButton;
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
     private int connectionAttemptId = 0;
     private boolean connectionErrorShown = false;
 
     public DashboardStage() {
         setTitle("TikTok Live Stream Suite - Bảng Điều Khiển");
-        setWidth(980);
-        setHeight(680);
+        setWidth(1100);
+        setHeight(800);
 
         // Load application window icon
         IconManager.applyAppIcon(this);
@@ -65,7 +70,7 @@ public class DashboardStage extends Stage {
         // 1. Build Header Bar
         buildHeaderBar(root);
 
-        // 2. Build Tabbed Pane
+        // 2. Build sidebar dashboard layout
         initComponents(root);
 
         // 3. Setup TikTok Connect Event Listeners
@@ -75,6 +80,10 @@ public class DashboardStage extends Stage {
         updateOverlayButtonStates();
 
         Scene scene = new Scene(root);
+        var dashboardCss = getClass().getResource("/css/dashboard.css");
+        if (dashboardCss != null) {
+            scene.getStylesheets().add(dashboardCss.toExternalForm());
+        }
         setScene(scene);
 
         // Window Closing hook
@@ -123,7 +132,7 @@ public class DashboardStage extends Stage {
                         "-fx-font-size: 18px;" +
                         "-fx-font-family: 'Segoe UI', system-ui;");
 
-        lblSubtitle = new Label("Bảng điều khiển quản lý OBS Overlays & Kết nối Livestream");
+        lblSubtitle = new Label("Kết nối livestream, overlay OBS và trạng thái hệ thống");
         lblSubtitle.setStyle(
                 "-fx-text-fill: #a1a1aa;" +
                         "-fx-font-size: 11px;" +
@@ -132,6 +141,15 @@ public class DashboardStage extends Stage {
         titleGroup.getChildren().addAll(lblTitle, lblSubtitle);
         headerTextGroup.getChildren().addAll(iconDot, titleGroup);
         headerBar.setLeft(headerTextGroup);
+
+        lblPageTitle = new Label("Tổng Quan");
+        lblPageTitle.setStyle(
+                "-fx-text-fill: #f4f4f5;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-font-size: 14px;" +
+                        "-fx-font-family: 'Segoe UI', system-ui;");
+        headerBar.setRight(lblPageTitle);
+        BorderPane.setAlignment(lblPageTitle, Pos.CENTER_RIGHT);
 
         // Divider
         Region divider = new Region();
@@ -143,12 +161,6 @@ public class DashboardStage extends Stage {
     }
 
     private void initComponents(BorderPane root) {
-        TabPane tabPane = new TabPane();
-        tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-        tabPane.setPadding(new Insets(5, 15, 15, 15));
-        tabPane.setStyle("-fx-background-color: transparent;");
-
-        // Instantiate Tabs
         overviewTab = new OverviewTab(this);
         leaderboardTab = new LeaderboardTab(this);
         teamTab = new TeamTab(this);
@@ -156,21 +168,153 @@ public class DashboardStage extends Stage {
         likesTab = new LikesTab(this);
         bankTab = new BankTab(this);
 
-        // Add to TabPane
-        addTab(tabPane, "Tổng Quan", overviewTab);
-        addTab(tabPane, "Bảng Xếp Hạng", leaderboardTab);
-        addTab(tabPane, "Thành Viên", teamTab);
-        addTab(tabPane, "Trò Chuyện", chatTab);
-        addTab(tabPane, "Mục Tiêu Tim", likesTab);
-        addTab(tabPane, "BankPusher", bankTab);
+        contentArea = new StackPane();
+        contentArea.setPadding(new Insets(0, 20, 20, 0));
+        contentArea.getChildren().addAll(
+                overviewTab, leaderboardTab, teamTab, chatTab, likesTab, bankTab);
 
-        root.setCenter(tabPane);
+        VBox sidebar = buildSidebar();
+        HBox dashboardBody = new HBox(0, sidebar, contentArea);
+        HBox.setHgrow(contentArea, Priority.ALWAYS);
+        dashboardBody.setPadding(new Insets(0, 0, 0, 0));
+
+        root.setCenter(dashboardBody);
+        selectNav(activeNavButton, overviewTab, "Tổng Quan", "Kết nối livestream, overlay OBS và trạng thái hệ thống");
     }
 
-    private void addTab(TabPane tabPane, String title, Pane content) {
-        Tab tab = new Tab(title);
-        tab.setContent(content);
-        tabPane.getTabs().add(tab);
+    private VBox buildSidebar() {
+        VBox sidebar = new VBox(6);
+        sidebar.setPrefWidth(230);
+        sidebar.setMinWidth(230);
+        sidebar.setMaxWidth(230);
+        sidebar.setPadding(new Insets(16, 10, 16, 16));
+        sidebar.setStyle(
+                "-fx-background-color: #0c0c0e;" +
+                        "-fx-border-color: #27272a;" +
+                        "-fx-border-width: 0 1 0 0;");
+
+        Label lblMenu = new Label("ĐIỀU HƯỚNG");
+        lblMenu.setStyle("-fx-text-fill: #52525b; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 0 0 4 8;");
+
+        Separator menuSep = new Separator();
+        menuSep.setStyle("-fx-opacity: 0.15; -fx-padding: 0 0 8 0;");
+
+        sidebar.getChildren().addAll(
+                lblMenu,
+                menuSep,
+                createNavButton("Tổng Quan", Feather.HOME, overviewTab,
+                        "Kết nối livestream, overlay OBS và trạng thái hệ thống"),
+                createNavButton("Bảng Xếp Hạng", Feather.BAR_CHART_2, leaderboardTab,
+                        "Theo dõi và quản lý top quà tặng"),
+                createNavButton("Thành Viên", Feather.USERS, teamTab,
+                        "Danh sách thành viên và fan club"),
+                createNavButton("Trò Chuyện", Feather.MESSAGE_CIRCLE, chatTab,
+                        "Live chat và overlay tin nhắn"),
+                createNavButton("Mục Tiêu Tim", Feather.HEART, likesTab,
+                        "Theo dõi lượt tim và mục tiêu"),
+                createNavButton("BankPusher", Feather.DOLLAR_SIGN, bankTab,
+                        "Đồng bộ giao dịch ngân hàng ACB"));
+
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+        sidebar.getChildren().add(spacer);
+
+        return sidebar;
+    }
+
+    private Button createNavButton(String title, Feather icon, Pane view, String subtitle) {
+        FontIcon navIcon = new FontIcon(icon);
+        navIcon.setIconSize(16);
+
+        Button btn = new Button(title, navIcon);
+        btn.setMaxWidth(Double.MAX_VALUE);
+        btn.setAlignment(Pos.CENTER_LEFT);
+        btn.setGraphicTextGap(10);
+        btn.setPrefHeight(40);
+        btn.setUserData(view);
+        applyNavStyle(btn, false);
+        navIcon.setIconColor(Color.web("#71717a"));
+
+        btn.setOnAction(e -> selectNav(btn, view, title, subtitle));
+        btn.setOnMouseEntered(e -> {
+            if (btn != activeNavButton) {
+                btn.setStyle(
+                        "-fx-background-color: rgba(255, 255, 255, 0.04);" +
+                                "-fx-background-radius: 8px;" +
+                                "-fx-text-fill: #e4e4e7;" +
+                                "-fx-font-weight: bold;" +
+                                "-fx-font-size: " + (int) DashboardLayout.NAV_BUTTON_FONT_SIZE + "px;" +
+                                "-fx-border-color: transparent;" +
+                                "-fx-border-radius: 8px;" +
+                                "-fx-cursor: hand;");
+            }
+        });
+        btn.setOnMouseExited(e -> {
+            if (btn != activeNavButton) {
+                applyNavStyle(btn, false);
+            }
+        });
+
+        if (activeNavButton == null) {
+            activeNavButton = btn;
+        }
+        return btn;
+    }
+
+    private void selectNav(Button btn, Pane view, String title, String subtitle) {
+        if (activeNavButton != null && activeNavButton != btn) {
+            applyNavStyle(activeNavButton, false);
+            FontIcon oldIcon = (FontIcon) activeNavButton.getGraphic();
+            if (oldIcon != null) {
+                oldIcon.setIconColor(Color.web("#71717a"));
+            }
+        }
+
+        activeNavButton = btn;
+        applyNavStyle(btn, true);
+        FontIcon icon = (FontIcon) btn.getGraphic();
+        if (icon != null) {
+            icon.setIconColor(Color.web("#fe2c55"));
+        }
+
+        for (javafx.scene.Node node : contentArea.getChildren()) {
+            boolean active = node == view;
+            node.setVisible(active);
+            node.setManaged(active);
+        }
+
+        if (lblPageTitle != null) {
+            lblPageTitle.setText(title);
+        }
+        if (subtitle != null && !subtitle.isBlank()) {
+            lblSubtitle.setText(subtitle);
+        }
+    }
+
+    private void applyNavStyle(Button btn, boolean active) {
+        String font = "-fx-font-size: " + (int) DashboardLayout.NAV_BUTTON_FONT_SIZE + "px;";
+        if (active) {
+            btn.setStyle(
+                    "-fx-background-color: rgba(254, 44, 85, 0.12);" +
+                            "-fx-background-radius: 8px;" +
+                            "-fx-text-fill: #fe2c55;" +
+                            "-fx-font-weight: bold;" +
+                            font +
+                            "-fx-border-color: rgba(254, 44, 85, 0.25);" +
+                            "-fx-border-radius: 8px;" +
+                            "-fx-border-width: 1px;" +
+                            "-fx-cursor: hand;");
+        } else {
+            btn.setStyle(
+                    "-fx-background-color: transparent;" +
+                            "-fx-background-radius: 8px;" +
+                            "-fx-text-fill: #a1a1aa;" +
+                            "-fx-font-weight: bold;" +
+                            font +
+                            "-fx-border-color: transparent;" +
+                            "-fx-border-radius: 8px;" +
+                            "-fx-cursor: hand;");
+        }
     }
 
     private void setupTikTokListeners() {
@@ -234,7 +378,7 @@ public class DashboardStage extends Stage {
             overviewTab.setDisconnectingState();
             TikTokConnector.disconnect();
             overviewTab.updateDiagnostics(false, "--");
-            lblSubtitle.setText("Bảng điều khiển quản lý OBS Overlays & Kết nối Livestream");
+            lblSubtitle.setText("Kết nối livestream, overlay OBS và trạng thái hệ thống");
         } else {
             String username = overviewTab.getUsername();
             if (username.isEmpty()) {
@@ -260,7 +404,7 @@ public class DashboardStage extends Stage {
                             return;
                         overviewTab.setConnectionState(false);
                         overviewTab.updateDiagnostics(false, "--");
-                        lblSubtitle.setText("Bảng điều khiển quản lý OBS Overlays & Kết nối Livestream");
+                        lblSubtitle.setText("Kết nối livestream, overlay OBS và trạng thái hệ thống");
                     }),
                     errorMsg -> Platform.runLater(() -> {
                         if (attemptId != connectionAttemptId || connectionErrorShown)
@@ -269,7 +413,7 @@ public class DashboardStage extends Stage {
                         Dialogs.error(this, "Lỗi kết nối", "Kết nối thất bại: " + errorMsg);
                         overviewTab.setConnectionState(false);
                         overviewTab.updateDiagnostics(false, "--");
-                        lblSubtitle.setText("Bảng điều khiển quản lý OBS Overlays & Kết nối Livestream");
+                        lblSubtitle.setText("Kết nối livestream, overlay OBS và trạng thái hệ thống");
                     }),
                     () -> Platform.runLater(() -> {
                         leaderboardTab.refreshTableData();

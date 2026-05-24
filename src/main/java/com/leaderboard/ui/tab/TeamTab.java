@@ -3,6 +3,7 @@ package com.leaderboard.ui.tab;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.leaderboard.model.TeamMember;
+import com.leaderboard.ui.DashboardLayout;
 import com.leaderboard.ui.DashboardStage;
 import com.leaderboard.ui.Dialogs;
 import com.leaderboard.util.DataManager;
@@ -52,110 +53,48 @@ public class TeamTab extends BorderPane {
 
     public TeamTab(DashboardStage parent) {
         this.parent = parent;
-        setPadding(new Insets(15, 5, 15, 5));
-        setStyle("-fx-background-color: transparent;");
+        DashboardLayout.stylePage(this);
         initComponents();
         refreshTableData();
     }
 
     private void initComponents() {
-        VBox cardMain = new VBox(15);
-        cardMain.setPadding(new Insets(15, 20, 15, 20));
-        cardMain.setStyle(
-            "-fx-background-color: #121214;" +
-            "-fx-background-radius: 12px;" +
-            "-fx-border-color: rgba(255, 255, 255, 0.05);" +
-            "-fx-border-radius: 12px;" +
-            "-fx-border-width: 1px;"
-        );
-
-        // --- SUBHEADER PANEL ---
-        HBox cardHeader = new HBox(15);
-        cardHeader.setAlignment(Pos.CENTER_LEFT);
-        cardHeader.setPadding(new Insets(0, 0, 10, 0));
-
-        // Left Area: Title
-        VBox titleArea = new VBox(2);
-        HBox.setHgrow(titleArea, Priority.ALWAYS);
-
-        Label lblTitle = new Label("QUẢN LÝ THÀNH VIÊN TIM ĐỘI / SUBSCRIBER");
-        lblTitle.setStyle("-fx-text-fill: #f4f4f5; -fx-font-weight: bold; -fx-font-size: 13px;");
-
-        Label lblSubtitle = new Label("Danh sách người xem có vai trò đặc biệt tương tác trực tiếp trong phiên live.");
-        lblSubtitle.setStyle("-fx-text-fill: #71717a; -fx-font-size: 10px;");
-
-        titleArea.getChildren().addAll(lblTitle, lblSubtitle);
-        cardHeader.getChildren().add(titleArea);
-
-        // Right Area: Stats
-        HBox headerRight = new HBox(12);
-        headerRight.setAlignment(Pos.CENTER_RIGHT);
+        VBox cardMain = DashboardLayout.createPageContainer();
 
         lblTotalMembersVal = new Label("0");
-        VBox pnlStatMembers = createMiniStatCard("THÀNH VIÊN", lblTotalMembersVal, "#e4e4e7");
-
         lblTotalSubsVal = new Label("0");
-        VBox pnlStatSubs = createMiniStatCard("SUBSCRIBERS", lblTotalSubsVal, "#818cf8");
-
         lblTotalFanClubVal = new Label("0");
-        VBox pnlStatFanClub = createMiniStatCard("TIM ĐỘI", lblTotalFanClubVal, "#a1a1aa");
 
-        headerRight.getChildren().addAll(pnlStatMembers, pnlStatSubs, pnlStatFanClub);
-        cardHeader.getChildren().add(headerRight);
+        HBox headerRight = DashboardLayout.createHeaderActions(
+                DashboardLayout.createMiniStatCard("THÀNH VIÊN", lblTotalMembersVal, "#e4e4e7"),
+                DashboardLayout.createMiniStatCard("SUBSCRIBERS", lblTotalSubsVal, "#818cf8"),
+                DashboardLayout.createMiniStatCard("TIM ĐỘI", lblTotalFanClubVal, "#a1a1aa")
+        );
 
-        cardMain.getChildren().add(cardHeader);
+        cardMain.getChildren().add(DashboardLayout.createPageHeader(
+                "QUẢN LÝ THÀNH VIÊN TIM ĐỘI / SUBSCRIBER",
+                "Danh sách người xem có vai trò đặc biệt tương tác trực tiếp trong phiên live.",
+                headerRight
+        ));
 
-        // --- FILTER ACTION BAR ---
         HBox filterBar = new HBox(15);
         filterBar.setAlignment(Pos.CENTER_LEFT);
 
-        // Vercel styled Search bar HBox
-        HBox searchBox = new HBox(8);
-        searchBox.setAlignment(Pos.CENTER_LEFT);
-        searchBox.setPadding(new Insets(0, 10, 0, 10));
-        searchBox.setStyle(
-            "-fx-background-color: #18181b;" +
-            "-fx-background-radius: 8px;" +
-            "-fx-border-color: rgba(255, 255, 255, 0.08);" +
-            "-fx-border-width: 1px;"
-        );
+        txtSearch = DashboardLayout.newSearchField();
+        HBox searchBox = DashboardLayout.createSearchBox(
+                txtSearch, "Tìm kiếm TikTok ID hoặc Tên hiển thị...");
         HBox.setHgrow(searchBox, Priority.ALWAYS);
-        
-        FontIcon searchIcon = new FontIcon(Feather.SEARCH);
-        searchIcon.setIconColor(Color.web("#71717a"));
 
-        txtSearch = new TextField();
-        txtSearch.setPromptText("Tìm kiếm TikTok ID hoặc Tên hiển thị...");
-        txtSearch.setPrefHeight(34);
-        txtSearch.setStyle("-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: #f4f4f5;");
-        HBox.setHgrow(txtSearch, Priority.ALWAYS);
-        searchBox.getChildren().addAll(searchIcon, txtSearch);
-
-        cbFilter = new ComboBox<>(FXCollections.observableArrayList("Lọc: Tất cả", "Lọc: Chỉ Subscriber", "Lọc: Chỉ Fan Club"));
+        cbFilter = new ComboBox<>(FXCollections.observableArrayList(
+                "Lọc: Tất cả", "Lọc: Chỉ Subscriber", "Lọc: Chỉ Fan Club"));
         cbFilter.getSelectionModel().select(0);
-        cbFilter.setPrefHeight(36);
         cbFilter.setPrefWidth(180);
-        cbFilter.setStyle(
-            "-fx-background-color: #18181b;" +
-            "-fx-background-radius: 8px;" +
-            "-fx-border-color: rgba(255, 255, 255, 0.08);" +
-            "-fx-border-width: 1px;" +
-            "-fx-text-fill: #f4f4f5;"
-        );
+        DashboardLayout.styleComboBox(cbFilter);
 
         filterBar.getChildren().addAll(searchBox, cbFilter);
         cardMain.getChildren().add(filterBar);
 
-        // --- TABLE CONTAINER ---
-        tblMembers = new TableView<>();
-        tblMembers.setPrefHeight(380);
-        tblMembers.setStyle(
-            "-fx-background-color: #121214;" +
-            "-fx-control-inner-background: #121214;" +
-            "-fx-border-color: rgba(255,255,255,0.05);" +
-            "-fx-border-radius: 8px;" +
-            "-fx-background-radius: 8px;"
-        );
+        tblMembers = DashboardLayout.createTable();
 
         TableColumn<TeamMember, Integer> colStt = new TableColumn<>("STT");
         colStt.setCellValueFactory(cell -> new SimpleIntegerProperty(memberList.indexOf(cell.getValue()) + 1).asObject());
@@ -197,7 +136,7 @@ public class TeamTab extends BorderPane {
         colGiftLvl.setCellValueFactory(cell -> new SimpleStringProperty(
             cell.getValue().getGiftGiverLevel() > 0 ? "Cấp " + cell.getValue().getGiftGiverLevel() : "--"
         ));
-        colGiftLvl.setPrefWidth(80);
+        colGiftLvl.setPrefWidth(90);
         colGiftLvl.setStyle("-fx-alignment: CENTER; -fx-text-fill: #e4e4e7; -fx-font-weight: bold;");
 
         TableColumn<TeamMember, String> colLastActive = new TableColumn<>("Tương Tác Cuối");
@@ -239,90 +178,31 @@ public class TeamTab extends BorderPane {
 
         cardMain.getChildren().add(tblMembers);
 
-        // --- BOTTOM ACTIONS TOOLBAR ---
-        HBox actionsRow = new HBox(12);
-        actionsRow.setAlignment(Pos.CENTER_RIGHT);
-        actionsRow.setPadding(new Insets(10, 0, 0, 0));
-
-        btnDeleteSelected = new Button("Xoá Thành Viên Chọn");
-        btnDeleteSelected.setPrefHeight(32);
-        
+        btnDeleteSelected = DashboardLayout.newButton("Xoá Thành Viên Chọn");
         FontIcon trashIcon = new FontIcon(Feather.TRASH_2);
         trashIcon.setIconColor(Color.web("#a1a1aa"));
         btnDeleteSelected.setGraphic(trashIcon);
-        
-        btnDeleteSelected.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #a1a1aa;" +
-            "-fx-font-weight: bold;" +
-            "-fx-border-color: rgba(255, 255, 255, 0.08);" +
-            "-fx-border-radius: 8px;" +
-            "-fx-background-radius: 8px;" +
-            "-fx-border-width: 1px;"
-        );
+        DashboardLayout.applySecondaryButton(btnDeleteSelected);
         btnDeleteSelected.setOnAction(e -> deleteSelectedMember());
 
-        btnResetAll = new Button("Xoá Hết Bảng");
-        btnResetAll.setPrefHeight(32);
-        
+        btnResetAll = DashboardLayout.newButton("Xoá Hết Bảng");
         FontIcon refreshIcon = new FontIcon(Feather.REFRESH_CW);
         refreshIcon.setIconColor(Color.web("#f87171"));
         btnResetAll.setGraphic(refreshIcon);
-        
-        btnResetAll.setStyle(
-            "-fx-background-color: rgba(239, 68, 68, 0.08);" +
-            "-fx-text-fill: #f87171;" +
-            "-fx-font-weight: bold;" +
-            "-fx-border-color: rgba(239, 68, 68, 0.4);" +
-            "-fx-border-radius: 8px;" +
-            "-fx-background-radius: 8px;" +
-            "-fx-border-width: 1px;"
-        );
+        DashboardLayout.applyDangerButton(btnResetAll);
         btnResetAll.setOnAction(e -> resetAllMembers());
 
-        btnExportJson = new Button("Xuất File JSON");
-        btnExportJson.setPrefHeight(32);
-        
+        btnExportJson = DashboardLayout.newButton("Xuất File JSON");
         FontIcon exportIcon = new FontIcon(Feather.DOWNLOAD);
         exportIcon.setIconColor(Color.web("#818cf8"));
         btnExportJson.setGraphic(exportIcon);
-        
-        btnExportJson.setStyle(
-            "-fx-background-color: rgba(99, 102, 241, 0.08);" +
-            "-fx-text-fill: #818cf8;" +
-            "-fx-font-weight: bold;" +
-            "-fx-border-color: rgba(99, 102, 241, 0.4);" +
-            "-fx-border-radius: 8px;" +
-            "-fx-background-radius: 8px;" +
-            "-fx-border-width: 1px;"
-        );
+        DashboardLayout.applyPrimaryButton(btnExportJson);
         btnExportJson.setOnAction(e -> exportToJson());
 
-        actionsRow.getChildren().addAll(btnDeleteSelected, btnResetAll, btnExportJson);
-        cardMain.getChildren().add(actionsRow);
+        cardMain.getChildren().add(DashboardLayout.createActionsRow(
+                btnDeleteSelected, btnResetAll, btnExportJson));
 
         setCenter(cardMain);
-    }
-
-    private VBox createMiniStatCard(String label, Label valueLabel, String accentHex) {
-        VBox pnl = new VBox(2);
-        pnl.setPadding(new Insets(4, 12, 4, 12));
-        pnl.setAlignment(Pos.CENTER_LEFT);
-        pnl.setStyle(
-            "-fx-background-color: rgba(255, 255, 255, 0.02);" +
-            "-fx-background-radius: 10px;" +
-            "-fx-border-color: rgba(255, 255, 255, 0.06);" +
-            "-fx-border-radius: 10px;" +
-            "-fx-border-width: 1px;"
-        );
-
-        Label lblTitle = new Label(label);
-        lblTitle.setStyle("-fx-font-size: 8.5px; -fx-font-weight: bold; -fx-text-fill: #71717a;");
-
-        valueLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: " + accentHex + ";");
-
-        pnl.getChildren().addAll(lblTitle, valueLabel);
-        return pnl;
     }
 
     public void refreshTableData() {

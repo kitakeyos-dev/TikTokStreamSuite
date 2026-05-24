@@ -1,0 +1,113 @@
+/* ============================================================
+   Dashboard shared field styles — TikTok Live Stream Suite
+   ============================================================ */
+
+/* TextField / PasswordField */
+.tss-field {
+    -fx-background-color: #18181b;
+    -fx-background-radius: 8px;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-text-fill: #f4f4f5;
+    -fx-prompt-text-fill: #52525b;
+    -fx-padding: 0 10 0 10;
+    -fx-highlight-fill: rgba(129, 140, 248, 0.3);
+}
+
+.tss-field:focused {
+    -fx-border-color: rgba(129, 140, 248, 0.55);
+    -fx-background-color: #1c1c20;
+}
+
+.tss-field:disabled {
+    -fx-opacity: 0.45;
+}
+
+/* ComboBox */
+.tss-combo .combo-box-base {
+    -fx-background-color: #18181b;
+    -fx-background-radius: 8px;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+}
+
+.tss-combo .combo-box-base:focused {
+    -fx-border-color: rgba(129, 140, 248, 0.55);
+}
+
+.tss-combo .combo-box-base > .label {
+    -fx-text-fill: #f4f4f5;
+    -fx-font-size: 11px;
+}
+
+.tss-combo .combo-box-base > .arrow-button {
+    -fx-background-color: transparent;
+}
+
+.tss-combo .combo-box-base > .arrow-button > .arrow {
+    -fx-background-color: #71717a;
+}
+
+.tss-combo .list-view {
+    -fx-background-color: #1c1c20;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+
+.tss-combo .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #d4d4d8;
+    -fx-font-size: 11px;
+    -fx-padding: 6 10 6 10;
+}
+
+.tss-combo .list-cell:hover {
+    -fx-background-color: rgba(129, 140, 248, 0.1);
+    -fx-text-fill: #f4f4f5;
+}
+
+.tss-combo .list-cell:selected {
+    -fx-background-color: rgba(129, 140, 248, 0.18);
+    -fx-text-fill: #818cf8;
+}
+
+/* Spinner */
+.tss-spinner .text-field {
+    -fx-background-color: #18181b;
+    -fx-background-radius: 8px 0 0 8px;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 8px 0 0 8px;
+    -fx-border-width: 1px;
+    -fx-text-fill: #f4f4f5;
+    -fx-padding: 0 8 0 10;
+}
+
+.tss-spinner .increment-arrow-button,
+.tss-spinner .decrement-arrow-button {
+    -fx-background-color: #1e1e22;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-width: 1px;
+}
+
+.tss-spinner .increment-arrow-button {
+    -fx-background-radius: 0 8px 0 0;
+    -fx-border-radius: 0 8px 0 0;
+}
+
+.tss-spinner .decrement-arrow-button {
+    -fx-background-radius: 0 0 8px 0;
+    -fx-border-radius: 0 0 8px 0;
+}
+
+.tss-spinner .increment-arrow-button:hover,
+.tss-spinner .decrement-arrow-button:hover {
+    -fx-background-color: rgba(129, 140, 248, 0.12);
+}
+
+.tss-spinner .increment-arrow-button > .increment-arrow,
+.tss-spinner .decrement-arrow-button > .decrement-arrow {
+    -fx-background-color: #71717a;
+}

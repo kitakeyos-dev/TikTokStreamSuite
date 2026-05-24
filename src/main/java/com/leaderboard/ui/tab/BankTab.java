@@ -3,9 +3,10 @@ package com.leaderboard.ui.tab;
 import com.leaderboard.model.BankDeposit;
 import com.leaderboard.model.BankTransaction;
 import com.leaderboard.service.AcbClient;
-import com.leaderboard.service.AcbTransactionParser;
+import com.leaderboard.util.AcbTransactionParser;
 import com.leaderboard.util.BankConfigManager;
 import com.leaderboard.util.BankDataManager;
+import com.leaderboard.ui.DashboardLayout;
 import com.leaderboard.ui.DashboardStage;
 import com.leaderboard.ui.Dialogs;
 import javafx.application.Platform;
@@ -23,7 +24,6 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -60,8 +60,7 @@ public class BankTab extends BorderPane {
 
     public BankTab(DashboardStage parent) {
         this.parent = parent;
-        setPadding(new Insets(15, 5, 15, 5));
-        setStyle("-fx-background-color: transparent;");
+        DashboardLayout.stylePage(this);
 
         initComponents();
 
@@ -73,107 +72,63 @@ public class BankTab extends BorderPane {
     }
 
     private void initComponents() {
-        GridPane grid = new GridPane();
-        grid.setHgap(24);
-        grid.setVgap(0);
+        GridPane grid = DashboardLayout.createTwoColumnGrid();
 
-        ColumnConstraints col1 = new ColumnConstraints();
-        col1.setPercentWidth(40);
-        ColumnConstraints col2 = new ColumnConstraints();
-        col2.setPercentWidth(60);
-        grid.getColumnConstraints().addAll(col1, col2);
+        VBox cardConfig = DashboardLayout.createCard("CẤU HÌNH ACB BANKPUSHER");
+        VBox leftContent = DashboardLayout.createSectionContent();
 
-        // Column 1: Config and Controls
-        VBox cardConfig = createCard("CẤU HÌNH ACB BANKPUSHER");
-        VBox leftContent = new VBox(10);
-        leftContent.setPadding(new Insets(10, 0, 10, 0));
-
-        // Status Row (Badge + Start/Stop Button)
-        HBox statusRow = new HBox(15);
-        statusRow.setAlignment(Pos.CENTER_LEFT);
-        statusRow.setPadding(new Insets(5, 0, 10, 0));
-
-        lblStatusBadge = new Label("ĐÃ DỪNG");
-        lblStatusBadge.setAlignment(Pos.CENTER);
-        lblStatusBadge.setPrefSize(110, 32);
-        lblStatusBadge.setStyle(
-                "-fx-background-color: rgba(255, 255, 255, 0.03);" +
-                        "-fx-background-radius: 8px;" +
-                        "-fx-text-fill: #a1a1aa;" +
-                        "-fx-font-weight: bold;" +
-                        "-fx-border-color: rgba(255, 255, 255, 0.08);" +
-                        "-fx-border-radius: 8px;" +
-                        "-fx-border-width: 1px;" +
-                        "-fx-font-size: 11px;");
-
-        btnStartStop = new Button("Bắt đầu");
-        btnStartStop.setPrefHeight(32);
-        btnStartStop.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(btnStartStop, Priority.ALWAYS);
-        btnStartStop.setStyle(
-                "-fx-background-color: rgba(34, 197, 94, 0.08);" +
-                        "-fx-text-fill: #4ade80;" +
-                        "-fx-font-weight: bold;" +
-                        "-fx-border-color: rgba(34, 197, 94, 0.4);" +
-                        "-fx-border-radius: 8px;" +
-                        "-fx-background-radius: 8px;" +
-                        "-fx-border-width: 1px;");
+        lblStatusBadge = DashboardLayout.createStatusBadge("ĐÃ DỪNG");
+        btnStartStop = DashboardLayout.newButton("Bắt đầu");
+        DashboardLayout.applySuccessButton(btnStartStop);
         btnStartStop.setOnAction(e -> toggleRunning());
+        HBox statusRow = DashboardLayout.createStatusRow(lblStatusBadge, btnStartStop);
 
-        statusRow.getChildren().addAll(lblStatusBadge, btnStartStop);
+        VBox form = new VBox(DashboardLayout.FORM_GAP);
+        form.setMaxWidth(Double.MAX_VALUE);
 
-        // Form Fields
-        VBox form = new VBox(8);
+        txtUsername = DashboardLayout.newTextField();
+        txtPassword = DashboardLayout.newPasswordField();
+        txtAccount = DashboardLayout.newTextField();
+        txtApiUrl = DashboardLayout.newTextField();
+        txtApiKey = DashboardLayout.newPasswordField();
 
-        Label lblUser = new Label("TÊN ĐĂNG NHẬP BANK:");
-        lblUser.setStyle("-fx-font-size: 9.5px; -fx-font-weight: bold; -fx-text-fill: #71717a;");
-        txtUsername = createStyledTextField("Nhập tên đăng nhập ACB...");
+        FontIcon iconUser = new FontIcon(Feather.USER);
+        iconUser.setIconColor(Color.web("#71717a"));
+        FontIcon iconPass = new FontIcon(Feather.LOCK);
+        iconPass.setIconColor(Color.web("#71717a"));
+        FontIcon iconAcct = new FontIcon(Feather.CREDIT_CARD);
+        iconAcct.setIconColor(Color.web("#71717a"));
+        FontIcon iconUrl = new FontIcon(Feather.LINK);
+        iconUrl.setIconColor(Color.web("#71717a"));
+        FontIcon iconKey = new FontIcon(Feather.KEY);
+        iconKey.setIconColor(Color.web("#71717a"));
 
-        Label lblPassword = new Label("MẬT KHẨU BANK:");
-        lblPassword.setStyle("-fx-font-size: 9.5px; -fx-font-weight: bold; -fx-text-fill: #71717a;");
-        txtPassword = new PasswordField();
-        txtPassword.setPromptText("Nhập mật khẩu...");
-        txtPassword.setPrefHeight(34);
-        txtPassword.setStyle(
-                "-fx-background-color: #18181b;" +
-                        "-fx-background-radius: 8px;" +
-                        "-fx-border-color: rgba(255, 255, 255, 0.08);" +
-                        "-fx-border-width: 1px;" +
-                        "-fx-text-fill: #f4f4f5;" +
-                        "-fx-padding: 0 10 0 10;");
-
-        Label lblAccount = new Label("SỐ TÀI KHOẢN:");
-        lblAccount.setStyle("-fx-font-size: 9.5px; -fx-font-weight: bold; -fx-text-fill: #71717a;");
-        txtAccount = createStyledTextField("Nhập số tài khoản...");
-
-        Label lblApiUrl = new Label("API URL:");
-        lblApiUrl.setStyle("-fx-font-size: 9.5px; -fx-font-weight: bold; -fx-text-fill: #71717a;");
-        txtApiUrl = createStyledTextField("https://donate.nhimnhor.com");
-
-        Label lblApiKey = new Label("API KEY:");
-        lblApiKey.setStyle("-fx-font-size: 9.5px; -fx-font-weight: bold; -fx-text-fill: #71717a;");
-        txtApiKey = new PasswordField();
-        txtApiKey.setPromptText("Nhập API Key...");
-        txtApiKey.setPrefHeight(34);
-        txtApiKey.setStyle(
-                "-fx-background-color: #18181b;" +
-                        "-fx-background-radius: 8px;" +
-                        "-fx-border-color: rgba(255, 255, 255, 0.08);" +
-                        "-fx-border-width: 1px;" +
-                        "-fx-text-fill: #f4f4f5;" +
-                        "-fx-padding: 0 10 0 10;");
-
-        Label lblInterval = new Label("CHU KỲ CẬP NHẬT:");
-        lblInterval.setStyle("-fx-font-size: 9.5px; -fx-font-weight: bold; -fx-text-fill: #71717a;");
+        form.getChildren().addAll(
+                DashboardLayout.createFieldLabel("TÊN ĐĂNG NHẬP BANK:"),
+                DashboardLayout.wrapTextField(txtUsername, "Nhập tên đăng nhập ACB...", iconUser),
+                DashboardLayout.createFieldLabel("MẬT KHẨU BANK:"),
+                DashboardLayout.wrapPasswordField(txtPassword, "Nhập mật khẩu...", iconPass),
+                DashboardLayout.createFieldLabel("SỐ TÀI KHOẢN:"),
+                DashboardLayout.wrapTextField(txtAccount, "Nhập số tài khoản...", iconAcct),
+                DashboardLayout.createFieldLabel("API URL:"),
+                DashboardLayout.wrapTextField(txtApiUrl, "https://donate.nhimnhor.com", iconUrl),
+                DashboardLayout.createFieldLabel("API KEY:"),
+                DashboardLayout.wrapPasswordField(txtApiKey, "Nhập API Key...", iconKey),
+                DashboardLayout.createFieldLabel("CHU KỲ CẬP NHẬT:")
+        );
 
         HBox intervalBox = new HBox(8);
         intervalBox.setAlignment(Pos.CENTER_LEFT);
         spinnerInterval = new Spinner<>(new SpinnerValueFactory.IntegerSpinnerValueFactory(5, 300, 30));
         spinnerInterval.setPrefWidth(80);
-        spinnerInterval.setPrefHeight(32);
+        spinnerInterval.setPrefHeight(DashboardLayout.FIELD_HEIGHT);
+        spinnerInterval.getStyleClass().add("tss-spinner");
         spinnerInterval.setStyle(
                 "-fx-background-color: #18181b;" +
                         "-fx-background-radius: 8px;" +
+                        "-fx-border-color: rgba(255, 255, 255, 0.08);" +
+                        "-fx-border-radius: 8px;" +
+                        "-fx-border-width: 1px;" +
                         "-fx-text-fill: #f4f4f5;");
         spinnerInterval.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (running)
@@ -182,21 +137,12 @@ public class BankTab extends BorderPane {
         Label lblMin = new Label("giây");
         lblMin.setStyle("-fx-text-fill: #71717a; -fx-font-size: 12px;");
         intervalBox.getChildren().addAll(spinnerInterval, lblMin);
-
-        form.getChildren().addAll(
-                lblUser, txtUsername,
-                lblPassword, txtPassword,
-                lblAccount, txtAccount,
-                lblApiUrl, txtApiUrl,
-                lblApiKey, txtApiKey,
-                lblInterval, intervalBox);
+        form.getChildren().add(intervalBox);
 
         Separator sep = new Separator();
         sep.setStyle("-fx-opacity: 0.08; -fx-padding: 8 0 8 0;");
 
-        // System Info (Balance display)
-        Label lblBalanceTitle = new Label("SỐ DƯ TÀI KHOẢN:");
-        lblBalanceTitle.setStyle("-fx-font-size: 9.5px; -fx-font-weight: bold; -fx-text-fill: #71717a;");
+        Label lblBalanceTitle = DashboardLayout.createFieldLabel("SỐ DƯ TÀI KHOẢN:");
 
         lblBalance = new Label("-- VND");
         lblBalance.setStyle(
@@ -208,23 +154,19 @@ public class BankTab extends BorderPane {
         leftContent.getChildren().addAll(statusRow, form, sep, lblBalanceTitle, lblBalance);
         cardConfig.getChildren().add(leftContent);
         grid.add(cardConfig, 0, 0);
+        DashboardLayout.fillGridCell(cardConfig);
 
         // Column 2: Data Tabs & Logs
-        VBox cardDisplay = createCard("DÒNG SỰ KIỆN GIAO DỊCH");
+        VBox cardDisplay = DashboardLayout.createCard("DÒNG SỰ KIỆN GIAO DỊCH");
 
         TabPane tabs = new TabPane();
         tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-        tabs.setPrefHeight(450);
+        tabs.setMinHeight(DashboardLayout.TABLE_PREF_HEIGHT);
+        tabs.setPrefHeight(DashboardLayout.TABLE_PREF_HEIGHT);
+        VBox.setVgrow(tabs, Priority.ALWAYS);
         tabs.setStyle("-fx-background-color: transparent;");
 
-        // Tab 1: Live Transactions
-        tblTransactions = new TableView<>();
-        tblTransactions.setStyle(
-                "-fx-background-color: #121214;" +
-                        "-fx-control-inner-background: #121214;" +
-                        "-fx-border-color: rgba(255,255,255,0.05);" +
-                        "-fx-border-radius: 8px;" +
-                        "-fx-background-radius: 8px;");
+        tblTransactions = DashboardLayout.createTable();
 
         TableColumn<BankTransaction, String> colType = new TableColumn<>("Loại");
         colType.setCellValueFactory(
@@ -300,13 +242,7 @@ public class BankTab extends BorderPane {
         Tab tabTx = new Tab("Giao dịch", tblTransactions);
 
         // Tab 2: Pushed History (DepositRecord)
-        tblDeposits = new TableView<>();
-        tblDeposits.setStyle(
-                "-fx-background-color: #121214;" +
-                        "-fx-control-inner-background: #121214;" +
-                        "-fx-border-color: rgba(255,255,255,0.05);" +
-                        "-fx-border-radius: 8px;" +
-                        "-fx-background-radius: 8px;");
+        tblDeposits = DashboardLayout.createTable();
 
         TableColumn<BankDeposit, String> colDepAmount = new TableColumn<>("Số tiền");
         colDepAmount.setCellValueFactory(
@@ -350,67 +286,21 @@ public class BankTab extends BorderPane {
         tabs.getTabs().addAll(tabTx, tabDep, tabLog);
 
         // Clear local logs button
-        HBox tabActions = new HBox();
-        tabActions.setAlignment(Pos.CENTER_RIGHT);
-        tabActions.setPadding(new Insets(10, 0, 0, 0));
-
-        Button btnClearLog = new Button("Xoá Lịch Sử");
-        btnClearLog.setPrefHeight(32);
+        Button btnClearLog = DashboardLayout.newButton("Xoá Lịch Sử");
         FontIcon trashIcon = new FontIcon(Feather.TRASH_2);
         trashIcon.setIconColor(Color.web("#f87171"));
         btnClearLog.setGraphic(trashIcon);
-        btnClearLog.setStyle(
-                "-fx-background-color: rgba(239, 68, 68, 0.08);" +
-                        "-fx-text-fill: #f87171;" +
-                        "-fx-font-weight: bold;" +
-                        "-fx-border-color: rgba(239, 68, 68, 0.4);" +
-                        "-fx-border-radius: 8px;" +
-                        "-fx-background-radius: 8px;" +
-                        "-fx-border-width: 1px;");
+        DashboardLayout.applyDangerButton(btnClearLog);
         btnClearLog.setOnAction(e -> {
             txtLog.clear();
             appendLog("Lịch sử log đã được làm sạch.");
         });
-        tabActions.getChildren().add(btnClearLog);
 
-        cardDisplay.getChildren().addAll(tabs, tabActions);
+        cardDisplay.getChildren().addAll(tabs, DashboardLayout.createActionsRow(btnClearLog));
         grid.add(cardDisplay, 1, 0);
+        DashboardLayout.fillGridCell(cardDisplay);
 
         setCenter(grid);
-    }
-
-    private VBox createCard(String title) {
-        VBox card = new VBox(10);
-        card.setPadding(new Insets(15, 20, 15, 20));
-        card.setStyle(
-                "-fx-background-color: #121214;" +
-                        "-fx-background-radius: 12px;" +
-                        "-fx-border-color: rgba(255, 255, 255, 0.05);" +
-                        "-fx-border-radius: 12px;" +
-                        "-fx-border-width: 1px;");
-
-        Label lblTitle = new Label(title);
-        lblTitle.setStyle("-fx-text-fill: #f4f4f5; -fx-font-weight: bold; -fx-font-size: 13px;");
-
-        Separator titleSep = new Separator();
-        titleSep.setStyle("-fx-opacity: 0.08; -fx-padding: 2 0 5 0;");
-
-        card.getChildren().addAll(lblTitle, titleSep);
-        return card;
-    }
-
-    private TextField createStyledTextField(String prompt) {
-        TextField tf = new TextField();
-        tf.setPromptText(prompt);
-        tf.setPrefHeight(34);
-        tf.setStyle(
-                "-fx-background-color: #18181b;" +
-                        "-fx-background-radius: 8px;" +
-                        "-fx-border-color: rgba(255, 255, 255, 0.08);" +
-                        "-fx-border-width: 1px;" +
-                        "-fx-text-fill: #f4f4f5;" +
-                        "-fx-padding: 0 10 0 10;");
-        return tf;
     }
 
     private void appendLog(String message) {
@@ -516,14 +406,7 @@ public class BankTab extends BorderPane {
 
                 running = true;
                 btnStartStop.setText("Dừng lại");
-                btnStartStop.setStyle(
-                        "-fx-background-color: rgba(239, 68, 68, 0.08);" +
-                                "-fx-text-fill: #f87171;" +
-                                "-fx-font-weight: bold;" +
-                                "-fx-border-color: rgba(239, 68, 68, 0.4);" +
-                                "-fx-border-radius: 8px;" +
-                                "-fx-background-radius: 8px;" +
-                                "-fx-border-width: 1px;");
+                DashboardLayout.applyDangerButton(btnStartStop);
                 btnStartStop.setDisable(false);
                 lblStatusBadge.setText("ĐANG CHẠY");
                 lblStatusBadge.setStyle(
@@ -546,14 +429,7 @@ public class BankTab extends BorderPane {
         stopScheduler();
         running = false;
         btnStartStop.setText("Bắt đầu");
-        btnStartStop.setStyle(
-                "-fx-background-color: rgba(34, 197, 94, 0.08);" +
-                        "-fx-text-fill: #4ade80;" +
-                        "-fx-font-weight: bold;" +
-                        "-fx-border-color: rgba(34, 197, 94, 0.4);" +
-                        "-fx-border-radius: 8px;" +
-                        "-fx-background-radius: 8px;" +
-                        "-fx-border-width: 1px;");
+        DashboardLayout.applySuccessButton(btnStartStop);
         setFormEnabled(true);
         lblStatusBadge.setText("ĐÃ DỪNG");
         lblStatusBadge.setStyle(
