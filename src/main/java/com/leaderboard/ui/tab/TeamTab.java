@@ -14,7 +14,10 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
+import org.kordamp.ikonli.javafx.FontIcon;
+import org.kordamp.ikonli.feather.Feather;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
@@ -58,9 +61,9 @@ public class TeamTab extends BorderPane {
         VBox cardMain = new VBox(15);
         cardMain.setPadding(new Insets(15, 20, 15, 20));
         cardMain.setStyle(
-            "-fx-background-color: #1e1e1e;" +
+            "-fx-background-color: #121214;" +
             "-fx-background-radius: 12px;" +
-            "-fx-border-color: rgba(255, 255, 255, 0.08);" +
+            "-fx-border-color: rgba(255, 255, 255, 0.05);" +
             "-fx-border-radius: 12px;" +
             "-fx-border-width: 1px;"
         );
@@ -75,7 +78,7 @@ public class TeamTab extends BorderPane {
         HBox.setHgrow(titleArea, Priority.ALWAYS);
 
         Label lblTitle = new Label("QUẢN LÝ THÀNH VIÊN TIM ĐỘI / SUBSCRIBER");
-        lblTitle.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 13px;");
+        lblTitle.setStyle("-fx-text-fill: #f4f4f5; -fx-font-weight: bold; -fx-font-size: 13px;");
 
         Label lblSubtitle = new Label("Danh sách người xem có vai trò đặc biệt tương tác trực tiếp trong phiên live.");
         lblSubtitle.setStyle("-fx-text-fill: #71717a; -fx-font-size: 10px;");
@@ -84,17 +87,17 @@ public class TeamTab extends BorderPane {
         cardHeader.getChildren().add(titleArea);
 
         // Right Area: Stats
-        HBox headerRight = new HBox(15);
+        HBox headerRight = new HBox(12);
         headerRight.setAlignment(Pos.CENTER_RIGHT);
 
         lblTotalMembersVal = new Label("0");
-        VBox pnlStatMembers = createMiniStatCard("THÀNH VIÊN", lblTotalMembersVal, "#ffffff");
+        VBox pnlStatMembers = createMiniStatCard("THÀNH VIÊN", lblTotalMembersVal, "#e4e4e7");
 
         lblTotalSubsVal = new Label("0");
-        VBox pnlStatSubs = createMiniStatCard("SUBSCRIBERS", lblTotalSubsVal, "#fe2c55");
+        VBox pnlStatSubs = createMiniStatCard("SUBSCRIBERS", lblTotalSubsVal, "#818cf8");
 
         lblTotalFanClubVal = new Label("0");
-        VBox pnlStatFanClub = createMiniStatCard("TIM ĐỘI", lblTotalFanClubVal, "#25f4ee");
+        VBox pnlStatFanClub = createMiniStatCard("TIM ĐỘI", lblTotalFanClubVal, "#a1a1aa");
 
         headerRight.getChildren().addAll(pnlStatMembers, pnlStatSubs, pnlStatFanClub);
         cardHeader.getChildren().add(headerRight);
@@ -105,28 +108,50 @@ public class TeamTab extends BorderPane {
         HBox filterBar = new HBox(15);
         filterBar.setAlignment(Pos.CENTER_LEFT);
 
+        // Vercel styled Search bar HBox
+        HBox searchBox = new HBox(8);
+        searchBox.setAlignment(Pos.CENTER_LEFT);
+        searchBox.setPadding(new Insets(0, 10, 0, 10));
+        searchBox.setStyle(
+            "-fx-background-color: #18181b;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-border-color: rgba(255, 255, 255, 0.08);" +
+            "-fx-border-width: 1px;"
+        );
+        HBox.setHgrow(searchBox, Priority.ALWAYS);
+        
+        FontIcon searchIcon = new FontIcon(Feather.SEARCH);
+        searchIcon.setIconColor(Color.web("#71717a"));
+
         txtSearch = new TextField();
         txtSearch.setPromptText("Tìm kiếm TikTok ID hoặc Tên hiển thị...");
-        txtSearch.setPrefHeight(36);
-        txtSearch.setStyle("-fx-background-radius: 8px;");
+        txtSearch.setPrefHeight(34);
+        txtSearch.setStyle("-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: #f4f4f5;");
         HBox.setHgrow(txtSearch, Priority.ALWAYS);
+        searchBox.getChildren().addAll(searchIcon, txtSearch);
 
         cbFilter = new ComboBox<>(FXCollections.observableArrayList("Lọc: Tất cả", "Lọc: Chỉ Subscriber", "Lọc: Chỉ Fan Club"));
         cbFilter.getSelectionModel().select(0);
         cbFilter.setPrefHeight(36);
         cbFilter.setPrefWidth(180);
-        cbFilter.setStyle("-fx-background-radius: 8px;");
+        cbFilter.setStyle(
+            "-fx-background-color: #18181b;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-border-color: rgba(255, 255, 255, 0.08);" +
+            "-fx-border-width: 1px;" +
+            "-fx-text-fill: #f4f4f5;"
+        );
 
-        filterBar.getChildren().addAll(txtSearch, cbFilter);
+        filterBar.getChildren().addAll(searchBox, cbFilter);
         cardMain.getChildren().add(filterBar);
 
         // --- TABLE CONTAINER ---
         tblMembers = new TableView<>();
         tblMembers.setPrefHeight(380);
         tblMembers.setStyle(
-            "-fx-background-color: #1e1e1e;" +
-            "-fx-control-inner-background: #1e1e1e;" +
-            "-fx-border-color: rgba(255,255,255,0.08);" +
+            "-fx-background-color: #121214;" +
+            "-fx-control-inner-background: #121214;" +
+            "-fx-border-color: rgba(255,255,255,0.05);" +
             "-fx-border-radius: 8px;" +
             "-fx-background-radius: 8px;"
         );
@@ -134,7 +159,7 @@ public class TeamTab extends BorderPane {
         TableColumn<TeamMember, Integer> colStt = new TableColumn<>("STT");
         colStt.setCellValueFactory(cell -> new SimpleIntegerProperty(memberList.indexOf(cell.getValue()) + 1).asObject());
         colStt.setPrefWidth(50);
-        colStt.setStyle("-fx-alignment: CENTER; -fx-text-fill: #a1a1a8;");
+        colStt.setStyle("-fx-alignment: CENTER; -fx-text-fill: #71717a;");
 
         TableColumn<TeamMember, String> colId = new TableColumn<>("TikTok ID");
         colId.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getUniqueId()));
@@ -158,28 +183,28 @@ public class TeamTab extends BorderPane {
             return new SimpleStringProperty(role);
         });
         colRole.setPrefWidth(140);
-        colRole.setStyle("-fx-alignment: CENTER; -fx-text-fill: #fe2c55; -fx-font-weight: bold;");
+        colRole.setStyle("-fx-alignment: CENTER; -fx-text-fill: #818cf8; -fx-font-weight: bold;");
 
         TableColumn<TeamMember, String> colTeamLvl = new TableColumn<>("Cấp Tim");
         colTeamLvl.setCellValueFactory(cell -> new SimpleStringProperty(
             cell.getValue().getTeamLevel() > 0 ? "Cấp " + cell.getValue().getTeamLevel() : "--"
         ));
         colTeamLvl.setPrefWidth(80);
-        colTeamLvl.setStyle("-fx-alignment: CENTER; -fx-text-fill: #fb923c; -fx-font-weight: bold;");
+        colTeamLvl.setStyle("-fx-alignment: CENTER; -fx-text-fill: #a1a1aa; -fx-font-weight: bold;");
 
         TableColumn<TeamMember, String> colGiftLvl = new TableColumn<>("Cấp Xanh");
         colGiftLvl.setCellValueFactory(cell -> new SimpleStringProperty(
             cell.getValue().getGiftGiverLevel() > 0 ? "Cấp " + cell.getValue().getGiftGiverLevel() : "--"
         ));
         colGiftLvl.setPrefWidth(80);
-        colGiftLvl.setStyle("-fx-alignment: CENTER; -fx-text-fill: #25f4ee; -fx-font-weight: bold;");
+        colGiftLvl.setStyle("-fx-alignment: CENTER; -fx-text-fill: #e4e4e7; -fx-font-weight: bold;");
 
         TableColumn<TeamMember, String> colLastActive = new TableColumn<>("Tương Tác Cuối");
         colLastActive.setCellValueFactory(cell -> new SimpleStringProperty(
             TIME_FORMAT.format(new Date(cell.getValue().getLastActive()))
         ));
         colLastActive.setPrefWidth(110);
-        colLastActive.setStyle("-fx-alignment: CENTER; -fx-text-fill: #a1a1a8;");
+        colLastActive.setStyle("-fx-alignment: CENTER; -fx-text-fill: #71717a;");
 
         tblMembers.getColumns().addAll(colStt, colId, colNick, colRole, colTeamLvl, colGiftLvl, colLastActive);
 
@@ -214,37 +239,61 @@ public class TeamTab extends BorderPane {
         cardMain.getChildren().add(tblMembers);
 
         // --- BOTTOM ACTIONS TOOLBAR ---
-        HBox actionsRow = new HBox(15);
+        HBox actionsRow = new HBox(12);
         actionsRow.setAlignment(Pos.CENTER_RIGHT);
         actionsRow.setPadding(new Insets(10, 0, 0, 0));
 
         btnDeleteSelected = new Button("Xoá Thành Viên Chọn");
         btnDeleteSelected.setPrefHeight(32);
+        
+        FontIcon trashIcon = new FontIcon(Feather.TRASH_2);
+        trashIcon.setIconColor(Color.web("#a1a1aa"));
+        btnDeleteSelected.setGraphic(trashIcon);
+        
         btnDeleteSelected.setStyle(
-            "-fx-background-color: rgba(255, 255, 255, 0.05);" +
-            "-fx-text-fill: #e9e2e1;" +
+            "-fx-background-color: transparent;" +
+            "-fx-text-fill: #a1a1aa;" +
             "-fx-font-weight: bold;" +
-            "-fx-background-radius: 8px;"
+            "-fx-border-color: rgba(255, 255, 255, 0.08);" +
+            "-fx-border-radius: 8px;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-border-width: 1px;"
         );
         btnDeleteSelected.setOnAction(e -> deleteSelectedMember());
 
         btnResetAll = new Button("Xoá Hết Bảng");
         btnResetAll.setPrefHeight(32);
+        
+        FontIcon refreshIcon = new FontIcon(Feather.REFRESH_CW);
+        refreshIcon.setIconColor(Color.web("#f87171"));
+        btnResetAll.setGraphic(refreshIcon);
+        
         btnResetAll.setStyle(
-            "-fx-background-color: #fe2c55;" +
-            "-fx-text-fill: #ffffff;" +
+            "-fx-background-color: rgba(239, 68, 68, 0.08);" +
+            "-fx-text-fill: #f87171;" +
             "-fx-font-weight: bold;" +
-            "-fx-background-radius: 8px;"
+            "-fx-border-color: rgba(239, 68, 68, 0.4);" +
+            "-fx-border-radius: 8px;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-border-width: 1px;"
         );
         btnResetAll.setOnAction(e -> resetAllMembers());
 
         btnExportJson = new Button("Xuất File JSON");
         btnExportJson.setPrefHeight(32);
+        
+        FontIcon exportIcon = new FontIcon(Feather.DOWNLOAD);
+        exportIcon.setIconColor(Color.web("#818cf8"));
+        btnExportJson.setGraphic(exportIcon);
+        
         btnExportJson.setStyle(
-            "-fx-background-color: #25f4ee;" +
-            "-fx-text-fill: #131313;" +
+            "-fx-background-color: rgba(99, 102, 241, 0.08);" +
+            "-fx-text-fill: #818cf8;" +
             "-fx-font-weight: bold;" +
-            "-fx-background-radius: 8px;"
+            "-fx-border-color: rgba(99, 102, 241, 0.4);" +
+            "-fx-border-radius: 8px;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-border-width: 1px;"
         );
         btnExportJson.setOnAction(e -> exportToJson());
 
@@ -259,15 +308,15 @@ public class TeamTab extends BorderPane {
         pnl.setPadding(new Insets(4, 12, 4, 12));
         pnl.setAlignment(Pos.CENTER_LEFT);
         pnl.setStyle(
-            "-fx-background-color: rgba(30, 30, 30, 0.8);" +
+            "-fx-background-color: rgba(255, 255, 255, 0.02);" +
             "-fx-background-radius: 10px;" +
-            "-fx-border-color: rgba(255, 255, 255, 0.15);" +
+            "-fx-border-color: rgba(255, 255, 255, 0.06);" +
             "-fx-border-radius: 10px;" +
             "-fx-border-width: 1px;"
         );
 
         Label lblTitle = new Label(label);
-        lblTitle.setStyle("-fx-font-size: 8.5px; -fx-font-weight: bold; -fx-text-fill: #a1a1a8;");
+        lblTitle.setStyle("-fx-font-size: 8.5px; -fx-font-weight: bold; -fx-text-fill: #71717a;");
 
         valueLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: " + accentHex + ";");
 

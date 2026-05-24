@@ -1,15 +1,15 @@
 .progress-bar {
-    -fx-background-color: rgba(33, 30, 39, 0.6);
-    -fx-background-radius: 8px;
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-background-radius: 4px;
     -fx-padding: 0;
 }
 
 .progress-bar > .track {
     -fx-background-color: transparent;
-    -fx-background-radius: 8px;
+    -fx-background-radius: 4px;
 }
 
 .progress-bar > .bar {
-    -fx-background-color: linear-gradient(to right, #ff446e 0%, #6e44ff 100%);
-    -fx-background-radius: 8px;
+    -fx-background-color: linear-gradient(to right, #4f46e5 0%, #818cf8 100%);
+    -fx-background-radius: 4px;
 }

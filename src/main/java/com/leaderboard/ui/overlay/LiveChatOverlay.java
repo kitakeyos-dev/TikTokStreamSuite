@@ -41,22 +41,22 @@ public class LiveChatOverlay extends Stage {
             System.err.println("Could not load application icon: " + e.getMessage());
         }
 
-        // Root Pane
+        // Root Pane with Vercel glassmorphism styling
         AnchorPane root = new AnchorPane();
         root.setPrefSize(340, 500);
         root.setStyle(
-            "-fx-background-color: rgba(21, 18, 27, 0.78);" + // surface-dim (78% opacity)
-            "-fx-background-radius: 20px;" +
-            "-fx-border-color: rgba(255, 255, 255, 0.1);" +
-            "-fx-border-radius: 20px;" +
-            "-fx-border-width: 1.2px;"
+            "-fx-background-color: rgba(9, 9, 11, 0.75);" + // Slate-dark base
+            "-fx-background-radius: 16px;" +
+            "-fx-border-color: rgba(255, 255, 255, 0.06);" +
+            "-fx-border-radius: 16px;" +
+            "-fx-border-width: 1px;"
         );
 
-        // Glassmorphic shadow
+        // Glassmorphic soft shadow
         DropShadow shadow = new DropShadow();
-        shadow.setColor(Color.web("#000000", 0.45));
-        shadow.setRadius(15);
-        shadow.setOffsetY(4);
+        shadow.setColor(Color.web("#000000", 0.35));
+        shadow.setRadius(12);
+        shadow.setOffsetY(3);
         root.setEffect(shadow);
 
         // Draggable window support
@@ -71,10 +71,10 @@ public class LiveChatOverlay extends Stage {
 
         // 1. Header Bar
         AnchorPane header = new AnchorPane();
-        header.setPrefSize(338, 50);
+        header.setPrefSize(338, 46);
         header.setStyle(
-            "-fx-background-color: rgba(33, 30, 39, 0.5);" + // surface-container/50
-            "-fx-background-radius: 20px 20px 0 0;"
+            "-fx-background-color: rgba(24, 24, 27, 0.4);" + // Semi-translucent dark slate
+            "-fx-background-radius: 16px 16px 0 0;"
         );
         AnchorPane.setTopAnchor(header, 1.0);
         AnchorPane.setLeftAnchor(header, 1.0);
@@ -82,27 +82,30 @@ public class LiveChatOverlay extends Stage {
 
         Label lblTitle = new Label("TRÒ CHUYỆN TRỰC TIẾP");
         lblTitle.setStyle(
-            "-fx-text-fill: #d0bcfc;" + // Light purple Dim
+            "-fx-text-fill: #f4f4f5;" + // Crisp white-gray
             "-fx-font-family: 'Segoe UI', system-ui;" +
             "-fx-font-weight: bold;" +
-            "-fx-font-size: 14px;"
+            "-fx-font-size: 12px;"
         );
         AnchorPane.setLeftAnchor(lblTitle, 15.0);
         AnchorPane.setTopAnchor(lblTitle, 15.0);
 
         Label lblLiveBadge = new Label("CHAT");
         lblLiveBadge.setAlignment(Pos.CENTER);
-        lblLiveBadge.setPrefSize(45, 20);
+        lblLiveBadge.setPrefSize(45, 18);
         lblLiveBadge.setStyle(
-            "-fx-background-color: rgba(255, 68, 110, 0.3);" +
-            "-fx-background-radius: 10px;" +
-            "-fx-text-fill: #ffffff;" +
+            "-fx-background-color: rgba(99, 102, 241, 0.12);" + // soft indigo tint
+            "-fx-background-radius: 6px;" +
+            "-fx-text-fill: #818cf8;" +
             "-fx-font-family: 'Segoe UI', system-ui;" +
             "-fx-font-size: 9px;" +
-            "-fx-font-weight: bold;"
+            "-fx-font-weight: bold;" +
+            "-fx-border-color: rgba(99, 102, 241, 0.3);" +
+            "-fx-border-radius: 6px;" +
+            "-fx-border-width: 1px;"
         );
         AnchorPane.setRightAnchor(lblLiveBadge, 15.0);
-        AnchorPane.setTopAnchor(lblLiveBadge, 15.0);
+        AnchorPane.setTopAnchor(lblLiveBadge, 14.0);
 
         header.getChildren().addAll(lblTitle, lblLiveBadge);
 
@@ -110,7 +113,7 @@ public class LiveChatOverlay extends Stage {
         chatContainer = new VBox(6); // 6px gap like in Swing
         chatContainer.setPadding(new Insets(10));
         chatContainer.setPrefWidth(320);
-        AnchorPane.setTopAnchor(chatContainer, 60.0);
+        AnchorPane.setTopAnchor(chatContainer, 55.0);
         AnchorPane.setLeftAnchor(chatContainer, 10.0);
         AnchorPane.setRightAnchor(chatContainer, 10.0);
 
@@ -129,10 +132,10 @@ public class LiveChatOverlay extends Stage {
             bubble.setPadding(new Insets(8, 12, 8, 12));
             bubble.setAlignment(Pos.CENTER_LEFT);
             bubble.setStyle(
-                "-fx-background-color: rgba(33, 30, 39, 0.6);" + // surface-container (60% opacity)
-                "-fx-background-radius: 12px;" +
-                "-fx-border-color: rgba(73, 68, 84, 0.2);" + // outline variant
-                "-fx-border-radius: 12px;" +
+                "-fx-background-color: rgba(24, 24, 27, 0.5);" + // Slate-dark bubble
+                "-fx-background-radius: 10px;" +
+                "-fx-border-color: rgba(255, 255, 255, 0.05);" + // Thin outline
+                "-fx-border-radius: 10px;" +
                 "-fx-border-width: 1px;"
             );
             bubble.setPrefHeight(52);
@@ -152,19 +155,17 @@ public class LiveChatOverlay extends Stage {
             avatarView.setClip(clipCircle);
 
             if (avatarUrl != null && !avatarUrl.isEmpty()) {
-                // Background asynchronous load in JavaFX is native and thread-safe!
                 Image img = new Image(avatarUrl, 32, 32, true, true, true);
                 avatarView.setImage(img);
             } else {
-                // Load default logo or shape
                 avatarView.setImage(new Image(getClass().getResourceAsStream("/icons/logo.png")));
             }
 
-            // Outer cyan/purple glowing border
+            // Outer indigo glowing border
             Circle borderCircle = new Circle(16, 16, 16);
             borderCircle.setFill(Color.TRANSPARENT);
-            borderCircle.setStroke(Color.web("#d0bcfc")); // Light purple
-            borderCircle.setStrokeWidth(1.5);
+            borderCircle.setStroke(Color.web("#818cf8", 0.4)); // Soft indigo border
+            borderCircle.setStrokeWidth(1.2);
 
             avatarContainer.getChildren().addAll(avatarView, borderCircle);
 
@@ -175,16 +176,16 @@ public class LiveChatOverlay extends Stage {
 
             // Use the EmojiParser to create beautiful rich TextFlows
             javafx.scene.text.TextFlow nameFlow = com.leaderboard.util.EmojiParser.createEmojiTextFlow(
-                nickname, 12, Color.web("#d0bcfc"), javafx.scene.text.Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 12)
+                nickname, 11.5, Color.web("#818cf8"), javafx.scene.text.Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 11.5)
             );
             javafx.scene.text.TextFlow commentFlow = com.leaderboard.util.EmojiParser.createEmojiTextFlow(
-                comment, 11.5, Color.web("#e7e0ed"), javafx.scene.text.Font.font("Segoe UI", 11.5)
+                comment, 11, Color.web("#e4e4e7"), javafx.scene.text.Font.font("Segoe UI", 11)
             );
 
             textContainer.getChildren().addAll(nameFlow, commentFlow);
             bubble.getChildren().addAll(avatarContainer, textContainer);
 
-            // Slide & Fade-in transitions (GPU accelerated) for micro-animations
+            // Slide & Fade-in transitions for micro-animations
             bubble.setOpacity(0);
             bubble.setTranslateY(15);
 

@@ -10,9 +10,6 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.LinearGradient;
-import javafx.scene.paint.CycleMethod;
-import javafx.scene.paint.Stop;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
@@ -49,22 +46,22 @@ public class LikeGoalOverlay extends Stage {
         // Load like target from config
         this.targetLikes = ConfigManager.getConfig().getLikeTarget();
 
-        // Root Container with transparent background
+        // Root Container with premium glassmorphism
         AnchorPane root = new AnchorPane();
-        root.setPrefSize(320, 95);
+        root.setPrefSize(320, 65);
         root.setStyle(
-            "-fx-background-color: rgba(21, 18, 27, 0.78);" + // surface-dim (78% opacity)
-            "-fx-background-radius: 16px;" +
-            "-fx-border-color: rgba(255, 255, 255, 0.1);" +
-            "-fx-border-radius: 16px;" +
-            "-fx-border-width: 1.2px;"
+            "-fx-background-color: rgba(9, 9, 11, 0.75);" + // Slate-dark Vercel dark base
+            "-fx-background-radius: 10px;" +
+            "-fx-border-color: rgba(255, 255, 255, 0.06);" +
+            "-fx-border-radius: 10px;" +
+            "-fx-border-width: 1px;"
         );
 
-        // Enable glassmorphic shadow
+        // Drop shadow for elegant float
         DropShadow shadow = new DropShadow();
-        shadow.setColor(Color.web("#000000", 0.45));
-        shadow.setRadius(12);
-        shadow.setOffsetY(4);
+        shadow.setColor(Color.web("#000000", 0.3));
+        shadow.setRadius(10);
+        shadow.setOffsetY(3);
         root.setEffect(shadow);
 
         // Draggable window support
@@ -77,34 +74,21 @@ public class LikeGoalOverlay extends Stage {
             setY(event.getScreenY() - yOffset);
         });
 
-        // 1. Draw Heart Icon (Pulsing SVG Path)
+        // 1. Draw Heart Icon (Pulsing SVG Path) - Soft Crimson Rose (#f43f5e)
         heartPath = new SVGPath();
         heartPath.setContent("M 11 4 C 11 4 7 0 3 0 C 0 0 0 4 0 6 C 0 11 6 17 11 21 C 16 17 22 11 22 6 C 22 4 22 0 19 0 C 15 0 11 4 11 4 Z");
-        
-        // Hot Pink to Red Gradient fill
-        LinearGradient heartGrad = new LinearGradient(
-            0, 0, 0, 1, true, CycleMethod.NO_CYCLE,
-            new Stop(0, Color.web("#ff446e")),
-            new Stop(1, Color.web("#dc143c"))
-        );
-        heartPath.setFill(heartGrad);
+        heartPath.setFill(Color.web("#f43f5e"));
 
         // Positioning the heart within AnchorPane
         AnchorPane.setLeftAnchor(heartPath, 15.0);
-        AnchorPane.setTopAnchor(heartPath, 14.0);
-
-        // Add soft glowing neon shadow to the heart
-        DropShadow heartGlow = new DropShadow();
-        heartGlow.setColor(Color.web("#ff446e", 0.6));
-        heartGlow.setRadius(8);
-        heartPath.setEffect(heartGlow);
+        AnchorPane.setTopAnchor(heartPath, 13.0);
 
         // Animation for Heart pulsing effect (GPU accelerated)
-        pulseTransition = new ScaleTransition(Duration.millis(600), heartPath);
+        pulseTransition = new ScaleTransition(Duration.millis(800), heartPath);
         pulseTransition.setFromX(0.95);
         pulseTransition.setFromY(0.95);
-        pulseTransition.setToX(1.15);
-        pulseTransition.setToY(1.15);
+        pulseTransition.setToX(1.1);
+        pulseTransition.setToY(1.1);
         pulseTransition.setAutoReverse(true);
         pulseTransition.setCycleCount(Animation.INDEFINITE);
         pulseTransition.play();
@@ -112,10 +96,10 @@ public class LikeGoalOverlay extends Stage {
         // 2. Goal Title Label
         lblTitle = new Label("MỤC TIÊU THẢ TIM");
         lblTitle.setStyle(
-            "-fx-text-fill: #d0bcfc;" + // Light purple Dim
+            "-fx-text-fill: #e4e4e7;" +
             "-fx-font-family: 'Segoe UI', system-ui;" +
             "-fx-font-weight: bold;" +
-            "-fx-font-size: 12px;"
+            "-fx-font-size: 11px;"
         );
         AnchorPane.setLeftAnchor(lblTitle, 45.0);
         AnchorPane.setTopAnchor(lblTitle, 13.0);
@@ -123,29 +107,31 @@ public class LikeGoalOverlay extends Stage {
         // 3. Goal Status Text (e.g. 0 / 10,000)
         lblStatus = new Label("0 / 10,000");
         lblStatus.setStyle(
-            "-fx-text-fill: #e7e0ed;" + // #e7e0ed
+            "-fx-text-fill: #a1a1aa;" +
             "-fx-font-family: 'Segoe UI', system-ui;" +
-            "-fx-font-size: 12px;" +
+            "-fx-font-size: 11px;" +
             "-fx-font-weight: bold;"
         );
         AnchorPane.setRightAnchor(lblStatus, 15.0);
         AnchorPane.setTopAnchor(lblStatus, 13.0);
 
-        // 4. Progress Bar
+        // 4. Progress Bar (Thin & elegant 8px height)
         progressBar = new ProgressBar(0.0);
-        progressBar.setPrefSize(290, 15);
+        progressBar.setPrefHeight(8);
+        
+        AnchorPane.setLeftAnchor(progressBar, 15.0);
+        AnchorPane.setRightAnchor(progressBar, 15.0);
+        AnchorPane.setTopAnchor(progressBar, 42.0);
+
         progressBar.setStyle(
             "-fx-box-border: transparent;" +
-            "-fx-control-inner-background: rgba(33, 30, 39, 0.6);" + // surface-container
+            "-fx-control-inner-background: rgba(24, 24, 27, 0.6);" +
             "-fx-background-color: transparent;"
         );
 
         // Apply custom modern gradient CSS to ProgressBar bar
         progressBar.getStylesheets().add(getClass().getResource("/css/progressbar.css") != null ? 
             getClass().getResource("/css/progressbar.css").toExternalForm() : "");
-            
-        AnchorPane.setLeftAnchor(progressBar, 15.0);
-        AnchorPane.setTopAnchor(progressBar, 40.0);
 
         // Assemble root
         root.getChildren().addAll(heartPath, lblTitle, lblStatus, progressBar);

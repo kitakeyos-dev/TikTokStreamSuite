@@ -43,20 +43,20 @@ public class TopLikeOverlay extends Stage {
 
         // Main Glass Panel Container
         AnchorPane root = new AnchorPane();
-        root.setPrefSize(360, 760);
+        root.setPrefSize(360, 660);
         root.setStyle(
-            "-fx-background-color: rgba(21, 18, 27, 0.78);" + // surface-dim (78% opacity)
-            "-fx-background-radius: 24px;" +
-            "-fx-border-color: rgba(255, 255, 255, 0.1);" +
-            "-fx-border-radius: 24px;" +
-            "-fx-border-width: 1.2px;"
+            "-fx-background-color: rgba(9, 9, 11, 0.75);" + // Slate-dark Vercel dark mode
+            "-fx-background-radius: 16px;" +
+            "-fx-border-color: rgba(255, 255, 255, 0.06);" +
+            "-fx-border-radius: 16px;" +
+            "-fx-border-width: 1px;"
         );
 
-        // Premium glassmorphic drop shadow
+        // Premium soft drop shadow
         DropShadow shadow = new DropShadow();
-        shadow.setColor(Color.web("#000000", 0.45));
-        shadow.setRadius(15);
-        shadow.setOffsetY(4);
+        shadow.setColor(Color.web("#000000", 0.35));
+        shadow.setRadius(12);
+        shadow.setOffsetY(3);
         root.setEffect(shadow);
 
         // Make window draggable
@@ -71,61 +71,64 @@ public class TopLikeOverlay extends Stage {
 
         // 1. Header Bar
         AnchorPane header = new AnchorPane();
-        header.setPrefSize(358, 70);
+        header.setPrefSize(358, 50);
         header.setStyle(
-            "-fx-background-color: rgba(33, 30, 39, 0.5);" + // bg-surface-container/50
-            "-fx-background-radius: 24px 24px 0 0;"
+            "-fx-background-color: rgba(24, 24, 27, 0.4);" +
+            "-fx-background-radius: 16px 16px 0 0;"
         );
         AnchorPane.setTopAnchor(header, 1.0);
         AnchorPane.setLeftAnchor(header, 1.0);
         AnchorPane.setRightAnchor(header, 1.0);
 
-        // SVG Heart next to title
+        // SVG Heart next to title - Soft Crimson Rose (#f43f5e)
         SVGPath titleHeart = new SVGPath();
         titleHeart.setContent(HEART_SVG);
-        titleHeart.setFill(Color.web("#fe2c55")); // TikTok Pink
-        titleHeart.setScaleX(0.9);
-        titleHeart.setScaleY(0.9);
-        AnchorPane.setLeftAnchor(titleHeart, 18.0);
-        AnchorPane.setTopAnchor(titleHeart, 25.0);
+        titleHeart.setFill(Color.web("#f43f5e"));
+        titleHeart.setScaleX(0.75);
+        titleHeart.setScaleY(0.75);
+        AnchorPane.setLeftAnchor(titleHeart, 15.0);
+        AnchorPane.setTopAnchor(titleHeart, 10.0);
 
         Label lblTitle = new Label("TOP THẢ TIM");
         lblTitle.setStyle(
-            "-fx-text-fill: #e7e0ed;" + // #e7e0ed
+            "-fx-text-fill: #f4f4f5;" +
             "-fx-font-weight: bold;" +
-            "-fx-font-size: 15px;" +
+            "-fx-font-size: 13px;" +
             FONT_FAMILY
         );
-        AnchorPane.setLeftAnchor(lblTitle, 48.0);
-        AnchorPane.setTopAnchor(lblTitle, 22.0);
+        AnchorPane.setLeftAnchor(lblTitle, 45.0);
+        AnchorPane.setTopAnchor(lblTitle, 16.0);
 
         Label lblLiveBadge = new Label("LIVE");
         lblLiveBadge.setAlignment(Pos.CENTER);
-        lblLiveBadge.setPrefSize(50, 26);
+        lblLiveBadge.setPrefSize(45, 18);
         lblLiveBadge.setStyle(
-            "-fx-background-color: rgba(110, 68, 255, 0.3);" +
-            "-fx-background-radius: 13px;" +
-            "-fx-text-fill: #e7e0ed;" +
-            "-fx-font-size: 11px;" +
+            "-fx-background-color: rgba(99, 102, 241, 0.12);" +
+            "-fx-background-radius: 6px;" +
+            "-fx-text-fill: #818cf8;" +
+            "-fx-font-size: 9px;" +
             "-fx-font-weight: bold;" +
+            "-fx-border-color: rgba(99, 102, 241, 0.3);" +
+            "-fx-border-radius: 6px;" +
+            "-fx-border-width: 1px;" +
             FONT_FAMILY
         );
-        AnchorPane.setRightAnchor(lblLiveBadge, 20.0);
-        AnchorPane.setTopAnchor(lblLiveBadge, 20.0);
+        AnchorPane.setRightAnchor(lblLiveBadge, 15.0);
+        AnchorPane.setTopAnchor(lblLiveBadge, 15.0);
 
         header.getChildren().addAll(titleHeart, lblTitle, lblLiveBadge);
 
         // Divider
         Region headerDivider = new Region();
-        headerDivider.setPrefSize(360, 1.2);
-        headerDivider.setStyle("-fx-background-color: rgba(73, 68, 84, 0.2);");
-        AnchorPane.setTopAnchor(headerDivider, 70.0);
+        headerDivider.setPrefSize(360, 1);
+        headerDivider.setStyle("-fx-background-color: rgba(255, 255, 255, 0.05);");
+        AnchorPane.setTopAnchor(headerDivider, 50.0);
 
         // 2. Rows VBox Container
         rowsContainer = new VBox(6); // Gap of 6px between cards
-        rowsContainer.setPadding(new Insets(10, 20, 10, 20));
+        rowsContainer.setPadding(new Insets(10, 15, 10, 15));
         rowsContainer.setPrefWidth(360);
-        AnchorPane.setTopAnchor(rowsContainer, 80.0);
+        AnchorPane.setTopAnchor(rowsContainer, 60.0);
 
         root.getChildren().addAll(header, headerDivider, rowsContainer);
 
@@ -166,20 +169,20 @@ public class TopLikeOverlay extends Stage {
         // Colors & Configs
         String accentHex;
         double cardHeight;
-        double avatarSize = isSpotlight ? (rank == 1 ? 46 : 40) : 0;
+        double avatarSize = isSpotlight ? (rank == 1 ? 40 : 36) : 0;
 
         if (rank == 1) {
-            accentHex = "#ffd700"; // Gold
-            cardHeight = 73; // (85 - border padding 12)
+            accentHex = "#fbbf24"; // Soft Gold
+            cardHeight = 56;
         } else if (rank == 2) {
-            accentHex = "#c0c0c0"; // Silver
-            cardHeight = 63; // (75 - border padding 12)
+            accentHex = "#cbd5e1"; // Soft Silver
+            cardHeight = 50;
         } else if (rank == 3) {
-            accentHex = "#cd7f32"; // Bronze
-            cardHeight = 63;
+            accentHex = "#d97706"; // Soft Bronze/Amber
+            cardHeight = 50;
         } else {
-            accentHex = "#fe2c55"; // TikTok Pink
-            cardHeight = 42;
+            accentHex = "#71717a"; // Muted Slate-gray
+            cardHeight = 38;
         }
 
         card.setPrefHeight(cardHeight);
@@ -187,22 +190,16 @@ public class TopLikeOverlay extends Stage {
 
         // Container custom styling
         if (isSpotlight) {
-            card.setPadding(new Insets(6, 12, 6, 12));
+            card.setPadding(new Insets(5, 12, 5, 12));
             card.setStyle(
-                "-fx-background-color: rgba(33, 30, 39, 0.6);" + // surface-container
-                "-fx-background-radius: 16px;" +
-                "-fx-border-color: " + accentHex + "99;" + // 60% opacity outline matching rank
-                "-fx-border-radius: 16px;" +
-                "-fx-border-width: 1.5px;"
+                "-fx-background-color: rgba(24, 24, 27, 0.5);" + // Slate-dark spotlight card
+                "-fx-background-radius: 10px;" +
+                "-fx-border-color: rgba(255, 255, 255, 0.08);" + // Sleek, clean gray metal border
+                "-fx-border-radius: 10px;" +
+                "-fx-border-width: 1px;"
             );
 
-            // Add soft drop shadow glow to Ranks 1-3
-            DropShadow glow = new DropShadow();
-            glow.setColor(Color.web(accentHex, rank == 1 ? 0.3 : 0.2));
-            glow.setRadius(8);
-            card.setEffect(glow);
-
-            // 1. Float Rank Badge Layout
+            // 1. Float Rank Badge Layout using a StackPane
             StackPane badgeStack = new StackPane();
             badgeStack.setPrefSize(20, 20);
             badgeStack.setMinSize(20, 20);
@@ -210,7 +207,7 @@ public class TopLikeOverlay extends Stage {
             Circle badgeBg = new Circle(10, Color.web(accentHex));
             Label lblBadgeRank = new Label(String.valueOf(rank));
             lblBadgeRank.setStyle(
-                "-fx-text-fill: #15121b;" + // Dark background text
+                "-fx-text-fill: #09090b;" +
                 "-fx-font-weight: bold;" +
                 "-fx-font-size: 11px;" +
                 FONT_FAMILY
@@ -237,8 +234,8 @@ public class TopLikeOverlay extends Stage {
 
             Circle avatarBorder = new Circle(avatarSize / 2, avatarSize / 2, avatarSize / 2);
             avatarBorder.setFill(Color.TRANSPARENT);
-            avatarBorder.setStroke(Color.web(accentHex));
-            avatarBorder.setStrokeWidth(2.0);
+            avatarBorder.setStroke(Color.web("#ffffff", 0.12));
+            avatarBorder.setStrokeWidth(1.2);
             avatarStack.getChildren().addAll(avatarImg, avatarBorder);
 
             // 3. Name Group
@@ -247,13 +244,13 @@ public class TopLikeOverlay extends Stage {
             nameGroup.setAlignment(Pos.CENTER_LEFT);
 
             javafx.scene.text.TextFlow nickFlow = com.leaderboard.util.EmojiParser.createEmojiTextFlow(
-                l.getNickname(), 12.5, Color.web("#e7e0ed"), javafx.scene.text.Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 12.5)
+                l.getNickname(), 12, Color.web("#e4e4e7"), javafx.scene.text.Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 12)
             );
 
             Label lblUser = new Label(l.getNickname().equals(l.getUniqueId()) ? "" : "@" + l.getUniqueId());
             lblUser.setStyle(
-                "-fx-text-fill: #cbc3d7;" +
-                "-fx-font-size: 10px;" +
+                "-fx-text-fill: #71717a;" +
+                "-fx-font-size: 9.5px;" +
                 FONT_FAMILY
             );
             
@@ -262,20 +259,20 @@ public class TopLikeOverlay extends Stage {
             // 4. Likes display
             Label lblLikes = new Label(String.format("%,d", l.getLikes()));
             lblLikes.setStyle(
-                "-fx-text-fill: #e7e0ed;" +
+                "-fx-text-fill: #e4e4e7;" +
                 "-fx-font-weight: bold;" +
-                "-fx-font-size: 12.5px;" +
+                "-fx-font-size: 12px;" +
                 FONT_FAMILY
             );
 
-            // Pink Heart Icon Stack
+            // Crimson Rose Heart Icon Stack
             StackPane heartIconStack = new StackPane();
-            heartIconStack.setPrefSize(16, 16);
+            heartIconStack.setPrefSize(14, 14);
             SVGPath rowHeart = new SVGPath();
             rowHeart.setContent(HEART_SVG);
-            rowHeart.setFill(Color.web("#fe2c55")); // TikTok Pink
-            rowHeart.setScaleX(0.72);
-            rowHeart.setScaleY(0.72);
+            rowHeart.setFill(Color.web("#f43f5e"));
+            rowHeart.setScaleX(0.65);
+            rowHeart.setScaleY(0.65);
             heartIconStack.getChildren().add(rowHeart);
 
             card.getChildren().addAll(badgeStack, avatarStack, nameGroup, lblLikes, heartIconStack);
@@ -284,9 +281,9 @@ public class TopLikeOverlay extends Stage {
             // COMPACT CARD (Ranks 4-10)
             card.setPadding(new Insets(4, 10, 4, 10));
             card.setStyle(
-                "-fx-background-color: rgba(33, 30, 39, 0.6);" +
+                "-fx-background-color: rgba(24, 24, 27, 0.5);" +
                 "-fx-background-radius: 8px;" +
-                "-fx-border-color: rgba(73, 68, 84, 0.2);" +
+                "-fx-border-color: rgba(255, 255, 255, 0.05);" +
                 "-fx-border-radius: 8px;" +
                 "-fx-border-width: 1px;"
             );
@@ -296,9 +293,9 @@ public class TopLikeOverlay extends Stage {
             lblRank.setPrefWidth(16);
             lblRank.setAlignment(Pos.CENTER);
             lblRank.setStyle(
-                "-fx-text-fill: #cbc3d7;" +
+                "-fx-text-fill: #71717a;" +
                 "-fx-font-weight: bold;" +
-                "-fx-font-size: 13.5px;" +
+                "-fx-font-size: 11px;" +
                 FONT_FAMILY
             );
 
@@ -308,13 +305,13 @@ public class TopLikeOverlay extends Stage {
             nameGroup.setAlignment(Pos.CENTER_LEFT);
 
             javafx.scene.text.TextFlow nickFlow = com.leaderboard.util.EmojiParser.createEmojiTextFlow(
-                l.getNickname(), 12, Color.web("#e7e0ed"), javafx.scene.text.Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 12)
+                l.getNickname(), 11, Color.web("#e4e4e7"), javafx.scene.text.Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 11)
             );
             
             Label lblUser = new Label(l.getNickname().equals(l.getUniqueId()) ? "" : "@" + l.getUniqueId());
             lblUser.setStyle(
-                "-fx-text-fill: #cbc3d7;" +
-                "-fx-font-size: 9.5px;" +
+                "-fx-text-fill: #71717a;" +
+                "-fx-font-size: 9px;" +
                 FONT_FAMILY
             );
             
@@ -323,20 +320,20 @@ public class TopLikeOverlay extends Stage {
             // 3. Likes Label
             Label lblLikes = new Label(String.format("%,d", l.getLikes()));
             lblLikes.setStyle(
-                "-fx-text-fill: #cbc3d7;" +
+                "-fx-text-fill: #71717a;" +
                 "-fx-font-weight: bold;" +
                 "-fx-font-size: 11px;" +
                 FONT_FAMILY
             );
 
-            // Smaller Pink Heart Icon
+            // Smaller Crimson Heart
             StackPane heartIconStack = new StackPane();
-            heartIconStack.setPrefSize(12, 12);
+            heartIconStack.setPrefSize(10, 10);
             SVGPath rowHeart = new SVGPath();
             rowHeart.setContent(HEART_SVG);
-            rowHeart.setFill(Color.web("#fe2c55"));
-            rowHeart.setScaleX(0.55);
-            rowHeart.setScaleY(0.55);
+            rowHeart.setFill(Color.web("#f43f5e"));
+            rowHeart.setScaleX(0.5);
+            rowHeart.setScaleY(0.5);
             heartIconStack.getChildren().add(rowHeart);
 
             card.getChildren().addAll(lblRank, nameGroup, lblLikes, heartIconStack);

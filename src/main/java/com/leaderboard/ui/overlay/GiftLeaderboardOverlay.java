@@ -12,9 +12,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.LinearGradient;
-import javafx.scene.paint.CycleMethod;
-import javafx.scene.paint.Stop;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.Stage;
@@ -45,20 +42,20 @@ public class GiftLeaderboardOverlay extends Stage {
 
         // Main Glass Panel Container
         AnchorPane root = new AnchorPane();
-        root.setPrefSize(360, 760);
+        root.setPrefSize(360, 660); // Adjusted height to look more compact
         root.setStyle(
-            "-fx-background-color: rgba(21, 18, 27, 0.78);" + // surface-dim (78% opacity)
-            "-fx-background-radius: 24px;" +
-            "-fx-border-color: rgba(255, 255, 255, 0.1);" +
-            "-fx-border-radius: 24px;" +
-            "-fx-border-width: 1.2px;"
+            "-fx-background-color: rgba(9, 9, 11, 0.75);" + // Slate-dark glassmorphism
+            "-fx-background-radius: 16px;" +
+            "-fx-border-color: rgba(255, 255, 255, 0.06);" +
+            "-fx-border-radius: 16px;" +
+            "-fx-border-width: 1px;"
         );
 
-        // Premium glassmorphic drop shadow
+        // Premium soft drop shadow
         DropShadow shadow = new DropShadow();
-        shadow.setColor(Color.web("#000000", 0.45));
-        shadow.setRadius(15);
-        shadow.setOffsetY(4);
+        shadow.setColor(Color.web("#000000", 0.35));
+        shadow.setRadius(12);
+        shadow.setOffsetY(3);
         root.setEffect(shadow);
 
         // Make window draggable
@@ -73,10 +70,10 @@ public class GiftLeaderboardOverlay extends Stage {
 
         // 1. Header Bar
         AnchorPane header = new AnchorPane();
-        header.setPrefSize(358, 70);
+        header.setPrefSize(358, 50);
         header.setStyle(
-            "-fx-background-color: rgba(33, 30, 39, 0.5);" + // bg-surface-container/50
-            "-fx-background-radius: 24px 24px 0 0;"
+            "-fx-background-color: rgba(24, 24, 27, 0.4);" +
+            "-fx-background-radius: 16px 16px 0 0;"
         );
         AnchorPane.setTopAnchor(header, 1.0);
         AnchorPane.setLeftAnchor(header, 1.0);
@@ -85,47 +82,50 @@ public class GiftLeaderboardOverlay extends Stage {
         // Crown Path
         SVGPath crownPath = new SVGPath();
         crownPath.setContent("M 20 43 L 16 27 L 22 33 L 26 23 L 30 33 L 36 27 L 32 43 Z");
-        crownPath.setFill(Color.web("#ffd700")); // Gold Color
+        crownPath.setFill(Color.web("#fbbf24")); // Soft Gold Color
         AnchorPane.setLeftAnchor(crownPath, 15.0);
-        AnchorPane.setTopAnchor(crownPath, 15.0);
+        AnchorPane.setTopAnchor(crownPath, 5.0);
 
         Label lblTitle = new Label("BẢNG XẾP HẠNG");
         lblTitle.setStyle(
-            "-fx-text-fill: #d0bcfc;" + // Light purple Dim
+            "-fx-text-fill: #f4f4f5;" +
             "-fx-font-weight: bold;" +
-            "-fx-font-size: 15px;" +
+            "-fx-font-size: 13px;" +
             FONT_FAMILY
         );
         AnchorPane.setLeftAnchor(lblTitle, 45.0);
-        AnchorPane.setTopAnchor(lblTitle, 22.0);
+        AnchorPane.setTopAnchor(lblTitle, 16.0);
 
         Label lblLiveBadge = new Label("LIVE");
         lblLiveBadge.setAlignment(Pos.CENTER);
-        lblLiveBadge.setPrefSize(50, 26);
+        lblLiveBadge.setPrefSize(45, 18);
         lblLiveBadge.setStyle(
-            "-fx-background-color: rgba(110, 68, 255, 0.3);" +
-            "-fx-background-radius: 13px;" +
-            "-fx-text-fill: #d0bcfc;" +
-            "-fx-font-size: 11px;" +
+            "-fx-background-color: rgba(99, 102, 241, 0.12);" +
+            "-fx-background-radius: 6px;" +
+            "-fx-text-fill: #818cf8;" +
+            "-fx-font-size: 9px;" +
             "-fx-font-weight: bold;" +
+            "-fx-border-color: rgba(99, 102, 241, 0.3);" +
+            "-fx-border-radius: 6px;" +
+            "-fx-border-width: 1px;" +
             FONT_FAMILY
         );
-        AnchorPane.setRightAnchor(lblLiveBadge, 20.0);
-        AnchorPane.setTopAnchor(lblLiveBadge, 20.0);
+        AnchorPane.setRightAnchor(lblLiveBadge, 15.0);
+        AnchorPane.setTopAnchor(lblLiveBadge, 15.0);
 
         header.getChildren().addAll(crownPath, lblTitle, lblLiveBadge);
 
         // Divider
         Region headerDivider = new Region();
-        headerDivider.setPrefSize(360, 1.2);
-        headerDivider.setStyle("-fx-background-color: rgba(73, 68, 84, 0.2);");
-        AnchorPane.setTopAnchor(headerDivider, 70.0);
+        headerDivider.setPrefSize(360, 1);
+        headerDivider.setStyle("-fx-background-color: rgba(255, 255, 255, 0.05);");
+        AnchorPane.setTopAnchor(headerDivider, 50.0);
 
         // 2. Rows VBox Container
         rowsContainer = new VBox(6); // Gap of 6px between cards
-        rowsContainer.setPadding(new Insets(10, 20, 10, 20));
+        rowsContainer.setPadding(new Insets(10, 15, 10, 15));
         rowsContainer.setPrefWidth(360);
-        AnchorPane.setTopAnchor(rowsContainer, 80.0);
+        AnchorPane.setTopAnchor(rowsContainer, 60.0);
 
         root.getChildren().addAll(header, headerDivider, rowsContainer);
 
@@ -165,25 +165,21 @@ public class GiftLeaderboardOverlay extends Stage {
         
         // Colors & Configs
         String accentHex;
-        String glowColorHex = null;
         double cardHeight;
-        double avatarSize = isSpotlight ? (rank == 1 ? 46 : 40) : 0;
+        double avatarSize = isSpotlight ? (rank == 1 ? 40 : 36) : 0;
 
         if (rank == 1) {
-            accentHex = "#ffd700"; // Gold
-            glowColorHex = "rgba(255, 215, 0, 0.4)";
-            cardHeight = 73; // (85 - border padding 12)
+            accentHex = "#fbbf24"; // Soft Gold
+            cardHeight = 56;
         } else if (rank == 2) {
-            accentHex = "#c0c0c0"; // Silver
-            glowColorHex = "rgba(192, 192, 192, 0.3)";
-            cardHeight = 63; // (75 - border padding 12)
+            accentHex = "#cbd5e1"; // Soft Silver
+            cardHeight = 50;
         } else if (rank == 3) {
-            accentHex = "#cd7f32"; // Bronze
-            glowColorHex = "rgba(205, 127, 50, 0.25)";
-            cardHeight = 63;
+            accentHex = "#d97706"; // Soft Bronze/Amber
+            cardHeight = 50;
         } else {
-            accentHex = "#d0bcfc"; // Purple
-            cardHeight = 42;
+            accentHex = "#71717a"; // Muted Slate-gray
+            cardHeight = 38;
         }
 
         card.setPrefHeight(cardHeight);
@@ -191,20 +187,14 @@ public class GiftLeaderboardOverlay extends Stage {
 
         // Container custom styling
         if (isSpotlight) {
-            card.setPadding(new Insets(6, 12, 6, 12));
+            card.setPadding(new Insets(5, 12, 5, 12));
             card.setStyle(
-                "-fx-background-color: rgba(33, 30, 39, 0.6);" + // surface-container
-                "-fx-background-radius: 16px;" +
-                "-fx-border-color: " + accentHex + "99;" + // 60% opacity outline matching rank
-                "-fx-border-radius: 16px;" +
-                "-fx-border-width: 1.5px;"
+                "-fx-background-color: rgba(24, 24, 27, 0.5);" + // Slate-dark spotlight card
+                "-fx-background-radius: 10px;" +
+                "-fx-border-color: rgba(255, 255, 255, 0.08);" + // Sleek, clean gray metal border
+                "-fx-border-radius: 10px;" +
+                "-fx-border-width: 1px;"
             );
-
-            // Add soft drop shadow glow to Ranks 1-3
-            DropShadow glow = new DropShadow();
-            glow.setColor(Color.web(accentHex, rank == 1 ? 0.3 : 0.2));
-            glow.setRadius(8);
-            card.setEffect(glow);
 
             // 1. Float Rank Badge Layout using a StackPane
             StackPane badgeStack = new StackPane();
@@ -214,7 +204,7 @@ public class GiftLeaderboardOverlay extends Stage {
             Circle badgeBg = new Circle(10, Color.web(accentHex));
             Label lblBadgeRank = new Label(String.valueOf(rank));
             lblBadgeRank.setStyle(
-                "-fx-text-fill: #15121b;" + // Dark background text
+                "-fx-text-fill: #09090b;" + // Dark text for contrast inside solid badge
                 "-fx-font-weight: bold;" +
                 "-fx-font-size: 11px;" +
                 FONT_FAMILY
@@ -241,8 +231,8 @@ public class GiftLeaderboardOverlay extends Stage {
 
             Circle avatarBorder = new Circle(avatarSize / 2, avatarSize / 2, avatarSize / 2);
             avatarBorder.setFill(Color.TRANSPARENT);
-            avatarBorder.setStroke(Color.web(accentHex));
-            avatarBorder.setStrokeWidth(2.0);
+            avatarBorder.setStroke(Color.web("#ffffff", 0.12)); // Elegant, thin silver avatar border
+            avatarBorder.setStrokeWidth(1.2);
             avatarStack.getChildren().addAll(avatarImg, avatarBorder);
 
             // 3. Name Group
@@ -251,13 +241,13 @@ public class GiftLeaderboardOverlay extends Stage {
             nameGroup.setAlignment(Pos.CENTER_LEFT);
 
             javafx.scene.text.TextFlow nickFlow = com.leaderboard.util.EmojiParser.createEmojiTextFlow(
-                g.getNickname(), 12.5, Color.web("#e7e0ed"), javafx.scene.text.Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 12.5)
+                g.getNickname(), 12, Color.web("#e4e4e7"), javafx.scene.text.Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 12)
             );
 
             Label lblUser = new Label(g.getNickname().equals(g.getUniqueId()) ? "" : "@" + g.getUniqueId());
             lblUser.setStyle(
-                "-fx-text-fill: #cbc3d7;" +
-                "-fx-font-size: 10px;" +
+                "-fx-text-fill: #71717a;" +
+                "-fx-font-size: 9.5px;" +
                 FONT_FAMILY
             );
             
@@ -266,24 +256,24 @@ public class GiftLeaderboardOverlay extends Stage {
             // 4. Points display
             Label lblPoints = new Label(String.format("%,d", g.getPoints()));
             lblPoints.setStyle(
-                "-fx-text-fill: #e7e0ed;" +
+                "-fx-text-fill: #e4e4e7;" +
                 "-fx-font-weight: bold;" +
-                "-fx-font-size: 12.5px;" +
+                "-fx-font-size: 12px;" +
                 FONT_FAMILY
             );
 
-            // Gold Coin Stack
+            // Tiny Gold Coin Stack
             StackPane coinStack = new StackPane();
-            coinStack.setPrefSize(16, 16);
-            Circle coinBg = new Circle(8, Color.web("#ffd700"));
-            Circle coinBorder = new Circle(8, Color.TRANSPARENT);
-            coinBorder.setStroke(Color.web("#c58c00"));
-            coinBorder.setStrokeWidth(1.2);
+            coinStack.setPrefSize(14, 14);
+            Circle coinBg = new Circle(7, Color.web("#fbbf24"));
+            Circle coinBorder = new Circle(7, Color.TRANSPARENT);
+            coinBorder.setStroke(Color.web("#d97706"));
+            coinBorder.setStrokeWidth(1.0);
             Label lblCoinSym = new Label("$");
             lblCoinSym.setStyle(
                 "-fx-text-fill: #ffffff;" +
                 "-fx-font-weight: bold;" +
-                "-fx-font-size: 9px;" +
+                "-fx-font-size: 8px;" +
                 FONT_FAMILY
             );
             coinStack.getChildren().addAll(coinBg, coinBorder, lblCoinSym);
@@ -294,9 +284,9 @@ public class GiftLeaderboardOverlay extends Stage {
             // COMPACT CARD (Ranks 4-10)
             card.setPadding(new Insets(4, 10, 4, 10));
             card.setStyle(
-                "-fx-background-color: rgba(33, 30, 39, 0.6);" +
+                "-fx-background-color: rgba(24, 24, 27, 0.5);" +
                 "-fx-background-radius: 8px;" +
-                "-fx-border-color: rgba(73, 68, 84, 0.2);" +
+                "-fx-border-color: rgba(255, 255, 255, 0.05);" +
                 "-fx-border-radius: 8px;" +
                 "-fx-border-width: 1px;"
             );
@@ -306,9 +296,9 @@ public class GiftLeaderboardOverlay extends Stage {
             lblRank.setPrefWidth(16);
             lblRank.setAlignment(Pos.CENTER);
             lblRank.setStyle(
-                "-fx-text-fill: #cbc3d7;" +
+                "-fx-text-fill: #71717a;" +
                 "-fx-font-weight: bold;" +
-                "-fx-font-size: 13.5px;" +
+                "-fx-font-size: 11px;" +
                 FONT_FAMILY
             );
 
@@ -318,13 +308,13 @@ public class GiftLeaderboardOverlay extends Stage {
             nameGroup.setAlignment(Pos.CENTER_LEFT);
 
             javafx.scene.text.TextFlow nickFlow = com.leaderboard.util.EmojiParser.createEmojiTextFlow(
-                g.getNickname(), 12, Color.web("#e7e0ed"), javafx.scene.text.Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 12)
+                g.getNickname(), 11, Color.web("#e4e4e7"), javafx.scene.text.Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 11)
             );
             
             Label lblUser = new Label(g.getNickname().equals(g.getUniqueId()) ? "" : "@" + g.getUniqueId());
             lblUser.setStyle(
-                "-fx-text-fill: #cbc3d7;" +
-                "-fx-font-size: 9.5px;" +
+                "-fx-text-fill: #71717a;" +
+                "-fx-font-size: 9px;" +
                 FONT_FAMILY
             );
             
@@ -333,7 +323,7 @@ public class GiftLeaderboardOverlay extends Stage {
             // 3. Points Label
             Label lblPoints = new Label(String.format("%,d", g.getPoints()));
             lblPoints.setStyle(
-                "-fx-text-fill: #cbc3d7;" +
+                "-fx-text-fill: #71717a;" +
                 "-fx-font-weight: bold;" +
                 "-fx-font-size: 11px;" +
                 FONT_FAMILY
@@ -341,16 +331,16 @@ public class GiftLeaderboardOverlay extends Stage {
 
             // Smaller Gold Coin
             StackPane coinStack = new StackPane();
-            coinStack.setPrefSize(12, 12);
-            Circle coinBg = new Circle(6, Color.web("#ffd700"));
-            Circle coinBorder = new Circle(6, Color.TRANSPARENT);
-            coinBorder.setStroke(Color.web("#c58c00"));
+            coinStack.setPrefSize(10, 10);
+            Circle coinBg = new Circle(5, Color.web("#fbbf24"));
+            Circle coinBorder = new Circle(5, Color.TRANSPARENT);
+            coinBorder.setStroke(Color.web("#d97706"));
             coinBorder.setStrokeWidth(0.8);
             Label lblCoinSym = new Label("$");
             lblCoinSym.setStyle(
                 "-fx-text-fill: #ffffff;" +
                 "-fx-font-weight: bold;" +
-                "-fx-font-size: 7px;" +
+                "-fx-font-size: 6px;" +
                 FONT_FAMILY
             );
             coinStack.getChildren().addAll(coinBg, coinBorder, lblCoinSym);

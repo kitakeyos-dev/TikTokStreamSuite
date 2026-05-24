@@ -55,48 +55,48 @@ public class OverviewTab extends BorderPane {
 
         // TikTok Username
         Label lblUser = new Label("TIKTOK USERNAME (TÊN KÊNH LIVE):");
-        lblUser.setStyle("-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #a1a1a8;");
+        lblUser.setStyle("-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #71717a;");
         
         HBox userFieldBox = new HBox(8);
         userFieldBox.setAlignment(Pos.CENTER_LEFT);
         userFieldBox.setPadding(new Insets(0, 10, 0, 10));
         userFieldBox.setStyle(
-            "-fx-background-color: #2b2b2b;" +
+            "-fx-background-color: #18181b;" +
             "-fx-background-radius: 8px;" +
             "-fx-border-color: rgba(255, 255, 255, 0.08);" +
             "-fx-border-width: 1px;"
         );
         Label lblAt = new Label("@");
-        lblAt.setStyle("-fx-text-fill: #a1a1a8; -fx-font-size: 14px; -fx-font-weight: bold;");
+        lblAt.setStyle("-fx-text-fill: #71717a; -fx-font-size: 14px; -fx-font-weight: bold;");
         
         txtUsername = new TextField(ConfigManager.getConfig().getStreamerUsername());
         txtUsername.setPromptText("Ví dụ: streamer_live");
         txtUsername.setPrefHeight(34);
-        txtUsername.setStyle("-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: #ffffff;");
+        txtUsername.setStyle("-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: #f4f4f5;");
         HBox.setHgrow(txtUsername, Priority.ALWAYS);
         userFieldBox.getChildren().addAll(lblAt, txtUsername);
 
         // API Key
         Label lblKey = new Label("EULERSTREAM API KEY (TÙY CHỌN):");
-        lblKey.setStyle("-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #a1a1a8;");
+        lblKey.setStyle("-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #71717a;");
         
         HBox keyFieldBox = new HBox(8);
         keyFieldBox.setAlignment(Pos.CENTER_LEFT);
         keyFieldBox.setPadding(new Insets(0, 10, 0, 10));
         keyFieldBox.setStyle(
-            "-fx-background-color: #2b2b2b;" +
+            "-fx-background-color: #18181b;" +
             "-fx-background-radius: 8px;" +
             "-fx-border-color: rgba(255, 255, 255, 0.08);" +
             "-fx-border-width: 1px;"
         );
         FontIcon keyIcon = new FontIcon(Feather.KEY);
-        keyIcon.setIconColor(Color.web("#a1a1a8"));
+        keyIcon.setIconColor(Color.web("#71717a"));
         
         txtApiKey = new PasswordField();
         txtApiKey.setText(ConfigManager.getConfig().getEulerstreamKey());
         txtApiKey.setPromptText("Nhập API Key để livestream ổn định...");
         txtApiKey.setPrefHeight(34);
-        txtApiKey.setStyle("-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: #ffffff;");
+        txtApiKey.setStyle("-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: #f4f4f5;");
         HBox.setHgrow(txtApiKey, Priority.ALWAYS);
         keyFieldBox.getChildren().addAll(keyIcon, txtApiKey);
 
@@ -109,10 +109,13 @@ public class OverviewTab extends BorderPane {
         lblStatusBadge.setAlignment(Pos.CENTER);
         lblStatusBadge.setPrefSize(110, 32);
         lblStatusBadge.setStyle(
-            "-fx-background-color: rgba(254, 44, 85, 0.1);" +
+            "-fx-background-color: rgba(255, 255, 255, 0.03);" +
             "-fx-background-radius: 8px;" +
-            "-fx-text-fill: #fe2c55;" +
+            "-fx-text-fill: #a1a1aa;" +
             "-fx-font-weight: bold;" +
+            "-fx-border-color: rgba(255, 255, 255, 0.08);" +
+            "-fx-border-radius: 8px;" +
+            "-fx-border-width: 1px;" +
             "-fx-font-size: 11px;"
         );
 
@@ -121,10 +124,13 @@ public class OverviewTab extends BorderPane {
         btnConnect.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(btnConnect, Priority.ALWAYS);
         btnConnect.setStyle(
-            "-fx-background-color: #25f4ee;" + // TikTok Cyan Accent
-            "-fx-text-fill: #131313;" +
+            "-fx-background-color: rgba(99, 102, 241, 0.08);" + // Soft indigo tint
+            "-fx-text-fill: #818cf8;" +
             "-fx-font-weight: bold;" +
-            "-fx-background-radius: 8px;"
+            "-fx-border-color: rgba(99, 102, 241, 0.4);" +
+            "-fx-border-radius: 8px;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-border-width: 1px;"
         );
         btnConnect.setOnAction(e -> parent.toggleConnection());
 
@@ -132,18 +138,18 @@ public class OverviewTab extends BorderPane {
 
         // Divider
         Separator sep = new Separator();
-        sep.setStyle("-fx-opacity: 0.15; -fx-padding: 5 0 5 0;");
+        sep.setStyle("-fx-opacity: 0.08; -fx-padding: 5 0 5 0;");
 
         // System Diagnostics Section
         Label lblDiagTitle = new Label("TRẠNG THÁI HỆ THỐNG / DIAGNOSTICS:");
-        lblDiagTitle.setStyle("-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #a1a1a8;");
+        lblDiagTitle.setStyle("-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #71717a;");
 
         VBox diagBox = new VBox(10);
         diagBox.setPadding(new Insets(5, 10, 5, 10));
         
-        lblWebSocketDiag = createDiagRow(diagBox, "WebSocket", "CHƯA KẾT NỐI", "#fe2c55");
-        lblLatencyDiag = createDiagRow(diagBox, "Độ trễ kết nối (Latency)", "--", "#ffffff");
-        lblSyncDiag = createDiagRow(diagBox, "Đồng bộ mắt xem (Viewer Sync)", "INACTIVE", "#a1a1a8");
+        lblWebSocketDiag = createDiagRow(diagBox, "WebSocket", "CHƯA KẾT NỐI", "#71717a");
+        lblLatencyDiag = createDiagRow(diagBox, "Độ trễ kết nối (Latency)", "--", "#f4f4f5");
+        lblSyncDiag = createDiagRow(diagBox, "Đồng bộ mắt xem (Viewer Sync)", "INACTIVE", "#71717a");
 
         leftContent.getChildren().addAll(lblUser, userFieldBox, lblKey, keyFieldBox, statusRow, sep, lblDiagTitle, diagBox);
         cardConfig.getChildren().add(leftContent);
@@ -163,7 +169,7 @@ public class OverviewTab extends BorderPane {
             ConfigManager.save();
             parent.updateOverlayAlwaysOnTop();
         });
-        widgetsBox.getChildren().add(createWidgetBento("BẢNG XẾP HẠNG LIVE", "Hiển thị Top nhà tài trợ và quà tặng.", "#25f4ee", Feather.BAR_CHART_2, btnToggleOverlay, chkLeaderboardOnTop));
+        widgetsBox.getChildren().add(createWidgetBento("BẢNG XẾP HẠNG LIVE", "Hiển thị Top nhà tài trợ và quà tặng.", "#818cf8", Feather.BAR_CHART_2, btnToggleOverlay, chkLeaderboardOnTop));
 
         // Bento 2: Chat Overlay
         btnToggleChatOverlay = new Button("BẬT KHUNG CHAT");
@@ -174,7 +180,7 @@ public class OverviewTab extends BorderPane {
             ConfigManager.save();
             parent.updateOverlayAlwaysOnTop();
         });
-        widgetsBox.getChildren().add(createWidgetBento("KHUNG CHAT TRONG SUỐT", "Hiển thị dòng chat game capture trực tiếp.", "#a855f7", Feather.MESSAGE_SQUARE, btnToggleChatOverlay, chkChatOnTop));
+        widgetsBox.getChildren().add(createWidgetBento("KHUNG CHAT TRONG SUỐT", "Hiển thị dòng chat game capture trực tiếp.", "#818cf8", Feather.MESSAGE_SQUARE, btnToggleChatOverlay, chkChatOnTop));
 
         // Bento 3: Like Goal Overlay
         btnToggleLikeOverlay = new Button("BẬT MỤC TIÊU TIM");
@@ -185,7 +191,7 @@ public class OverviewTab extends BorderPane {
             ConfigManager.save();
             parent.updateOverlayAlwaysOnTop();
         });
-        widgetsBox.getChildren().add(createWidgetBento("MỤC TIÊU THẢ TIM", "Thanh tim bay lơ lửng và đếm tim.", "#fe2c55", Feather.HEART, btnToggleLikeOverlay, chkLikeOnTop));
+        widgetsBox.getChildren().add(createWidgetBento("MỤC TIÊU THẢ TIM", "Thanh tim bay lơ lửng và đếm tim.", "#818cf8", Feather.HEART, btnToggleLikeOverlay, chkLikeOnTop));
 
         // Bento 4: Top Like Overlay
         btnToggleTopLikeOverlay = new Button("BẬT TOP THẢ TIM");
@@ -196,7 +202,7 @@ public class OverviewTab extends BorderPane {
             ConfigManager.save();
             parent.updateOverlayAlwaysOnTop();
         });
-        widgetsBox.getChildren().add(createWidgetBento("TOP THẢ TIM", "Bảng xếp hạng thả tim thời gian thực.", "#fe2c55", Feather.AWARD, btnToggleTopLikeOverlay, chkTopLikeOnTop));
+        widgetsBox.getChildren().add(createWidgetBento("TOP THẢ TIM", "Bảng xếp hạng thả tim thời gian thực.", "#818cf8", Feather.AWARD, btnToggleTopLikeOverlay, chkTopLikeOnTop));
 
         cardWidgets.getChildren().add(widgetsBox);
         grid.add(cardWidgets, 1, 0);
@@ -209,18 +215,18 @@ public class OverviewTab extends BorderPane {
         VBox card = new VBox(10);
         card.setPadding(new Insets(15, 20, 15, 20));
         card.setStyle(
-            "-fx-background-color: #1e1e1e;" +
+            "-fx-background-color: #121214;" +
             "-fx-background-radius: 12px;" +
-            "-fx-border-color: rgba(255, 255, 255, 0.08);" +
+            "-fx-border-color: rgba(255, 255, 255, 0.05);" +
             "-fx-border-radius: 12px;" +
             "-fx-border-width: 1px;"
         );
 
         Label lblTitle = new Label(title);
-        lblTitle.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 13px;");
+        lblTitle.setStyle("-fx-text-fill: #f4f4f5; -fx-font-weight: bold; -fx-font-size: 13px;");
         
         Separator titleSep = new Separator();
-        titleSep.setStyle("-fx-opacity: 0.15; -fx-padding: 2 0 5 0;");
+        titleSep.setStyle("-fx-opacity: 0.08; -fx-padding: 2 0 5 0;");
 
         card.getChildren().addAll(lblTitle, titleSep);
         return card;
@@ -231,7 +237,7 @@ public class OverviewTab extends BorderPane {
         row.setAlignment(Pos.CENTER_LEFT);
 
         Label lblLabel = new Label(label);
-        lblLabel.setStyle("-fx-text-fill: #a1a1a8; -fx-font-size: 11px;");
+        lblLabel.setStyle("-fx-text-fill: #71717a; -fx-font-size: 11px;");
         HBox.setHgrow(lblLabel, Priority.ALWAYS);
         lblLabel.setMaxWidth(Double.MAX_VALUE);
 
@@ -247,7 +253,7 @@ public class OverviewTab extends BorderPane {
     private CheckBox createOnTopCheckbox(boolean initialState) {
         CheckBox chk = new CheckBox("Luôn trên cùng");
         chk.setSelected(initialState);
-        chk.setStyle("-fx-text-fill: #a1a1a8; -fx-font-size: 10px;");
+        chk.setStyle("-fx-text-fill: #71717a; -fx-font-size: 10px;");
         return chk;
     }
 
@@ -256,7 +262,7 @@ public class OverviewTab extends BorderPane {
         row.setPadding(new Insets(5, 5, 8, 5));
         row.setAlignment(Pos.CENTER_LEFT);
         row.setStyle(
-            "-fx-border-color: rgba(255, 255, 255, 0.08);" +
+            "-fx-border-color: rgba(255, 255, 255, 0.05);" +
             "-fx-border-width: 0 0 1px 0;"
         );
 
@@ -264,9 +270,9 @@ public class OverviewTab extends BorderPane {
         StackPane iconBox = new StackPane();
         iconBox.setPrefSize(42, 38);
         iconBox.setStyle(
-            "-fx-background-color: #1c1c1e;" +
+            "-fx-background-color: #121214;" +
             "-fx-background-radius: 6px;" +
-            "-fx-border-color: rgba(255,255,255,0.08);" +
+            "-fx-border-color: rgba(255,255,255,0.06);" +
             "-fx-border-radius: 6px;" +
             "-fx-border-width: 1px;"
         );
@@ -274,12 +280,12 @@ public class OverviewTab extends BorderPane {
         Region leftBar = new Region();
         leftBar.setPrefWidth(3);
         leftBar.setMaxHeight(Double.MAX_VALUE);
-        leftBar.setStyle("-fx-background-color: " + iconColorHex + "; -fx-background-radius: 3px 0 0 3px;");
+        leftBar.setStyle("-fx-background-color: " + iconColorHex + "66; -fx-background-radius: 3px 0 0 3px;"); // Muted icon accent bar
         StackPane.setAlignment(leftBar, Pos.CENTER_LEFT);
         
         FontIcon fontIcon = new FontIcon(icon);
         fontIcon.setIconSize(16);
-        fontIcon.setIconColor(Color.web(iconColorHex));
+        fontIcon.setIconColor(Color.web(iconColorHex, 0.8)); // slightly translucent icon
 
         iconBox.getChildren().addAll(leftBar, fontIcon);
 
@@ -288,10 +294,10 @@ public class OverviewTab extends BorderPane {
         HBox.setHgrow(textGroup, Priority.ALWAYS);
         
         Label lblTitle = new Label(title);
-        lblTitle.setStyle("-fx-text-fill: #f4f4f5; -fx-font-weight: bold; -fx-font-size: 11px;");
+        lblTitle.setStyle("-fx-text-fill: #e4e4e7; -fx-font-weight: bold; -fx-font-size: 11px;");
         
         Label lblDesc = new Label(desc);
-        lblDesc.setStyle("-fx-text-fill: #a1a1a8; -fx-font-size: 9.5px;");
+        lblDesc.setStyle("-fx-text-fill: #71717a; -fx-font-size: 9.5px;");
         
         textGroup.getChildren().addAll(lblTitle, lblDesc, onTopChk);
         
@@ -306,18 +312,18 @@ public class OverviewTab extends BorderPane {
     public void updateDiagnostics(boolean isConnected, String latency) {
         if (isConnected) {
             lblWebSocketDiag.setText("ĐÃ KẾT NỐI (CONNECTED)");
-            lblWebSocketDiag.setStyle("-fx-text-fill: #25f4ee; -fx-font-size: 11px; -fx-font-weight: bold;");
+            lblWebSocketDiag.setStyle("-fx-text-fill: #818cf8; -fx-font-size: 11px; -fx-font-weight: bold;");
             lblLatencyDiag.setText(latency);
-            lblLatencyDiag.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 11px; -fx-font-weight: bold;");
+            lblLatencyDiag.setStyle("-fx-text-fill: #f4f4f5; -fx-font-size: 11px; -fx-font-weight: bold;");
             lblSyncDiag.setText("HOẠT ĐỘNG (ACTIVE)");
-            lblSyncDiag.setStyle("-fx-text-fill: #25f4ee; -fx-font-size: 11px; -fx-font-weight: bold;");
+            lblSyncDiag.setStyle("-fx-text-fill: #818cf8; -fx-font-size: 11px; -fx-font-weight: bold;");
         } else {
             lblWebSocketDiag.setText("CHƯA KẾT NỐI (OFFLINE)");
-            lblWebSocketDiag.setStyle("-fx-text-fill: #fe2c55; -fx-font-size: 11px; -fx-font-weight: bold;");
+            lblWebSocketDiag.setStyle("-fx-text-fill: #71717a; -fx-font-size: 11px; -fx-font-weight: bold;");
             lblLatencyDiag.setText("--");
-            lblLatencyDiag.setStyle("-fx-text-fill: #a1a1a8; -fx-font-size: 11px; -fx-font-weight: bold;");
+            lblLatencyDiag.setStyle("-fx-text-fill: #71717a; -fx-font-size: 11px; -fx-font-weight: bold;");
             lblSyncDiag.setText("TẮT (INACTIVE)");
-            lblSyncDiag.setStyle("-fx-text-fill: #a1a1a8; -fx-font-size: 11px; -fx-font-weight: bold;");
+            lblSyncDiag.setStyle("-fx-text-fill: #71717a; -fx-font-size: 11px; -fx-font-weight: bold;");
         }
     }
 
@@ -325,34 +331,46 @@ public class OverviewTab extends BorderPane {
         if (isConnected) {
             lblStatusBadge.setText("ĐÃ KẾT NỐI");
             lblStatusBadge.setStyle(
-                "-fx-background-color: rgba(37, 244, 238, 0.1);" +
+                "-fx-background-color: rgba(99, 102, 241, 0.08);" +
                 "-fx-background-radius: 8px;" +
-                "-fx-text-fill: #25f4ee;" +
+                "-fx-text-fill: #818cf8;" +
+                "-fx-border-color: rgba(99, 102, 241, 0.4);" +
+                "-fx-border-radius: 8px;" +
+                "-fx-border-width: 1px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-font-size: 11px;"
             );
             btnConnect.setText("Ngắt kết nối LIVE");
             btnConnect.setStyle(
-                "-fx-background-color: #fe2c55;" +
-                "-fx-text-fill: #ffffff;" +
+                "-fx-background-color: rgba(239, 68, 68, 0.08);" + // Outlined red disconnect button
+                "-fx-text-fill: #f87171;" +
                 "-fx-font-weight: bold;" +
-                "-fx-background-radius: 8px;"
+                "-fx-border-color: rgba(239, 68, 68, 0.4);" +
+                "-fx-border-radius: 8px;" +
+                "-fx-background-radius: 8px;" +
+                "-fx-border-width: 1px;"
             );
         } else {
             lblStatusBadge.setText("CHƯA KẾT NỐI");
             lblStatusBadge.setStyle(
-                "-fx-background-color: rgba(254, 44, 85, 0.1);" +
+                "-fx-background-color: rgba(255, 255, 255, 0.03);" +
                 "-fx-background-radius: 8px;" +
-                "-fx-text-fill: #fe2c55;" +
+                "-fx-text-fill: #a1a1aa;" +
+                "-fx-border-color: rgba(255, 255, 255, 0.08);" +
+                "-fx-border-radius: 8px;" +
+                "-fx-border-width: 1px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-font-size: 11px;"
             );
             btnConnect.setText("Kết nối LIVE");
             btnConnect.setStyle(
-                "-fx-background-color: #25f4ee;" +
-                "-fx-text-fill: #131313;" +
+                "-fx-background-color: rgba(99, 102, 241, 0.08);" +
+                "-fx-text-fill: #818cf8;" +
                 "-fx-font-weight: bold;" +
-                "-fx-background-radius: 8px;"
+                "-fx-border-color: rgba(99, 102, 241, 0.4);" +
+                "-fx-border-radius: 8px;" +
+                "-fx-background-radius: 8px;" +
+                "-fx-border-width: 1px;"
             );
         }
     }
@@ -360,9 +378,12 @@ public class OverviewTab extends BorderPane {
     public void setConnectingState() {
         lblStatusBadge.setText("ĐANG KẾT NỐI...");
         lblStatusBadge.setStyle(
-            "-fx-background-color: rgba(168, 85, 247, 0.1);" +
+            "-fx-background-color: rgba(168, 85, 247, 0.08);" +
             "-fx-background-radius: 8px;" +
-            "-fx-text-fill: #a855f7;" +
+            "-fx-text-fill: #c084fc;" +
+            "-fx-border-color: rgba(168, 85, 247, 0.4);" +
+            "-fx-border-radius: 8px;" +
+            "-fx-border-width: 1px;" +
             "-fx-font-weight: bold;" +
             "-fx-font-size: 11px;"
         );
@@ -371,9 +392,12 @@ public class OverviewTab extends BorderPane {
     public void setDisconnectingState() {
         lblStatusBadge.setText("ĐANG NGẮT...");
         lblStatusBadge.setStyle(
-            "-fx-background-color: rgba(251, 146, 60, 0.1);" +
+            "-fx-background-color: rgba(251, 146, 60, 0.08);" +
             "-fx-background-radius: 8px;" +
-            "-fx-text-fill: #fb923c;" +
+            "-fx-text-fill: #fdba74;" +
+            "-fx-border-color: rgba(251, 146, 60, 0.4);" +
+            "-fx-border-radius: 8px;" +
+            "-fx-border-width: 1px;" +
             "-fx-font-weight: bold;" +
             "-fx-font-size: 11px;"
         );
@@ -390,18 +414,21 @@ public class OverviewTab extends BorderPane {
         if (isActive) {
             btn.setText("TẮT " + title.toUpperCase());
             btn.setStyle(
-                "-fx-background-color: #fe2c55;" +
-                "-fx-text-fill: #ffffff;" +
+                "-fx-background-color: rgba(99, 102, 241, 0.12);" + // Premium low-saturation active state
+                "-fx-text-fill: #818cf8;" +
                 "-fx-font-weight: bold;" +
-                "-fx-background-radius: 8px;"
+                "-fx-border-color: rgba(99, 102, 241, 0.4);" +
+                "-fx-border-radius: 8px;" +
+                "-fx-background-radius: 8px;" +
+                "-fx-border-width: 1px;"
             );
         } else {
             btn.setText("BẬT " + title.toUpperCase());
             btn.setStyle(
-                "-fx-background-color: rgba(37, 244, 238, 0.1);" +
-                "-fx-text-fill: #25f4ee;" +
+                "-fx-background-color: transparent;" +
+                "-fx-text-fill: #a1a1aa;" +
                 "-fx-font-weight: bold;" +
-                "-fx-border-color: rgba(37, 244, 238, 0.4);" +
+                "-fx-border-color: rgba(255, 255, 255, 0.08);" +
                 "-fx-border-radius: 8px;" +
                 "-fx-background-radius: 8px;" +
                 "-fx-border-width: 1px;"

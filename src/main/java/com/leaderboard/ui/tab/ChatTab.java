@@ -9,6 +9,9 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import org.kordamp.ikonli.javafx.FontIcon;
+import org.kordamp.ikonli.feather.Feather;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
@@ -57,9 +60,9 @@ public class ChatTab extends BorderPane {
         VBox cardChat = new VBox(15);
         cardChat.setPadding(new Insets(15, 20, 15, 20));
         cardChat.setStyle(
-            "-fx-background-color: #1e1e1e;" +
+            "-fx-background-color: #121214;" +
             "-fx-background-radius: 12px;" +
-            "-fx-border-color: rgba(255, 255, 255, 0.08);" +
+            "-fx-border-color: rgba(255, 255, 255, 0.05);" +
             "-fx-border-radius: 12px;" +
             "-fx-border-width: 1px;"
         );
@@ -73,7 +76,7 @@ public class ChatTab extends BorderPane {
         HBox.setHgrow(titleArea, Priority.ALWAYS);
 
         Label lblTitle = new Label("LỊCH SỬ TRÒ CHUYỆN TRỰC TIẾP");
-        lblTitle.setStyle("-fx-text-fill: #ffffff; -fx-font-weight: bold; -fx-font-size: 13px;");
+        lblTitle.setStyle("-fx-text-fill: #f4f4f5; -fx-font-weight: bold; -fx-font-size: 13px;");
 
         Label lblSubtitle = new Label("Xem tin nhắn thời gian thực truyền trực tiếp từ cổng kết nối Live stream.");
         lblSubtitle.setStyle("-fx-text-fill: #71717a; -fx-font-size: 10px;");
@@ -84,32 +87,49 @@ public class ChatTab extends BorderPane {
         btnToggleChatOverlayTab3 = new Button("BẬT KHUNG CHAT");
         btnToggleChatOverlayTab3.setPrefHeight(32);
         btnToggleChatOverlayTab3.setStyle(
-            "-fx-background-color: rgba(37, 244, 238, 0.1);" +
-            "-fx-text-fill: #25f4ee;" +
+            "-fx-background-color: transparent;" +
+            "-fx-text-fill: #a1a1aa;" +
             "-fx-font-weight: bold;" +
-            "-fx-border-color: rgba(37, 244, 238, 0.4);" +
+            "-fx-border-color: rgba(255, 255, 255, 0.08);" +
             "-fx-border-radius: 8px;" +
-            "-fx-background-radius: 8px;"
+            "-fx-background-radius: 8px;" +
+            "-fx-border-width: 1px;"
         );
         btnToggleChatOverlayTab3.setOnAction(e -> parent.toggleChatOverlayWindow());
         cardHeader.getChildren().add(btnToggleChatOverlayTab3);
 
         cardChat.getChildren().add(cardHeader);
 
-        // --- ACTION SEARCH BAR ---
+        // --- ACTION SEARCH BAR (Vercel-styled search box) ---
+        HBox searchBox = new HBox(8);
+        searchBox.setAlignment(Pos.CENTER_LEFT);
+        searchBox.setPadding(new Insets(0, 10, 0, 10));
+        searchBox.setStyle(
+            "-fx-background-color: #18181b;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-border-color: rgba(255, 255, 255, 0.08);" +
+            "-fx-border-width: 1px;"
+        );
+        
+        FontIcon searchIcon = new FontIcon(Feather.SEARCH);
+        searchIcon.setIconColor(Color.web("#71717a"));
+
         txtSearch = new TextField();
         txtSearch.setPromptText("Tìm kiếm theo TikTok ID, Tên hiển thị hoặc Nội dung bình luận...");
-        txtSearch.setPrefHeight(36);
-        txtSearch.setStyle("-fx-background-radius: 8px;");
-        cardChat.getChildren().add(txtSearch);
+        txtSearch.setPrefHeight(34);
+        txtSearch.setStyle("-fx-background-color: transparent; -fx-border-width: 0; -fx-text-fill: #f4f4f5;");
+        HBox.setHgrow(txtSearch, Priority.ALWAYS);
+        searchBox.getChildren().addAll(searchIcon, txtSearch);
+        
+        cardChat.getChildren().add(searchBox);
 
         // --- CHAT TABLE CONTAINER ---
         tblChatLog = new TableView<>();
         tblChatLog.setPrefHeight(380);
         tblChatLog.setStyle(
-            "-fx-background-color: #1e1e1e;" +
-            "-fx-control-inner-background: #1e1e1e;" +
-            "-fx-border-color: rgba(255,255,255,0.08);" +
+            "-fx-background-color: #121214;" +
+            "-fx-control-inner-background: #121214;" +
+            "-fx-border-color: rgba(255,255,255,0.05);" +
             "-fx-border-radius: 8px;" +
             "-fx-background-radius: 8px;"
         );
@@ -117,12 +137,12 @@ public class ChatTab extends BorderPane {
         TableColumn<ChatRow, String> colTime = new TableColumn<>("Thời Gian");
         colTime.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getTime()));
         colTime.setPrefWidth(90);
-        colTime.setStyle("-fx-alignment: CENTER; -fx-text-fill: #8f8f98;");
+        colTime.setStyle("-fx-alignment: CENTER; -fx-text-fill: #71717a;");
 
         TableColumn<ChatRow, String> colId = new TableColumn<>("TikTok ID");
         colId.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getUniqueId()));
         colId.setPrefWidth(120);
-        colId.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-fill: #a1a1a8;");
+        colId.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-fill: #818cf8;");
 
         TableColumn<ChatRow, String> colNick = new TableColumn<>("Tên Hiển Thị");
         colNick.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getNickname()));
@@ -151,17 +171,25 @@ public class ChatTab extends BorderPane {
         cardChat.getChildren().add(tblChatLog);
 
         // --- ACTIONS TOOLBAR ---
-        HBox actionsRow = new HBox(15);
+        HBox actionsRow = new HBox(12);
         actionsRow.setAlignment(Pos.CENTER_RIGHT);
         actionsRow.setPadding(new Insets(10, 0, 0, 0));
 
         btnClearChat = new Button("Xoá Lịch Sử Chat");
         btnClearChat.setPrefHeight(32);
+        
+        FontIcon trashIcon = new FontIcon(Feather.TRASH_2);
+        trashIcon.setIconColor(Color.web("#f87171"));
+        btnClearChat.setGraphic(trashIcon);
+        
         btnClearChat.setStyle(
-            "-fx-background-color: #fe2c55;" +
-            "-fx-text-fill: #ffffff;" +
+            "-fx-background-color: rgba(239, 68, 68, 0.08);" +
+            "-fx-text-fill: #f87171;" +
             "-fx-font-weight: bold;" +
-            "-fx-background-radius: 8px;"
+            "-fx-border-color: rgba(239, 68, 68, 0.4);" +
+            "-fx-border-radius: 8px;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-border-width: 1px;"
         );
         btnClearChat.setOnAction(e -> chatList.clear());
         actionsRow.getChildren().add(btnClearChat);
@@ -184,20 +212,24 @@ public class ChatTab extends BorderPane {
         if (isOpen) {
             btnToggleChatOverlayTab3.setText("TẮT KHUNG CHAT");
             btnToggleChatOverlayTab3.setStyle(
-                "-fx-background-color: #fe2c55;" +
-                "-fx-text-fill: #ffffff;" +
+                "-fx-background-color: rgba(99, 102, 241, 0.12);" +
+                "-fx-text-fill: #818cf8;" +
                 "-fx-font-weight: bold;" +
-                "-fx-background-radius: 8px;"
+                "-fx-border-color: rgba(99, 102, 241, 0.4);" +
+                "-fx-border-radius: 8px;" +
+                "-fx-background-radius: 8px;" +
+                "-fx-border-width: 1px;"
             );
         } else {
             btnToggleChatOverlayTab3.setText("BẬT KHUNG CHAT");
             btnToggleChatOverlayTab3.setStyle(
-                "-fx-background-color: rgba(37, 244, 238, 0.1);" +
-                "-fx-text-fill: #25f4ee;" +
+                "-fx-background-color: transparent;" +
+                "-fx-text-fill: #a1a1aa;" +
                 "-fx-font-weight: bold;" +
-                "-fx-border-color: rgba(37, 244, 238, 0.4);" +
+                "-fx-border-color: rgba(255, 255, 255, 0.08);" +
                 "-fx-border-radius: 8px;" +
-                "-fx-background-radius: 8px;"
+                "-fx-background-radius: 8px;" +
+                "-fx-border-width: 1px;"
             );
         }
     }
