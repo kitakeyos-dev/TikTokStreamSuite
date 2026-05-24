@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.leaderboard.model.Gifter;
 import com.leaderboard.model.Liker;
+import com.leaderboard.model.TeamMember;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -18,12 +19,24 @@ public class DataManager {
     public static class AppData {
         private List<Gifter> gifters = new ArrayList<>();
         private List<Liker> likers = new ArrayList<>();
+        private List<TeamMember> teamMembers = new ArrayList<>();
 
         public List<Gifter> getGifters() {
             if (gifters == null) {
                 gifters = new ArrayList<>();
             }
             return gifters;
+        }
+
+        public List<TeamMember> getTeamMembers() {
+            if (teamMembers == null) {
+                teamMembers = new ArrayList<>();
+            }
+            return teamMembers;
+        }
+
+        public void setTeamMembers(List<TeamMember> teamMembers) {
+            this.teamMembers = teamMembers;
         }
 
         public void setGifters(List<Gifter> gifters) {
@@ -56,6 +69,51 @@ public class DataManager {
         return currentData.getLikers();
     }
 
+    public static synchronized List<TeamMember> getTeamMembers() {
+        return currentData.getTeamMembers();
+    }
+
+    public static synchronized void addOrUpdateTeamMember(String uniqueId, String nickname, String avatarUrl,
+                                                          String teamName, int teamLevel, int giftGiverLevel,
+                                                          boolean isSubscriber) {
+        List<TeamMember> list = getTeamMembers();
+        java.util.Optional<TeamMember> existing = list.stream()
+                .filter(m -> m.getUniqueId().equalsIgnoreCase(uniqueId))
+                .findFirst();
+
+        if (existing.isPresent()) {
+            TeamMember m = existing.get();
+            if (nickname != null && !nickname.trim().isEmpty()) {
+                m.setNickname(nickname);
+            }
+            if (avatarUrl != null) {
+                m.setAvatarUrl(avatarUrl);
+            }
+            if (teamName != null) {
+                m.setTeamName(teamName);
+            }
+            if (teamLevel > m.getTeamLevel()) {
+                m.setTeamLevel(teamLevel);
+            }
+            if (giftGiverLevel > 0) {
+                m.setGiftGiverLevel(giftGiverLevel);
+            }
+            if (isSubscriber) {
+                m.setSubscriber(true);
+            }
+            m.updateActive();
+        } else {
+            list.add(new TeamMember(uniqueId, nickname != null ? nickname : uniqueId, avatarUrl,
+                    teamName, teamLevel, giftGiverLevel, isSubscriber, System.currentTimeMillis()));
+        }
+
+        // Sort descending
+        Collections.sort(list);
+
+        // Save changes immediately
+        save();
+    }
+
     public static synchronized void load() {
         File dataFile = new File(FILE_NAME);
         if (!dataFile.exists()) {
@@ -79,6 +137,9 @@ public class DataManager {
                 if (currentData.likers == null) {
                     currentData.likers = new ArrayList<>();
                 }
+                if (currentData.teamMembers == null) {
+                    currentData.teamMembers = new ArrayList<>();
+                }
                 
                 // Auto-migrate standard rules (e.g. invalid username swap etc.)
                 boolean migrated = false;
@@ -90,11 +151,23 @@ public class DataManager {
                         migrated = true;
                     }
                 }
+                
+                // Self-healing: if a member has a teamLevel but teamName is null/empty, it's actually giftGiverLevel
+                for (TeamMember m : currentData.teamMembers) {
+                    if ((m.getTeamName() == null || m.getTeamName().trim().isEmpty()) && m.getTeamLevel() > 0) {
+                        m.setGiftGiverLevel(m.getTeamLevel());
+                        m.setTeamLevel(0);
+                        m.setTeamName(null);
+                        migrated = true;
+                    }
+                }
+                
                 if (migrated) {
                     save();
                 }
                 Collections.sort(currentData.gifters);
                 Collections.sort(currentData.likers);
+                Collections.sort(currentData.teamMembers);
             }
         } catch (Exception e) {
             System.err.println("Error reading data.json: " + e.getMessage());
@@ -190,5 +263,10 @@ public class DataManager {
         currentData.likers.add(new Liker("hoangthi_b", "Hoàng Thị B", null, 980));
         currentData.likers.add(new Liker("tranvan_c", "Trần Văn C", null, 420));
         Collections.sort(currentData.likers);
+
+        currentData.teamMembers.add(new TeamMember("hoanganh", "Hoàng Anh 👑", null, "Gia đình", 15, 28, true, System.currentTimeMillis() - 50000));
+        currentData.teamMembers.add(new TeamMember("linhchi", "Linh Chi 🌸", null, "Gia đình", 8, 12, false, System.currentTimeMillis() - 120000));
+        currentData.teamMembers.add(new TeamMember("quanghuy", "Quang Huy", null, null, 0, 35, true, System.currentTimeMillis() - 300000));
+        Collections.sort(currentData.teamMembers);
     }
 }

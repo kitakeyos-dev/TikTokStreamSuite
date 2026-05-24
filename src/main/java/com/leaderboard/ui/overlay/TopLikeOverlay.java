@@ -2,398 +2,350 @@ package com.leaderboard.ui.overlay;
 
 import com.leaderboard.model.Liker;
 import com.leaderboard.util.DataManager;
-import com.leaderboard.util.FontUtil;
-import com.leaderboard.util.ImageLoader;
+import javafx.application.Platform;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.SVGPath;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Path2D;
-import java.awt.image.BufferedImage;
 import java.util.List;
 
-public class TopLikeOverlay extends JFrame {
-    // Standard hex transparency colors matching modern dark StreamPulse theme
-    private static final Color COLOR_BG = new Color(21, 18, 27, 200); // surface-dim (78% opacity)
-    private static final Color COLOR_SURFACE = new Color(33, 30, 39, 153); // surface-container (60% opacity)
-    private static final Color COLOR_HEADER = new Color(33, 30, 39, 127); // bg-surface-container/50 (50% opacity)
-    private static final Color COLOR_ON_BACKGROUND = new Color(231, 224, 237); // #e7e0ed
-    private static final Color COLOR_ON_SURFACE_VARIANT = new Color(203, 195, 215); // #cbc3d7
-    private static final Color COLOR_OUTLINE_VARIANT = new Color(73, 68, 84, 50); // #494454 (border highlight)
+public class TopLikeOverlay extends Stage {
+    private static final String FONT_FAMILY = "-fx-font-family: 'Segoe UI', system-ui;";
+    private static final String HEART_SVG = "M 11 4 C 11 4 7 0 3 0 C 0 0 0 4 0 6 C 0 11 6 17 11 21 C 16 17 22 11 22 6 C 22 4 22 0 19 0 C 15 0 11 4 11 4 Z";
 
-    private static final Color COLOR_PRIMARY = new Color(254, 44, 85); // TikTok Pink
-    private static final Color COLOR_GOLD = new Color(255, 215, 0);
-    private static final Color COLOR_SILVER = new Color(192, 192, 192);
-    private static final Color COLOR_BRONZE = new Color(205, 127, 50);
-    private static final Color COLOR_NEON_BLUE = new Color(37, 244, 238); // Cyan Accent
-
-    private Point dragOffset;
-    private WidgetPanel widgetPanel;
+    private final VBox rowsContainer;
+    private double xOffset = 0;
+    private double yOffset = 0;
 
     public TopLikeOverlay() {
         setTitle("Top Thả Tim"); // Title needed for OBS Window Capture detection
-        setUndecorated(true);
-        setBackground(new Color(0, 0, 0, 0)); // Transparent container
-        setSize(360, 760); // Taller window to display up to 10 slots
-        setLocationRelativeTo(null);
-        setType(Type.NORMAL); // NORMAL type allows OBS/TikTok Live Studio to detect this window
+        initStyle(StageStyle.TRANSPARENT);
 
-        // Load and set application window icon
+        // Load application window icon
         try {
-            java.net.URL imgUrl = getClass().getResource("/icons/logo.png");
-            if (imgUrl != null) {
-                setIconImage(new ImageIcon(imgUrl).getImage());
+            java.io.InputStream imgStream = getClass().getResourceAsStream("/icons/logo.png");
+            if (imgStream != null) {
+                getIcons().add(new Image(imgStream));
             }
         } catch (Exception e) {
             System.err.println("Could not load application icon: " + e.getMessage());
         }
 
-        setLayout(null);
-        widgetPanel = new WidgetPanel();
-        widgetPanel.setBounds(20, 20, 320, 720); // Width 320px, Height 720px
-        add(widgetPanel);
+        // Main Glass Panel Container
+        AnchorPane root = new AnchorPane();
+        root.setPrefSize(360, 760);
+        root.setStyle(
+            "-fx-background-color: rgba(21, 18, 27, 0.78);" + // surface-dim (78% opacity)
+            "-fx-background-radius: 24px;" +
+            "-fx-border-color: rgba(255, 255, 255, 0.1);" +
+            "-fx-border-radius: 24px;" +
+            "-fx-border-width: 1.2px;"
+        );
+
+        // Premium glassmorphic drop shadow
+        DropShadow shadow = new DropShadow();
+        shadow.setColor(Color.web("#000000", 0.45));
+        shadow.setRadius(15);
+        shadow.setOffsetY(4);
+        root.setEffect(shadow);
 
         // Make window draggable
-        MouseAdapter dragListener = new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                dragOffset = e.getPoint();
-            }
+        root.setOnMousePressed(event -> {
+            xOffset = event.getSceneX();
+            yOffset = event.getSceneY();
+        });
+        root.setOnMouseDragged(event -> {
+            setX(event.getScreenX() - xOffset);
+            setY(event.getScreenY() - yOffset);
+        });
 
-            @Override
-            public void mouseDragged(MouseEvent e) {
-                if (dragOffset != null) {
-                    Point curr = getLocation();
-                    setLocation(curr.x + e.getX() - dragOffset.x, curr.y + e.getY() - dragOffset.y);
-                }
-            }
-        };
-        widgetPanel.addMouseListener(dragListener);
-        widgetPanel.addMouseMotionListener(dragListener);
+        // 1. Header Bar
+        AnchorPane header = new AnchorPane();
+        header.setPrefSize(358, 70);
+        header.setStyle(
+            "-fx-background-color: rgba(33, 30, 39, 0.5);" + // bg-surface-container/50
+            "-fx-background-radius: 24px 24px 0 0;"
+        );
+        AnchorPane.setTopAnchor(header, 1.0);
+        AnchorPane.setLeftAnchor(header, 1.0);
+        AnchorPane.setRightAnchor(header, 1.0);
+
+        // SVG Heart next to title
+        SVGPath titleHeart = new SVGPath();
+        titleHeart.setContent(HEART_SVG);
+        titleHeart.setFill(Color.web("#fe2c55")); // TikTok Pink
+        titleHeart.setScaleX(0.9);
+        titleHeart.setScaleY(0.9);
+        AnchorPane.setLeftAnchor(titleHeart, 18.0);
+        AnchorPane.setTopAnchor(titleHeart, 25.0);
+
+        Label lblTitle = new Label("TOP THẢ TIM");
+        lblTitle.setStyle(
+            "-fx-text-fill: #e7e0ed;" + // #e7e0ed
+            "-fx-font-weight: bold;" +
+            "-fx-font-size: 15px;" +
+            FONT_FAMILY
+        );
+        AnchorPane.setLeftAnchor(lblTitle, 48.0);
+        AnchorPane.setTopAnchor(lblTitle, 22.0);
+
+        Label lblLiveBadge = new Label("LIVE");
+        lblLiveBadge.setAlignment(Pos.CENTER);
+        lblLiveBadge.setPrefSize(50, 26);
+        lblLiveBadge.setStyle(
+            "-fx-background-color: rgba(110, 68, 255, 0.3);" +
+            "-fx-background-radius: 13px;" +
+            "-fx-text-fill: #e7e0ed;" +
+            "-fx-font-size: 11px;" +
+            "-fx-font-weight: bold;" +
+            FONT_FAMILY
+        );
+        AnchorPane.setRightAnchor(lblLiveBadge, 20.0);
+        AnchorPane.setTopAnchor(lblLiveBadge, 20.0);
+
+        header.getChildren().addAll(titleHeart, lblTitle, lblLiveBadge);
+
+        // Divider
+        Region headerDivider = new Region();
+        headerDivider.setPrefSize(360, 1.2);
+        headerDivider.setStyle("-fx-background-color: rgba(73, 68, 84, 0.2);");
+        AnchorPane.setTopAnchor(headerDivider, 70.0);
+
+        // 2. Rows VBox Container
+        rowsContainer = new VBox(6); // Gap of 6px between cards
+        rowsContainer.setPadding(new Insets(10, 20, 10, 20));
+        rowsContainer.setPrefWidth(360);
+        AnchorPane.setTopAnchor(rowsContainer, 80.0);
+
+        root.getChildren().addAll(header, headerDivider, rowsContainer);
+
+        // Scene Configuration
+        Scene scene = new Scene(root);
+        scene.setFill(Color.TRANSPARENT);
+        setScene(scene);
 
         updateLeaderboard();
     }
 
     public void updateLeaderboard() {
-        SwingUtilities.invokeLater(() -> {
-            widgetPanel.rebuildRows();
-            widgetPanel.repaint();
-        });
+        Platform.runLater(this::rebuildRows);
     }
 
-    private static void drawHeart(Graphics2D g2, int x, int y, int size, Color color) {
-        Graphics2D g = (Graphics2D) g2.create();
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setColor(color);
+    private void rebuildRows() {
+        rowsContainer.getChildren().clear();
+
+        List<Liker> list = DataManager.getLikers();
+        int limit = Math.min(list.size(), 10);
+
+        for (int i = 0; i < limit; i++) {
+            Liker l = list.get(i);
+            int rank = i + 1;
+            l.setRank(rank);
+
+            HBox rowCard = createRowCard(l, rank);
+            rowsContainer.getChildren().add(rowCard);
+        }
+    }
+
+    private HBox createRowCard(Liker l, int rank) {
+        boolean isSpotlight = rank <= 3;
         
-        Path2D heart = new Path2D.Double();
-        double scale = size / 24.0;
-        // Standard heart path scaled to size
-        heart.moveTo(x + 12 * scale, y + 21 * scale);
-        heart.curveTo(x + 6 * scale, y + 16 * scale, x + 2 * scale, y + 11 * scale, x + 2 * scale, y + 7 * scale);
-        heart.curveTo(x + 2 * scale, y + 3 * scale, x + 5 * scale, y + 0 * scale, x + 9 * scale, y + 0 * scale);
-        heart.curveTo(x + 11.5 * scale, y + 0 * scale, x + 13 * scale, y + 1.5 * scale, x + 14 * scale, y + 3 * scale);
-        heart.curveTo(x + 15 * scale, y + 1.5 * scale, x + 16.5 * scale, y + 0 * scale, x + 19 * scale, y + 0 * scale);
-        heart.curveTo(x + 23 * scale, y + 0 * scale, x + 26 * scale, y + 3 * scale, x + 26 * scale, y + 7 * scale);
-        heart.curveTo(x + 26 * scale, y + 11 * scale, x + 22 * scale, y + 16 * scale, x + 12 * scale, y + 21 * scale);
-        heart.closePath();
+        HBox card = new HBox(12);
+        card.setAlignment(Pos.CENTER_LEFT);
         
-        g.fill(heart);
-        g.dispose();
-    }
+        // Colors & Configs
+        String accentHex;
+        double cardHeight;
+        double avatarSize = isSpotlight ? (rank == 1 ? 46 : 40) : 0;
 
-    private class WidgetPanel extends JPanel {
-        private JPanel pnlRowsContainer;
-
-        public WidgetPanel() {
-            setOpaque(false);
-            setLayout(null);
-
-            // Container for dynamic leaderboard rows
-            pnlRowsContainer = new JPanel();
-            pnlRowsContainer.setOpaque(false);
-            pnlRowsContainer.setLayout(null);
-            pnlRowsContainer.setBounds(10, 85, 300, 625); // Expanded bounds to 625px
-            add(pnlRowsContainer);
+        if (rank == 1) {
+            accentHex = "#ffd700"; // Gold
+            cardHeight = 73; // (85 - border padding 12)
+        } else if (rank == 2) {
+            accentHex = "#c0c0c0"; // Silver
+            cardHeight = 63; // (75 - border padding 12)
+        } else if (rank == 3) {
+            accentHex = "#cd7f32"; // Bronze
+            cardHeight = 63;
+        } else {
+            accentHex = "#fe2c55"; // TikTok Pink
+            cardHeight = 42;
         }
 
-        public void rebuildRows() {
-            pnlRowsContainer.removeAll();
+        card.setPrefHeight(cardHeight);
+        card.setMinHeight(cardHeight);
 
-            List<Liker> list = DataManager.getLikers();
-            int limit = Math.min(list.size(), 10); // Display up to 10 likers
+        // Container custom styling
+        if (isSpotlight) {
+            card.setPadding(new Insets(6, 12, 6, 12));
+            card.setStyle(
+                "-fx-background-color: rgba(33, 30, 39, 0.6);" + // surface-container
+                "-fx-background-radius: 16px;" +
+                "-fx-border-color: " + accentHex + "99;" + // 60% opacity outline matching rank
+                "-fx-border-radius: 16px;" +
+                "-fx-border-width: 1.5px;"
+            );
 
-            int currentY = 0;
-            for (int i = 0; i < limit; i++) {
-                Liker l = list.get(i);
-                int rank = i + 1;
-                l.setRank(rank);
+            // Add soft drop shadow glow to Ranks 1-3
+            DropShadow glow = new DropShadow();
+            glow.setColor(Color.web(accentHex, rank == 1 ? 0.3 : 0.2));
+            glow.setRadius(8);
+            card.setEffect(glow);
 
-                Color accent = COLOR_PRIMARY;
-                Color glow = new Color(254, 44, 85, 60);
-                int rowHeight;
-                int rowGap;
+            // 1. Float Rank Badge Layout
+            StackPane badgeStack = new StackPane();
+            badgeStack.setPrefSize(20, 20);
+            badgeStack.setMinSize(20, 20);
+            
+            Circle badgeBg = new Circle(10, Color.web(accentHex));
+            Label lblBadgeRank = new Label(String.valueOf(rank));
+            lblBadgeRank.setStyle(
+                "-fx-text-fill: #15121b;" + // Dark background text
+                "-fx-font-weight: bold;" +
+                "-fx-font-size: 11px;" +
+                FONT_FAMILY
+            );
+            badgeStack.getChildren().addAll(badgeBg, lblBadgeRank);
 
-                if (rank == 1) {
-                    accent = COLOR_GOLD;
-                    glow = new Color(255, 215, 0, 100);
-                    rowHeight = 85;
-                    rowGap = 92;
-                } else if (rank == 2) {
-                    accent = COLOR_SILVER;
-                    glow = new Color(192, 192, 192, 80);
-                    rowHeight = 75;
-                    rowGap = 82;
-                } else if (rank == 3) {
-                    accent = COLOR_BRONZE;
-                    glow = new Color(205, 127, 50, 60);
-                    rowHeight = 75;
-                    rowGap = 82;
-                } else {
-                    // Compact rows for Ranks 4-10
-                    accent = COLOR_PRIMARY;
-                    glow = null;
-                    rowHeight = 42;
-                    rowGap = 48;
-                }
+            // 2. Circular Image Avatar
+            StackPane avatarStack = new StackPane();
+            avatarStack.setPrefSize(avatarSize, avatarSize);
+            avatarStack.setMinSize(avatarSize, avatarSize);
 
-                RowPanel rowPanel = new RowPanel(l, accent, glow, rank);
-                rowPanel.setBounds(0, currentY, 300, rowHeight);
-                pnlRowsContainer.add(rowPanel);
+            Circle clipCircle = new Circle(avatarSize / 2, avatarSize / 2, avatarSize / 2);
+            ImageView avatarImg = new ImageView();
+            avatarImg.setFitWidth(avatarSize);
+            avatarImg.setFitHeight(avatarSize);
+            avatarImg.setClip(clipCircle);
 
-                currentY += rowGap;
-
-                // Queue background image loading asynchronously only for Ranks 1-3 spotlights
-                if (rank <= 3) {
-                    if (l.getAvatarUrl() != null && ImageLoader.getImage(l.getUniqueId()) == null) {
-                        ImageLoader.loadImageAsync(l.getUniqueId(), l.getAvatarUrl(), this::repaint);
-                    }
-                }
-            }
-            pnlRowsContainer.revalidate();
-            pnlRowsContainer.repaint();
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            int w = getWidth();
-            int h = getHeight();
-
-            // 1. Draw main glass panel background card
-            g2.setColor(COLOR_BG);
-            g2.fillRoundRect(0, 0, w, h, 24, 24);
-
-            // 2. Draw white outline glass highlight
-            g2.setStroke(new BasicStroke(1.2f));
-            g2.setColor(new Color(255, 255, 255, 25));
-            g2.drawRoundRect(0, 0, w - 1, h - 1, 24, 24);
-
-            // 3. Draw Header Fill
-            g2.setColor(COLOR_HEADER);
-            g2.fillRoundRect(1, 1, w - 2, 70, 24, 24);
-            g2.fillRect(1, 40, w - 2, 31); // straighten bottom half
-
-            // 4. Header line separator
-            g2.setColor(COLOR_OUTLINE_VARIANT);
-            g2.drawLine(0, 71, w, 71);
-
-            // 5. Title
-            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            g2.setColor(COLOR_ON_BACKGROUND);
-            g2.setFont(FontUtil.getTitleFont());
-            g2.drawString("TOP THẢ TIM", 48, 42);
-
-            // 6. Beautiful Vector Heart Drawing next to title (No low-quality emoji)
-            drawHeart(g2, 18, 23, 20, COLOR_PRIMARY);
-
-            // 7. Live Indicator badge
-            g2.setColor(new Color(110, 68, 255, 80));
-            g2.fillRoundRect(w - 70, 20, 50, 26, 13, 13);
-            g2.setColor(COLOR_ON_BACKGROUND);
-            g2.setFont(FontUtil.getSubtitleFont());
-            g2.drawString("LIVE", w - 57, 37);
-
-            g2.dispose();
-        }
-    }
-
-    private class RowPanel extends JPanel {
-        private Liker liker;
-        private Color accentColor;
-        private Color glowColor;
-        private int rank;
-        private int borderPadding;
-        private int avatarDim;
-
-        public RowPanel(Liker liker, Color accentColor, Color glowColor, int rank) {
-            this.liker = liker;
-            this.accentColor = accentColor;
-            this.glowColor = glowColor;
-            this.rank = rank;
-            this.borderPadding = (rank <= 3) ? 6 : 0;
-            this.avatarDim = (rank == 1) ? 46 : 40;
-            setOpaque(false);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-
-            int w = getWidth();
-            int h = getHeight();
-
-            int offset = borderPadding;
-            int rowW = w - 2 * offset;
-            int rowH = h - 2 * offset;
-
-            if (rank <= 3) {
-                // SPOTLIGHT CARD RENDERING (Ranks 1-3)
-                // 1. Draw outer glowing outline
-                if (glowColor != null) {
-                    for (int i = 0; i < borderPadding; i++) {
-                        float opacity = (float) (borderPadding - i) / (borderPadding * borderPadding) * 0.4f;
-                        g2.setColor(new Color(glowColor.getRed(), glowColor.getGreen(), glowColor.getBlue(),
-                                (int) (opacity * 255)));
-                        g2.drawRoundRect(i, i, w - 1 - i * 2, h - 1 - i * 2, 20 - i, 20 - i);
-                    }
-                }
-
-                // 2. Row background glass card
-                g2.setColor(COLOR_SURFACE);
-                g2.fillRoundRect(offset, offset, rowW, rowH, 16, 16);
-
-                // 3. Row Border Highlight matching rank accent
-                g2.setStroke(new BasicStroke(1.5f));
-                g2.setColor(new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), 120));
-                g2.drawRoundRect(offset, offset, rowW, rowH, 16, 16);
-
-                // 4. Draw Avatar
-                int avatarX = offset + 15;
-                int avatarY = offset + (rowH - avatarDim) / 2;
-
-                BufferedImage avatarImage = ImageLoader.getImage(liker.getUniqueId());
-                if (avatarImage != null) {
-                    Shape clip = new Ellipse2D.Double(avatarX, avatarY, avatarDim, avatarDim);
-                    g2.setClip(clip);
-                    g2.drawImage(avatarImage, avatarX, avatarY, avatarDim, avatarDim, null);
-                    g2.setClip(null); // Reset clip
-
-                    // Ring Stroke around image avatar
-                    g2.setStroke(new BasicStroke(2.0f));
-                    g2.setColor(accentColor);
-                    g2.drawOval(avatarX, avatarY, avatarDim, avatarDim);
-                } else {
-                    // Vector placeholder text initial
-                    ImageLoader.drawPlaceholder(g2, liker.getNickname(), avatarX, avatarY, avatarDim, accentColor);
-                }
-
-                // 5. Draw Rank Badge (floating on top-left)
-                int badgeDim = 20;
-                g2.setColor(accentColor);
-                g2.fillOval(offset - 2, offset - 2, badgeDim, badgeDim);
-
-                g2.setColor(Color.BLACK);
-                g2.setFont(FontUtil.getSubtitleFont().deriveFont(Font.BOLD, 12f));
-                FontMetrics fmBadge = g2.getFontMetrics();
-                String badgeText = String.valueOf(rank);
-                int badgeTextX = offset - 2 + (badgeDim - fmBadge.stringWidth(badgeText)) / 2;
-                int badgeTextY = offset - 2 + (badgeDim + fmBadge.getAscent() - fmBadge.getLeading()) / 2 - 2;
-                g2.drawString(badgeText, badgeTextX, badgeTextY);
-
-                // 6. Draw Names
-                int infoX = avatarX + avatarDim + 15;
-                g2.setColor(COLOR_ON_BACKGROUND);
-
-                String nickname = liker.getNickname();
-                String username = liker.getNickname().equals(liker.getUniqueId()) ? "" : "@" + liker.getUniqueId();
-
-                if (username.isEmpty()) {
-                    FontUtil.drawStringWithEmoji(g2, nickname, infoX, avatarY + 28, FontUtil.getNameFont(),
-                            this::repaint);
-                } else {
-                    FontUtil.drawStringWithEmoji(g2, nickname, infoX, avatarY + 20, FontUtil.getNameFont(),
-                            this::repaint);
-                    g2.setColor(COLOR_ON_SURFACE_VARIANT);
-                    g2.setFont(FontUtil.getSubtitleFont());
-                    g2.drawString(username, infoX, avatarY + 38);
-                }
-
-                // 7. Draw Likes Count and Heart Icon on the Right
-                String likesStr = String.format("%,d", liker.getLikes());
-                g2.setFont(FontUtil.getCoinsFont());
-                FontMetrics fmLikes = g2.getFontMetrics();
-                int likesX = w - offset - 20 - 20 - fmLikes.stringWidth(likesStr);
-                int likesY = avatarY + 28;
-
-                g2.setColor(COLOR_ON_BACKGROUND);
-                g2.drawString(likesStr, likesX, likesY);
-
-                // Pink Heart graphic
-                int heartX = w - offset - 30;
-                int heartY = likesY - 14;
-                drawHeart(g2, heartX, heartY, 16, COLOR_PRIMARY);
-
+            if (l.getAvatarUrl() != null && !l.getAvatarUrl().isEmpty()) {
+                Image img = new Image(l.getAvatarUrl(), avatarSize, avatarSize, true, true, true);
+                avatarImg.setImage(img);
             } else {
-                // COMPACT ROW RENDERING (Ranks 4-10)
-                // 1. Row background card
-                g2.setColor(COLOR_SURFACE);
-                g2.fillRoundRect(offset, offset, rowW, rowH, 8, 8);
-
-                // 2. Subtle Border Highlight
-                g2.setStroke(new BasicStroke(1.0f));
-                g2.setColor(COLOR_OUTLINE_VARIANT);
-                g2.drawRoundRect(offset, offset, rowW, rowH, 8, 8);
-
-                // 3. Draw Rank Number
-                g2.setColor(COLOR_ON_SURFACE_VARIANT);
-                g2.setFont(FontUtil.getNameFont().deriveFont(Font.BOLD, 14f));
-                FontMetrics fmRank = g2.getFontMetrics();
-                String rankText = String.valueOf(rank);
-                int rankX = offset + 15 + (16 - fmRank.stringWidth(rankText)) / 2;
-                int rankY = offset + (rowH + fmRank.getAscent() - fmRank.getLeading()) / 2 - 2;
-                g2.drawString(rankText, rankX, rankY);
-
-                // 4. Draw Names
-                int infoX = offset + 45;
-                String nickname = liker.getNickname();
-                String username = liker.getNickname().equals(liker.getUniqueId()) ? "" : "@" + liker.getUniqueId();
-
-                g2.setColor(COLOR_ON_BACKGROUND);
-                Font nameFont = FontUtil.getNameFont().deriveFont(Font.BOLD, 13f);
-                if (username.isEmpty()) {
-                    int textY = offset + (rowH + g2.getFontMetrics(nameFont).getAscent()) / 2 - 2;
-                    FontUtil.drawStringWithEmoji(g2, nickname, infoX, textY, nameFont, this::repaint);
-                } else {
-                    FontUtil.drawStringWithEmoji(g2, nickname, infoX, offset + 17, nameFont, this::repaint);
-                    g2.setColor(COLOR_ON_SURFACE_VARIANT);
-                    g2.setFont(FontUtil.getSubtitleFont().deriveFont(Font.BOLD, 9.5f));
-                    g2.drawString(username, infoX, offset + 31);
-                }
-
-                // 5. Draw Likes Count and Heart Icon on the Right
-                String likesStr = String.format("%,d", liker.getLikes());
-                g2.setFont(FontUtil.getCoinsFont().deriveFont(Font.BOLD, 12f));
-                FontMetrics fmLikes = g2.getFontMetrics();
-                int likesX = w - offset - 15 - 16 - fmLikes.stringWidth(likesStr);
-                int likesY = offset + (rowH + fmLikes.getAscent() - fmLikes.getLeading()) / 2 - 2;
-
-                g2.setColor(COLOR_ON_SURFACE_VARIANT);
-                g2.drawString(likesStr, likesX, likesY);
-
-                // Smaller 12x12px Heart graphic for compact list
-                int heartX = w - offset - 25;
-                int heartY = likesY - 10;
-                drawHeart(g2, heartX, heartY, 12, COLOR_PRIMARY);
+                avatarImg.setImage(new Image(getClass().getResourceAsStream("/icons/logo.png")));
             }
 
-            g2.dispose();
+            Circle avatarBorder = new Circle(avatarSize / 2, avatarSize / 2, avatarSize / 2);
+            avatarBorder.setFill(Color.TRANSPARENT);
+            avatarBorder.setStroke(Color.web(accentHex));
+            avatarBorder.setStrokeWidth(2.0);
+            avatarStack.getChildren().addAll(avatarImg, avatarBorder);
+
+            // 3. Name Group
+            VBox nameGroup = new VBox(1);
+            HBox.setHgrow(nameGroup, Priority.ALWAYS);
+            nameGroup.setAlignment(Pos.CENTER_LEFT);
+
+            javafx.scene.text.TextFlow nickFlow = com.leaderboard.util.EmojiParser.createEmojiTextFlow(
+                l.getNickname(), 12.5, Color.web("#e7e0ed"), javafx.scene.text.Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 12.5)
+            );
+
+            Label lblUser = new Label(l.getNickname().equals(l.getUniqueId()) ? "" : "@" + l.getUniqueId());
+            lblUser.setStyle(
+                "-fx-text-fill: #cbc3d7;" +
+                "-fx-font-size: 10px;" +
+                FONT_FAMILY
+            );
+            
+            nameGroup.getChildren().addAll(nickFlow, lblUser);
+
+            // 4. Likes display
+            Label lblLikes = new Label(String.format("%,d", l.getLikes()));
+            lblLikes.setStyle(
+                "-fx-text-fill: #e7e0ed;" +
+                "-fx-font-weight: bold;" +
+                "-fx-font-size: 12.5px;" +
+                FONT_FAMILY
+            );
+
+            // Pink Heart Icon Stack
+            StackPane heartIconStack = new StackPane();
+            heartIconStack.setPrefSize(16, 16);
+            SVGPath rowHeart = new SVGPath();
+            rowHeart.setContent(HEART_SVG);
+            rowHeart.setFill(Color.web("#fe2c55")); // TikTok Pink
+            rowHeart.setScaleX(0.72);
+            rowHeart.setScaleY(0.72);
+            heartIconStack.getChildren().add(rowHeart);
+
+            card.getChildren().addAll(badgeStack, avatarStack, nameGroup, lblLikes, heartIconStack);
+
+        } else {
+            // COMPACT CARD (Ranks 4-10)
+            card.setPadding(new Insets(4, 10, 4, 10));
+            card.setStyle(
+                "-fx-background-color: rgba(33, 30, 39, 0.6);" +
+                "-fx-background-radius: 8px;" +
+                "-fx-border-color: rgba(73, 68, 84, 0.2);" +
+                "-fx-border-radius: 8px;" +
+                "-fx-border-width: 1px;"
+            );
+
+            // 1. Rank Label
+            Label lblRank = new Label(String.valueOf(rank));
+            lblRank.setPrefWidth(16);
+            lblRank.setAlignment(Pos.CENTER);
+            lblRank.setStyle(
+                "-fx-text-fill: #cbc3d7;" +
+                "-fx-font-weight: bold;" +
+                "-fx-font-size: 13.5px;" +
+                FONT_FAMILY
+            );
+
+            // 2. Name Group
+            VBox nameGroup = new VBox(0);
+            HBox.setHgrow(nameGroup, Priority.ALWAYS);
+            nameGroup.setAlignment(Pos.CENTER_LEFT);
+
+            javafx.scene.text.TextFlow nickFlow = com.leaderboard.util.EmojiParser.createEmojiTextFlow(
+                l.getNickname(), 12, Color.web("#e7e0ed"), javafx.scene.text.Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 12)
+            );
+            
+            Label lblUser = new Label(l.getNickname().equals(l.getUniqueId()) ? "" : "@" + l.getUniqueId());
+            lblUser.setStyle(
+                "-fx-text-fill: #cbc3d7;" +
+                "-fx-font-size: 9.5px;" +
+                FONT_FAMILY
+            );
+            
+            nameGroup.getChildren().addAll(nickFlow, lblUser);
+
+            // 3. Likes Label
+            Label lblLikes = new Label(String.format("%,d", l.getLikes()));
+            lblLikes.setStyle(
+                "-fx-text-fill: #cbc3d7;" +
+                "-fx-font-weight: bold;" +
+                "-fx-font-size: 11px;" +
+                FONT_FAMILY
+            );
+
+            // Smaller Pink Heart Icon
+            StackPane heartIconStack = new StackPane();
+            heartIconStack.setPrefSize(12, 12);
+            SVGPath rowHeart = new SVGPath();
+            rowHeart.setContent(HEART_SVG);
+            rowHeart.setFill(Color.web("#fe2c55"));
+            rowHeart.setScaleX(0.55);
+            rowHeart.setScaleY(0.55);
+            heartIconStack.getChildren().add(rowHeart);
+
+            card.getChildren().addAll(lblRank, nameGroup, lblLikes, heartIconStack);
         }
+
+        return card;
+    }
+
+    public void dispose() {
+        close();
     }
 }

@@ -1,44 +1,46 @@
 package com.leaderboard.ui.overlay;
 
 import com.leaderboard.util.ConfigManager;
-import com.leaderboard.util.FontUtil;
+import javafx.animation.Animation;
+import javafx.animation.ScaleTransition;
+import javafx.application.Platform;
+import javafx.scene.Scene;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.LinearGradient;
+import javafx.scene.paint.CycleMethod;
+import javafx.scene.paint.Stop;
+import javafx.scene.shape.SVGPath;
+import javafx.scene.image.Image;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import javafx.util.Duration;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Path2D;
-
-public class LikeGoalOverlay extends JFrame {
-    private static final Color COLOR_BG = new Color(21, 18, 27, 200); // surface-dim (78% opacity)
-    private static final Color COLOR_SURFACE = new Color(33, 30, 39, 153); // surface-container (60% opacity)
-    private static final Color COLOR_PRIMARY = new Color(208, 188, 255); // Light purple Dim
-    private static final Color COLOR_ON_BACKGROUND = new Color(231, 224, 237); // #e7e0ed
-    private static final Color COLOR_ON_SURFACE_VARIANT = new Color(203, 195, 215); // #cbc3d7
-    private static final Color COLOR_OUTLINE_VARIANT = new Color(73, 68, 84, 50); // border highlight
-
-    private Point dragOffset;
+public class LikeGoalOverlay extends Stage {
     private int totalLikes = 0;
     private int targetLikes = 10000;
 
-    private float pulseScale = 1.0f;
-    private boolean pulseGrowing = true;
-    private final Timer pulseTimer;
-    private final GoalPanel goalPanel;
+    private double xOffset = 0;
+    private double yOffset = 0;
+
+    private final Label lblTitle;
+    private final Label lblStatus;
+    private final ProgressBar progressBar;
+    private final SVGPath heartPath;
+    private final ScaleTransition pulseTransition;
 
     public LikeGoalOverlay() {
-        setTitle("Mục Tiêu Tim"); // Title needed for OBS Window Capture detection
-        setUndecorated(true);
-        setBackground(new Color(0, 0, 0, 0)); // transparent window
-        setSize(320, 95);
-        setLocationRelativeTo(null);
-        setType(Type.NORMAL); // NORMAL type allows OBS/TikTok Live Studio to detect this window
+        setTitle("Mục Tiêu Tim"); // Needed for OBS Window Capture detection
+        initStyle(StageStyle.TRANSPARENT);
 
-        // Load and set application window icon
+        // Load application window icon
         try {
-            java.net.URL imgUrl = getClass().getResource("/icons/logo.png");
-            if (imgUrl != null) {
-                setIconImage(new ImageIcon(imgUrl).getImage());
+            java.io.InputStream imgStream = getClass().getResourceAsStream("/icons/logo.png");
+            if (imgStream != null) {
+                getIcons().add(new Image(imgStream));
             }
         } catch (Exception e) {
             System.err.println("Could not load application icon: " + e.getMessage());
@@ -47,49 +49,126 @@ public class LikeGoalOverlay extends JFrame {
         // Load like target from config
         this.targetLikes = ConfigManager.getConfig().getLikeTarget();
 
-        setLayout(null);
-        goalPanel = new GoalPanel();
-        goalPanel.setBounds(10, 10, 300, 75);
-        add(goalPanel);
+        // Root Container with transparent background
+        AnchorPane root = new AnchorPane();
+        root.setPrefSize(320, 95);
+        root.setStyle(
+            "-fx-background-color: rgba(21, 18, 27, 0.78);" + // surface-dim (78% opacity)
+            "-fx-background-radius: 16px;" +
+            "-fx-border-color: rgba(255, 255, 255, 0.1);" +
+            "-fx-border-radius: 16px;" +
+            "-fx-border-width: 1.2px;"
+        );
+
+        // Enable glassmorphic shadow
+        DropShadow shadow = new DropShadow();
+        shadow.setColor(Color.web("#000000", 0.45));
+        shadow.setRadius(12);
+        shadow.setOffsetY(4);
+        root.setEffect(shadow);
 
         // Draggable window support
-        MouseAdapter dragListener = new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                dragOffset = e.getPoint();
-            }
-
-            @Override
-            public void mouseDragged(MouseEvent e) {
-                if (dragOffset != null) {
-                    Point curr = getLocation();
-                    setLocation(curr.x + e.getX() - dragOffset.x, curr.y + e.getY() - dragOffset.y);
-                }
-            }
-        };
-        goalPanel.addMouseListener(dragListener);
-        goalPanel.addMouseMotionListener(dragListener);
-
-        // Animation Timer for Heart pulsing effect
-        pulseTimer = new Timer(35, e -> {
-            if (pulseGrowing) {
-                pulseScale += 0.015f;
-                if (pulseScale >= 1.12f) {
-                    pulseGrowing = false;
-                }
-            } else {
-                pulseScale -= 0.015f;
-                if (pulseScale <= 0.95f) {
-                    pulseGrowing = true;
-                }
-            }
-            goalPanel.repaint();
+        root.setOnMousePressed(event -> {
+            xOffset = event.getSceneX();
+            yOffset = event.getSceneY();
         });
-        pulseTimer.start();
+        root.setOnMouseDragged(event -> {
+            setX(event.getScreenX() - xOffset);
+            setY(event.getScreenY() - yOffset);
+        });
+
+        // 1. Draw Heart Icon (Pulsing SVG Path)
+        heartPath = new SVGPath();
+        heartPath.setContent("M 11 4 C 11 4 7 0 3 0 C 0 0 0 4 0 6 C 0 11 6 17 11 21 C 16 17 22 11 22 6 C 22 4 22 0 19 0 C 15 0 11 4 11 4 Z");
+        
+        // Hot Pink to Red Gradient fill
+        LinearGradient heartGrad = new LinearGradient(
+            0, 0, 0, 1, true, CycleMethod.NO_CYCLE,
+            new Stop(0, Color.web("#ff446e")),
+            new Stop(1, Color.web("#dc143c"))
+        );
+        heartPath.setFill(heartGrad);
+
+        // Positioning the heart within AnchorPane
+        AnchorPane.setLeftAnchor(heartPath, 15.0);
+        AnchorPane.setTopAnchor(heartPath, 14.0);
+
+        // Add soft glowing neon shadow to the heart
+        DropShadow heartGlow = new DropShadow();
+        heartGlow.setColor(Color.web("#ff446e", 0.6));
+        heartGlow.setRadius(8);
+        heartPath.setEffect(heartGlow);
+
+        // Animation for Heart pulsing effect (GPU accelerated)
+        pulseTransition = new ScaleTransition(Duration.millis(600), heartPath);
+        pulseTransition.setFromX(0.95);
+        pulseTransition.setFromY(0.95);
+        pulseTransition.setToX(1.15);
+        pulseTransition.setToY(1.15);
+        pulseTransition.setAutoReverse(true);
+        pulseTransition.setCycleCount(Animation.INDEFINITE);
+        pulseTransition.play();
+
+        // 2. Goal Title Label
+        lblTitle = new Label("MỤC TIÊU THẢ TIM");
+        lblTitle.setStyle(
+            "-fx-text-fill: #d0bcfc;" + // Light purple Dim
+            "-fx-font-family: 'Segoe UI', system-ui;" +
+            "-fx-font-weight: bold;" +
+            "-fx-font-size: 12px;"
+        );
+        AnchorPane.setLeftAnchor(lblTitle, 45.0);
+        AnchorPane.setTopAnchor(lblTitle, 13.0);
+
+        // 3. Goal Status Text (e.g. 0 / 10,000)
+        lblStatus = new Label("0 / 10,000");
+        lblStatus.setStyle(
+            "-fx-text-fill: #e7e0ed;" + // #e7e0ed
+            "-fx-font-family: 'Segoe UI', system-ui;" +
+            "-fx-font-size: 12px;" +
+            "-fx-font-weight: bold;"
+        );
+        AnchorPane.setRightAnchor(lblStatus, 15.0);
+        AnchorPane.setTopAnchor(lblStatus, 13.0);
+
+        // 4. Progress Bar
+        progressBar = new ProgressBar(0.0);
+        progressBar.setPrefSize(290, 15);
+        progressBar.setStyle(
+            "-fx-box-border: transparent;" +
+            "-fx-control-inner-background: rgba(33, 30, 39, 0.6);" + // surface-container
+            "-fx-background-color: transparent;"
+        );
+
+        // Apply custom modern gradient CSS to ProgressBar bar
+        progressBar.getStylesheets().add(getClass().getResource("/css/progressbar.css") != null ? 
+            getClass().getResource("/css/progressbar.css").toExternalForm() : "");
+            
+        AnchorPane.setLeftAnchor(progressBar, 15.0);
+        AnchorPane.setTopAnchor(progressBar, 40.0);
+
+        // Assemble root
+        root.getChildren().addAll(heartPath, lblTitle, lblStatus, progressBar);
+
+        // Configure Scene
+        Scene scene = new Scene(root);
+        scene.setFill(Color.TRANSPARENT);
+        setScene(scene);
+
+        // Apply fallback custom CSS styling directly in case stylesheet not found
+        progressBar.setProgress(0.0);
+        updateProgressUI();
+    }
+
+    private void updateProgressUI() {
+        double pct = targetLikes > 0 ? (double) totalLikes / targetLikes : 0;
+        if (pct > 1.0) pct = 1.0;
+        progressBar.setProgress(pct);
+        lblStatus.setText(String.format("%,d / %,d", totalLikes, targetLikes));
     }
 
     public synchronized void setLikes(int totalLikes) {
-        SwingUtilities.invokeLater(() -> {
+        Platform.runLater(() -> {
             synchronized (this) {
                 this.totalLikes = totalLikes;
                 // Auto-scale target goals in steps of 10,000
@@ -97,16 +176,16 @@ public class LikeGoalOverlay extends JFrame {
                     this.targetLikes += 10000;
                 }
             }
-            goalPanel.repaint();
+            updateProgressUI();
         });
     }
 
     public synchronized void setTargetLikes(int targetLikes) {
-        SwingUtilities.invokeLater(() -> {
+        Platform.runLater(() -> {
             synchronized (this) {
                 this.targetLikes = targetLikes;
             }
-            goalPanel.repaint();
+            updateProgressUI();
         });
     }
 
@@ -118,118 +197,8 @@ public class LikeGoalOverlay extends JFrame {
         return targetLikes;
     }
 
-    @Override
     public void dispose() {
-        if (pulseTimer != null) {
-            pulseTimer.stop();
-        }
-        super.dispose();
-    }
-
-    private class GoalPanel extends JPanel {
-        public GoalPanel() {
-            setOpaque(false);
-            setLayout(null);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-
-            int w = getWidth();
-            int h = getHeight();
-
-            // 1. Paint Glassmorphic Card Background
-            g2.setColor(COLOR_BG);
-            g2.fillRoundRect(0, 0, w, h, 16, 16);
-
-            g2.setStroke(new BasicStroke(1.2f));
-            g2.setColor(new Color(255, 255, 255, 25));
-            g2.drawRoundRect(0, 0, w - 1, h - 1, 16, 16);
-
-            // 2. Draw Heart Icon (Pulsing Vector Path)
-            int heartX = 22;
-            int heartY = 24;
-            int heartSize = 22;
-
-            g2.translate(heartX, heartY);
-            g2.scale(pulseScale, pulseScale);
-            g2.translate(-heartSize / 2.0, -heartSize / 2.0);
-
-            // Custom painted heart path
-            Path2D heart = new Path2D.Double();
-            heart.moveTo(11, 4);
-            heart.curveTo(11, 4, 7, 0, 3, 0);
-            heart.curveTo(0, 0, 0, 4, 0, 6);
-            heart.curveTo(0, 11, 6, 17, 11, 21);
-            heart.curveTo(16, 17, 22, 11, 22, 6);
-            heart.curveTo(22, 4, 22, 0, 19, 0);
-            heart.curveTo(15, 0, 11, 4, 11, 4);
-            heart.closePath();
-
-            // Hot Pink to Red Gradient fill
-            GradientPaint heartGrad = new GradientPaint(0, 0, new Color(255, 68, 110), 0, heartSize,
-                    new Color(220, 20, 60));
-            g2.setPaint(heartGrad);
-            g2.fill(heart);
-
-            // Reset translation/scale matrix
-            g2.translate(heartSize / 2.0, heartSize / 2.0);
-            g2.scale(1.0 / pulseScale, 1.0 / pulseScale);
-            g2.translate(-heartX, -heartY);
-
-            // 3. Draw Goal Status Text
-            int textX = 42;
-            g2.setColor(COLOR_PRIMARY);
-            g2.setFont(FontUtil.getNameFont().deriveFont(Font.BOLD, 12.5f));
-            g2.drawString("MỤC TIÊU THẢ TIM", textX, 22);
-
-            int currentVal, targetVal;
-            synchronized (LikeGoalOverlay.this) {
-                currentVal = totalLikes;
-                targetVal = targetLikes;
-            }
-
-            g2.setColor(COLOR_ON_BACKGROUND);
-            g2.setFont(FontUtil.getCoinsFont().deriveFont(12f));
-            String statusStr = String.format("%,d / %,d", currentVal, targetVal);
-            FontMetrics fm = g2.getFontMetrics();
-            g2.drawString(statusStr, w - 15 - fm.stringWidth(statusStr), 22);
-
-            // 4. Draw Progress Bar Track
-            int barX = 15;
-            int barY = 40;
-            int barW = w - 30; // 270px
-            int barH = 15;
-
-            g2.setColor(COLOR_SURFACE);
-            g2.fillRoundRect(barX, barY, barW, barH, 8, 8);
-
-            g2.setStroke(new BasicStroke(1.0f));
-            g2.setColor(COLOR_OUTLINE_VARIANT);
-            g2.drawRoundRect(barX, barY, barW, barH, 8, 8);
-
-            // 5. Draw Progress Bar Gradient Fill
-            double pct = targetVal > 0 ? (double) currentVal / targetVal : 0;
-            if (pct > 1.0)
-                pct = 1.0;
-            int fillW = (int) (barW * pct);
-
-            if (fillW > 4) {
-                Graphics2D fillG = (Graphics2D) g2.create();
-                fillG.setClip(new java.awt.geom.RoundRectangle2D.Double(barX, barY, barW, barH, 8, 8));
-
-                // Hot pink to violet gradient fill
-                GradientPaint barGrad = new GradientPaint(barX, 0, new Color(255, 68, 110), barX + barW, 0,
-                        new Color(110, 68, 255));
-                fillG.setPaint(barGrad);
-                fillG.fillRoundRect(barX, barY, fillW, barH, 8, 8);
-                fillG.dispose();
-            }
-
-            g2.dispose();
-        }
+        pulseTransition.stop();
+        close();
     }
 }
