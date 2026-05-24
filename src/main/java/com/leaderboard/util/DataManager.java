@@ -16,22 +16,7 @@ public class DataManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public static File getDataFile() {
-        String userHome = System.getProperty("user.home");
-        File dir = new File(userHome, ".tiktokstream");
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-        File newFile = new File(dir, "data.json");
-        File oldLocalFile = new File("data.json");
-        if (oldLocalFile.exists() && !newFile.exists()) {
-            try {
-                oldLocalFile.renameTo(newFile);
-                System.out.println("Migrated data.json to " + newFile.getAbsolutePath());
-            } catch (Exception e) {
-                System.err.println("Failed to auto-migrate data.json: " + e.getMessage());
-            }
-        }
-        return newFile;
+        return ConfigManager.getStorageFile("data.json");
     }
 
     public static class AppData {
@@ -229,11 +214,7 @@ public class DataManager {
     }
 
     private static boolean tryMigrateFromConfig() {
-        String userHome = System.getProperty("user.home");
-        File configFile = new File(new File(userHome, ".tiktokstream"), "config.json");
-        if (!configFile.exists()) {
-            configFile = new File("config.json");
-        }
+        File configFile = ConfigManager.getStorageFile("config.json");
         if (!configFile.exists()) {
             return false;
         }

@@ -49,23 +49,62 @@ public class ConfigManager {
         load();
     }
 
-    public static File getConfigFile() {
-        String userHome = System.getProperty("user.home");
-        File dir = new File(userHome, ".tiktokstream");
+    public static File getStorageFile(String filename) {
+        String os = System.getProperty("os.name").toLowerCase();
+        String baseDir;
+        String appName = "TikTokStreamSuite";
+        
+        if (os.contains("win")) {
+            String appData = System.getenv("APPDATA");
+            if (appData != null) {
+                baseDir = appData + File.separator + appName;
+            } else {
+                baseDir = System.getProperty("user.home") + File.separator + "AppData" + File.separator + "Roaming" + File.separator + appName;
+            }
+        } else if (os.contains("mac")) {
+            baseDir = System.getProperty("user.home") + File.separator + "Library" + File.separator + "Application Support" + File.separator + appName;
+        } else {
+            String xdgConfig = System.getenv("XDG_CONFIG_HOME");
+            if (xdgConfig != null && !xdgConfig.isEmpty()) {
+                baseDir = xdgConfig + File.separator + appName;
+            } else {
+                baseDir = System.getProperty("user.home") + File.separator + ".config" + File.separator + appName;
+            }
+        }
+
+        File dir = new File(baseDir);
         if (!dir.exists()) {
             dir.mkdirs();
         }
-        File newFile = new File(dir, "config.json");
-        File oldLocalFile = new File("config.json");
-        if (oldLocalFile.exists() && !newFile.exists()) {
-            try {
-                oldLocalFile.renameTo(newFile);
-                System.out.println("Migrated config.json to " + newFile.getAbsolutePath());
-            } catch (Exception e) {
-                System.err.println("Failed to auto-migrate config.json: " + e.getMessage());
+
+        File targetFile = new File(dir, filename);
+
+        // Triple-layer Migration check: AppData <- ~/.tiktokstream <- local root
+        if (!targetFile.exists()) {
+            // Check in intermediate ~/.tiktokstream
+            File intermediateFile = new File(System.getProperty("user.home") + File.separator + ".tiktokstream" + File.separator + filename);
+            if (intermediateFile.exists()) {
+                try {
+                    intermediateFile.renameTo(targetFile);
+                    System.out.println("Migrated " + filename + " from ~/.tiktokstream to AppData: " + targetFile.getAbsolutePath());
+                } catch (Exception e) {
+                    System.err.println("Failed to migrate " + filename + " from ~/.tiktokstream: " + e.getMessage());
+                }
+            } else {
+                // Check in local project root
+                File oldLocalFile = new File(filename);
+                if (oldLocalFile.exists()) {
+                    try {
+                        oldLocalFile.renameTo(targetFile);
+                        System.out.println("Migrated " + filename + " from project root to AppData: " + targetFile.getAbsolutePath());
+                    } catch (Exception e) {
+                        System.err.println("Failed to migrate " + filename + " from project root: " + e.getMessage());
+                    }
+                }
             }
         }
-        return newFile;
+
+        return targetFile;
     }
 
     public static synchronized AppConfig getConfig() {
@@ -73,7 +112,7 @@ public class ConfigManager {
     }
 
     public static synchronized void load() {
-        File file = getConfigFile();
+        File file = getStorageFile("config.json");
         if (!file.exists()) {
             currentConfig = new AppConfig();
             save();
@@ -92,7 +131,7 @@ public class ConfigManager {
     }
 
     public static synchronized void save() {
-        File file = getConfigFile();
+        File file = getStorageFile("config.json");
         try (Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
             GSON.toJson(currentConfig, writer);
         } catch (Exception e) {
