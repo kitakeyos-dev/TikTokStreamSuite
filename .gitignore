@@ -58,3 +58,7 @@ dist/
 emojis/
 avatars/
 temp/
+
+# JavaFX jmods (large binary files - auto-downloaded by build-exe.bat)
+javafx-jmods/
+javafx-jmods.zip
