@@ -13,8 +13,26 @@ import java.util.Collections;
 import java.util.List;
 
 public class DataManager {
-    private static final String FILE_NAME = "data.json";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
+    public static File getDataFile() {
+        String userHome = System.getProperty("user.home");
+        File dir = new File(userHome, ".tiktokstream");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        File newFile = new File(dir, "data.json");
+        File oldLocalFile = new File("data.json");
+        if (oldLocalFile.exists() && !newFile.exists()) {
+            try {
+                oldLocalFile.renameTo(newFile);
+                System.out.println("Migrated data.json to " + newFile.getAbsolutePath());
+            } catch (Exception e) {
+                System.err.println("Failed to auto-migrate data.json: " + e.getMessage());
+            }
+        }
+        return newFile;
+    }
 
     public static class AppData {
         private List<Gifter> gifters = new ArrayList<>();
@@ -115,7 +133,7 @@ public class DataManager {
     }
 
     public static synchronized void load() {
-        File dataFile = new File(FILE_NAME);
+        File dataFile = getDataFile();
         if (!dataFile.exists()) {
             currentData = new AppData();
             // Check if we can migrate from config.json first!
@@ -176,7 +194,7 @@ public class DataManager {
     }
 
     public static synchronized void save() {
-        File file = new File(FILE_NAME);
+        File file = getDataFile();
         try (Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
             GSON.toJson(currentData, writer);
         } catch (Exception e) {
@@ -211,7 +229,11 @@ public class DataManager {
     }
 
     private static boolean tryMigrateFromConfig() {
-        File configFile = new File("config.json");
+        String userHome = System.getProperty("user.home");
+        File configFile = new File(new File(userHome, ".tiktokstream"), "config.json");
+        if (!configFile.exists()) {
+            configFile = new File("config.json");
+        }
         if (!configFile.exists()) {
             return false;
         }

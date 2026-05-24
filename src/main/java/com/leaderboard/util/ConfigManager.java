@@ -7,7 +7,6 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 public class ConfigManager {
-    private static final String FILE_NAME = "config.json";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public static class AppConfig {
@@ -50,12 +49,31 @@ public class ConfigManager {
         load();
     }
 
+    public static File getConfigFile() {
+        String userHome = System.getProperty("user.home");
+        File dir = new File(userHome, ".tiktokstream");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        File newFile = new File(dir, "config.json");
+        File oldLocalFile = new File("config.json");
+        if (oldLocalFile.exists() && !newFile.exists()) {
+            try {
+                oldLocalFile.renameTo(newFile);
+                System.out.println("Migrated config.json to " + newFile.getAbsolutePath());
+            } catch (Exception e) {
+                System.err.println("Failed to auto-migrate config.json: " + e.getMessage());
+            }
+        }
+        return newFile;
+    }
+
     public static synchronized AppConfig getConfig() {
         return currentConfig;
     }
 
     public static synchronized void load() {
-        File file = new File(FILE_NAME);
+        File file = getConfigFile();
         if (!file.exists()) {
             currentConfig = new AppConfig();
             save();
@@ -74,7 +92,7 @@ public class ConfigManager {
     }
 
     public static synchronized void save() {
-        File file = new File(FILE_NAME);
+        File file = getConfigFile();
         try (Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
             GSON.toJson(currentConfig, writer);
         } catch (Exception e) {
