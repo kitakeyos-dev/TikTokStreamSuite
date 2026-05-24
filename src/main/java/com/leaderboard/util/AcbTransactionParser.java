@@ -1,4 +1,4 @@
-package com.leaderboard.service;
+package com.leaderboard.util;
 
 import com.leaderboard.model.BankTransaction;
 import com.leaderboard.model.BankTransaction.Type;
