@@ -350,6 +350,9 @@ public class OverviewTab extends BorderPane {
                 "-fx-background-radius: 8px;" +
                 "-fx-border-width: 1px;"
             );
+            btnConnect.setDisable(false);
+            txtUsername.setDisable(true);
+            txtApiKey.setDisable(true);
         } else {
             lblStatusBadge.setText("CHƯA KẾT NỐI");
             lblStatusBadge.setStyle(
@@ -372,6 +375,9 @@ public class OverviewTab extends BorderPane {
                 "-fx-background-radius: 8px;" +
                 "-fx-border-width: 1px;"
             );
+            btnConnect.setDisable(false);
+            txtUsername.setDisable(false);
+            txtApiKey.setDisable(false);
         }
     }
 
@@ -387,6 +393,19 @@ public class OverviewTab extends BorderPane {
             "-fx-font-weight: bold;" +
             "-fx-font-size: 11px;"
         );
+        btnConnect.setText("Đang kết nối...");
+        btnConnect.setStyle(
+            "-fx-background-color: rgba(168, 85, 247, 0.04);" +
+            "-fx-text-fill: #c084fc;" +
+            "-fx-font-weight: bold;" +
+            "-fx-border-color: rgba(168, 85, 247, 0.2);" +
+            "-fx-border-radius: 8px;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-border-width: 1px;"
+        );
+        btnConnect.setDisable(true);
+        txtUsername.setDisable(true);
+        txtApiKey.setDisable(true);
     }
 
     public void setDisconnectingState() {
@@ -401,6 +420,19 @@ public class OverviewTab extends BorderPane {
             "-fx-font-weight: bold;" +
             "-fx-font-size: 11px;"
         );
+        btnConnect.setText("Đang ngắt...");
+        btnConnect.setStyle(
+            "-fx-background-color: rgba(251, 146, 60, 0.04);" +
+            "-fx-text-fill: #fdba74;" +
+            "-fx-font-weight: bold;" +
+            "-fx-border-color: rgba(251, 146, 60, 0.2);" +
+            "-fx-border-radius: 8px;" +
+            "-fx-background-radius: 8px;" +
+            "-fx-border-width: 1px;"
+        );
+        btnConnect.setDisable(true);
+        txtUsername.setDisable(true);
+        txtApiKey.setDisable(true);
     }
 
     public void updateOverlayButtonStates(boolean isLeaderboardOpen, boolean isChatOpen, boolean isLikeOpen, boolean isTopLikeOpen) {

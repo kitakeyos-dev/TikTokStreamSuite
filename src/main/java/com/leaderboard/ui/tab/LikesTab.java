@@ -1,6 +1,7 @@
 package com.leaderboard.ui.tab;
 
 import com.leaderboard.ui.DashboardStage;
+import com.leaderboard.ui.Dialogs;
 import com.leaderboard.util.ConfigManager;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -277,10 +278,7 @@ public class LikesTab extends BorderPane {
     private void updateLikeTarget() {
         String targetStr = txtLikeTarget.getText().trim();
         if (targetStr.isEmpty()) {
-            Alert alert = new Alert(Alert.AlertType.WARNING, "Vui lòng nhập mục tiêu tim!", ButtonType.OK);
-            alert.setTitle("Cảnh báo");
-            alert.setHeaderText(null);
-            alert.showAndWait();
+            Dialogs.warning(parent, "Cảnh báo", "Vui lòng nhập mục tiêu tim!");
             return;
         }
 
@@ -289,10 +287,7 @@ public class LikesTab extends BorderPane {
             target = Integer.parseInt(targetStr.replace(",", ""));
             if (target <= 0) throw new NumberFormatException();
         } catch (NumberFormatException e) {
-            Alert err = new Alert(Alert.AlertType.ERROR, "Mục tiêu tim phải là một số nguyên dương!", ButtonType.OK);
-            err.setTitle("Lỗi");
-            err.setHeaderText(null);
-            err.showAndWait();
+            Dialogs.error(parent, "Lỗi", "Mục tiêu tim phải là một số nguyên dương!");
             return;
         }
 
@@ -309,10 +304,7 @@ public class LikesTab extends BorderPane {
             updateProgress(0);
         }
 
-        Alert success = new Alert(Alert.AlertType.INFORMATION, "Đã cập nhật mục tiêu tim thành " + String.format("%,d", target) + "!", ButtonType.OK);
-        success.setTitle("Thành công");
-        success.setHeaderText(null);
-        success.showAndWait();
+        Dialogs.info(parent, "Thành công", "Đã cập nhật mục tiêu tim thành " + String.format("%,d", target) + "!");
     }
 
     public void updateProgress(int totalLikes) {

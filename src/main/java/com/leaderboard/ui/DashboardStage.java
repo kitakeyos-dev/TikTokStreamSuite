@@ -8,23 +8,20 @@ import com.leaderboard.ui.overlay.TopLikeOverlay;
 import com.leaderboard.ui.tab.*;
 import com.leaderboard.util.ConfigManager;
 import com.leaderboard.util.DataManager;
+import com.leaderboard.util.IconManager;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 public class DashboardStage extends Stage {
@@ -41,6 +38,8 @@ public class DashboardStage extends Stage {
 
     private Label lblSubtitle;
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
+    private int connectionAttemptId = 0;
+    private boolean connectionErrorShown = false;
 
     public DashboardStage() {
         setTitle("TikTok Live Stream Suite - Bảng Điều Khiển");
@@ -48,14 +47,7 @@ public class DashboardStage extends Stage {
         setHeight(680);
 
         // Load application window icon
-        try {
-            java.io.InputStream imgStream = getClass().getResourceAsStream("/icons/logo.png");
-            if (imgStream != null) {
-                getIcons().add(new Image(imgStream));
-            }
-        } catch (Exception e) {
-            System.err.println("Could not load application icon: " + e.getMessage());
-        }
+        IconManager.applyAppIcon(this);
 
         // Load configs and data
         ConfigManager.load();
@@ -84,10 +76,14 @@ public class DashboardStage extends Stage {
         setOnCloseRequest(e -> {
             saveInputSettings();
             TikTokConnector.disconnect();
-            if (overlayStage != null) overlayStage.dispose();
-            if (chatOverlayStage != null) chatOverlayStage.dispose();
-            if (likeOverlayStage != null) likeOverlayStage.dispose();
-            if (topLikeOverlayStage != null) topLikeOverlayStage.dispose();
+            if (overlayStage != null)
+                overlayStage.dispose();
+            if (chatOverlayStage != null)
+                chatOverlayStage.dispose();
+            if (likeOverlayStage != null)
+                likeOverlayStage.dispose();
+            if (topLikeOverlayStage != null)
+                topLikeOverlayStage.dispose();
         });
     }
 
@@ -115,18 +111,16 @@ public class DashboardStage extends Stage {
         VBox titleGroup = new VBox(2);
         Label lblTitle = new Label("LIVE STREAM SUITE");
         lblTitle.setStyle(
-            "-fx-text-fill: #f4f4f5;" +
-            "-fx-font-weight: bold;" +
-            "-fx-font-size: 18px;" +
-            "-fx-font-family: 'Segoe UI', system-ui;"
-        );
+                "-fx-text-fill: #f4f4f5;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-font-size: 18px;" +
+                        "-fx-font-family: 'Segoe UI', system-ui;");
 
         lblSubtitle = new Label("Bảng điều khiển quản lý OBS Overlays & Kết nối Livestream");
         lblSubtitle.setStyle(
-            "-fx-text-fill: #a1a1aa;" +
-            "-fx-font-size: 11px;" +
-            "-fx-font-family: 'Segoe UI', system-ui;"
-        );
+                "-fx-text-fill: #a1a1aa;" +
+                        "-fx-font-size: 11px;" +
+                        "-fx-font-family: 'Segoe UI', system-ui;");
 
         titleGroup.getChildren().addAll(lblTitle, lblSubtitle);
         headerTextGroup.getChildren().addAll(iconDot, titleGroup);
@@ -136,7 +130,7 @@ public class DashboardStage extends Stage {
         Region divider = new Region();
         divider.setPrefHeight(1);
         divider.setStyle("-fx-background-color: #27272a;");
-        
+
         VBox headerContainer = new VBox(headerBar, divider);
         root.setTop(headerContainer);
     }
@@ -181,7 +175,8 @@ public class DashboardStage extends Stage {
 
                 // 2. Update diagnostics
                 overviewTab.getLblSyncDiag().setText(String.format("HOẠT ĐỘNG (%,d người xem)", viewers));
-                overviewTab.getLblSyncDiag().setStyle("-fx-text-fill: #25f4ee; -fx-font-size: 11px; -fx-font-weight: bold;");
+                overviewTab.getLblSyncDiag()
+                        .setStyle("-fx-text-fill: #25f4ee; -fx-font-size: 11px; -fx-font-weight: bold;");
 
                 // 3. Update total likes
                 likesTab.updateProgress(likes);
@@ -234,44 +229,46 @@ public class DashboardStage extends Stage {
         } else {
             String username = overviewTab.getUsername();
             if (username.isEmpty()) {
-                Alert alert = new Alert(Alert.AlertType.WARNING, "Vui lòng nhập TikTok Username!", ButtonType.OK);
-                alert.setTitle("Cảnh báo");
-                alert.setHeaderText(null);
-                alert.showAndWait();
+                Dialogs.warning(this, "Cảnh báo", "Vui lòng nhập TikTok Username!");
                 return;
             }
             saveInputSettings();
             overviewTab.setConnectingState();
+            final int attemptId = ++connectionAttemptId;
+            connectionErrorShown = false;
 
             TikTokConnector.connect(
-                username,
-                overviewTab.getApiKey(),
-                () -> Platform.runLater(() -> {
-                    overviewTab.setConnectionState(true);
-                    overviewTab.updateDiagnostics(true, "42ms");
-                }),
-                () -> Platform.runLater(() -> {
-                    overviewTab.setConnectionState(false);
-                    overviewTab.updateDiagnostics(false, "--");
-                    lblSubtitle.setText("Bảng điều khiển quản lý OBS Overlays & Kết nối Livestream");
-                }),
-                errorMsg -> Platform.runLater(() -> {
-                    Alert alert = new Alert(Alert.AlertType.ERROR, "Kết nối thất bại: " + errorMsg, ButtonType.OK);
-                    alert.setTitle("Lỗi kết nối");
-                    alert.setHeaderText(null);
-                    alert.showAndWait();
-                    overviewTab.setConnectionState(false);
-                    overviewTab.updateDiagnostics(false, "--");
-                    lblSubtitle.setText("Bảng điều khiển quản lý OBS Overlays & Kết nối Livestream");
-                }),
-                () -> Platform.runLater(() -> {
-                    leaderboardTab.refreshTableData();
-                    teamTab.refreshTableData();
-                    if (overlayStage != null) {
-                        overlayStage.updateLeaderboard();
-                    }
-                })
-            );
+                    username,
+                    overviewTab.getApiKey(),
+                    () -> Platform.runLater(() -> {
+                        if (attemptId != connectionAttemptId)
+                            return;
+                        overviewTab.setConnectionState(true);
+                        overviewTab.updateDiagnostics(true, "42ms");
+                    }),
+                    () -> Platform.runLater(() -> {
+                        if (attemptId != connectionAttemptId)
+                            return;
+                        overviewTab.setConnectionState(false);
+                        overviewTab.updateDiagnostics(false, "--");
+                        lblSubtitle.setText("Bảng điều khiển quản lý OBS Overlays & Kết nối Livestream");
+                    }),
+                    errorMsg -> Platform.runLater(() -> {
+                        if (attemptId != connectionAttemptId || connectionErrorShown)
+                            return;
+                        connectionErrorShown = true;
+                        Dialogs.error(this, "Lỗi kết nối", "Kết nối thất bại: " + errorMsg);
+                        overviewTab.setConnectionState(false);
+                        overviewTab.updateDiagnostics(false, "--");
+                        lblSubtitle.setText("Bảng điều khiển quản lý OBS Overlays & Kết nối Livestream");
+                    }),
+                    () -> Platform.runLater(() -> {
+                        leaderboardTab.refreshTableData();
+                        teamTab.refreshTableData();
+                        if (overlayStage != null) {
+                            overlayStage.updateLeaderboard();
+                        }
+                    }));
         }
     }
 
@@ -324,10 +321,14 @@ public class DashboardStage extends Stage {
     }
 
     public void updateOverlayAlwaysOnTop() {
-        if (overlayStage != null) overlayStage.setAlwaysOnTop(overviewTab.getChkLeaderboardOnTop().isSelected());
-        if (chatOverlayStage != null) chatOverlayStage.setAlwaysOnTop(overviewTab.getChkChatOnTop().isSelected());
-        if (likeOverlayStage != null) likeOverlayStage.setAlwaysOnTop(overviewTab.getChkLikeOnTop().isSelected());
-        if (topLikeOverlayStage != null) topLikeOverlayStage.setAlwaysOnTop(overviewTab.getChkTopLikeOnTop().isSelected());
+        if (overlayStage != null)
+            overlayStage.setAlwaysOnTop(overviewTab.getChkLeaderboardOnTop().isSelected());
+        if (chatOverlayStage != null)
+            chatOverlayStage.setAlwaysOnTop(overviewTab.getChkChatOnTop().isSelected());
+        if (likeOverlayStage != null)
+            likeOverlayStage.setAlwaysOnTop(overviewTab.getChkLikeOnTop().isSelected());
+        if (topLikeOverlayStage != null)
+            topLikeOverlayStage.setAlwaysOnTop(overviewTab.getChkTopLikeOnTop().isSelected());
     }
 
     public void updateOverlayButtonStates() {

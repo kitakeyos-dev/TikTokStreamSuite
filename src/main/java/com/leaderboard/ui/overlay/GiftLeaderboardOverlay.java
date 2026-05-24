@@ -2,6 +2,7 @@ package com.leaderboard.ui.overlay;
 
 import com.leaderboard.model.Gifter;
 import com.leaderboard.util.DataManager;
+import com.leaderboard.util.IconManager;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -38,14 +39,7 @@ public class GiftLeaderboardOverlay extends Stage {
         initStyle(StageStyle.TRANSPARENT);
 
         // Load application window icon
-        try {
-            java.io.InputStream imgStream = getClass().getResourceAsStream("/icons/logo.png");
-            if (imgStream != null) {
-                getIcons().add(new Image(imgStream));
-            }
-        } catch (Exception e) {
-            System.err.println("Could not load application icon: " + e.getMessage());
-        }
+        IconManager.applyAppIcon(this);
 
         // Main Glass Panel Container
         AnchorPane root = new AnchorPane();
@@ -272,7 +266,7 @@ public class GiftLeaderboardOverlay extends Stage {
                 Image img = new Image(g.getAvatarUrl(), avatarSize, avatarSize, true, true, true);
                 avatarImg.setImage(img);
             } else {
-                avatarImg.setImage(new Image(getClass().getResourceAsStream("/icons/logo.png")));
+                avatarImg.setImage(IconManager.getAppIcon());
             }
 
             Circle avatarBorder = new Circle(avatarSize / 2, avatarSize / 2, avatarSize / 2);

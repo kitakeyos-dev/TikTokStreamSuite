@@ -1,0 +1,118 @@
+.tss-modal {
+    -fx-background-color: #151518;
+    -fx-background-radius: 10px;
+    -fx-border-color: rgba(255, 255, 255, 0.10);
+    -fx-border-radius: 10px;
+    -fx-border-width: 1px;
+    -fx-padding: 18px;
+}
+
+.modal-title {
+    -fx-text-fill: #f4f4f5;
+    -fx-font-family: "Segoe UI", system-ui;
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+}
+
+.modal-message {
+    -fx-text-fill: #d4d4d8;
+    -fx-font-family: "Segoe UI", system-ui;
+    -fx-font-size: 13px;
+    -fx-line-spacing: 3px;
+}
+
+.modal-type-icon {
+    -fx-padding: 0 2px 0 0;
+}
+
+.modal-close-button {
+    -fx-background-color: rgba(255, 255, 255, 0.03);
+    -fx-background-radius: 14px;
+    -fx-border-color: rgba(255, 255, 255, 0.10);
+    -fx-border-radius: 14px;
+    -fx-border-width: 1px;
+    -fx-padding: 0;
+}
+
+.modal-close-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+}
+
+.modal-button {
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-font-family: "Segoe UI", system-ui;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-padding: 8px 16px;
+    -fx-cursor: hand;
+}
+
+.default-button {
+    -fx-background-color: #252547;
+    -fx-border-color: rgba(129, 140, 248, 0.55);
+    -fx-text-fill: #e0e7ff;
+}
+
+.default-button:hover {
+    -fx-background-color: #303061;
+}
+
+.secondary-button {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(255, 255, 255, 0.12);
+    -fx-text-fill: #d4d4d8;
+}
+
+.secondary-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.06);
+}
+
+.danger-button {
+    -fx-background-color: rgba(239, 68, 68, 0.16);
+    -fx-border-color: rgba(248, 113, 113, 0.55);
+    -fx-text-fill: #fecaca;
+}
+
+.danger-button:hover {
+    -fx-background-color: rgba(239, 68, 68, 0.24);
+}
+
+.field-label {
+    -fx-text-fill: #a1a1aa;
+    -fx-font-family: "Segoe UI", system-ui;
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+}
+
+.tss-text-field {
+    -fx-background-color: #0f0f11;
+    -fx-background-radius: 8px;
+    -fx-border-color: rgba(255, 255, 255, 0.12);
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-text-fill: #f4f4f5;
+    -fx-prompt-text-fill: #71717a;
+    -fx-padding: 8px 10px;
+}
+
+.tss-text-field:focused {
+    -fx-border-color: rgba(129, 140, 248, 0.75);
+}
+
+.tss-error {
+    -fx-border-color: rgba(248, 113, 113, 0.50);
+}
+
+.tss-warning {
+    -fx-border-color: rgba(245, 158, 11, 0.44);
+}
+
+.tss-information {
+    -fx-border-color: rgba(37, 244, 238, 0.36);
+}
+
+.tss-confirmation {
+    -fx-border-color: rgba(129, 140, 248, 0.44);
+}

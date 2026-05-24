@@ -2,6 +2,7 @@ package com.leaderboard.ui.tab;
 
 import com.leaderboard.model.Gifter;
 import com.leaderboard.ui.DashboardStage;
+import com.leaderboard.ui.Dialogs;
 import com.leaderboard.util.DataManager;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -323,21 +324,11 @@ public class LeaderboardTab extends BorderPane {
     private void deleteSelectedGifter() {
         Gifter selected = tblGifters.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            Alert alert = new Alert(Alert.AlertType.WARNING, "Vui lòng chọn người cần xoá!", ButtonType.OK);
-            alert.setTitle("Cảnh báo");
-            alert.setHeaderText(null);
-            alert.showAndWait();
+            Dialogs.warning(parent, "Cảnh báo", "Vui lòng chọn người cần xoá!");
             return;
         }
 
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, 
-            "Bạn có chắc muốn xoá người dùng @" + selected.getUniqueId() + " khỏi bảng xếp hạng?", 
-            ButtonType.YES, ButtonType.NO);
-        confirm.setTitle("Xác nhận xoá");
-        confirm.setHeaderText(null);
-        Optional<ButtonType> result = confirm.showAndWait();
-
-        if (result.isPresent() && result.get() == ButtonType.YES) {
+        if (Dialogs.confirm(parent, "Xác nhận xoá", "Bạn có chắc muốn xoá người dùng @" + selected.getUniqueId() + " khỏi bảng xếp hạng?", "Xoá")) {
             synchronized (DataManager.class) {
                 List<Gifter> list = DataManager.getGifters();
                 list.removeIf(g -> g.getUniqueId().equalsIgnoreCase(selected.getUniqueId()));
@@ -349,14 +340,7 @@ public class LeaderboardTab extends BorderPane {
     }
 
     private void resetLeaderboard() {
-        Alert confirm = new Alert(Alert.AlertType.WARNING, 
-            "CẢNH BÁO: Hành động này sẽ xoá SẠCH bảng xếp hạng hiện tại! Bạn có muốn tiếp tục?", 
-            ButtonType.YES, ButtonType.NO);
-        confirm.setTitle("Xác nhận xoá sạch");
-        confirm.setHeaderText(null);
-        Optional<ButtonType> result = confirm.showAndWait();
-
-        if (result.isPresent() && result.get() == ButtonType.YES) {
+        if (Dialogs.confirm(parent, "Xác nhận xoá sạch", "Hành động này sẽ xoá sạch bảng xếp hạng hiện tại. Bạn có muốn tiếp tục?", "Xoá sạch")) {
             synchronized (DataManager.class) {
                 DataManager.getGifters().clear();
                 DataManager.save();
@@ -367,37 +351,22 @@ public class LeaderboardTab extends BorderPane {
     }
 
     private void addManualPoints() {
-        TextInputDialog idDialog = new TextInputDialog();
-        idDialog.setTitle("Cộng điểm thủ công");
-        idDialog.setHeaderText("Nhập TikTok ID (ví dụ: user123):");
-        idDialog.setContentText("TikTok ID:");
-        Optional<String> idResult = idDialog.showAndWait();
+        Optional<String> idResult = Dialogs.input(parent, "Cộng điểm thủ công", "Nhập TikTok ID (ví dụ: user123):", "TikTok ID:", "");
         if (idResult.isEmpty() || idResult.get().trim().isEmpty()) return;
         String uniqueId = idResult.get().trim();
 
-        TextInputDialog nickDialog = new TextInputDialog(uniqueId);
-        nickDialog.setTitle("Cộng điểm thủ công");
-        nickDialog.setHeaderText("Nhập Tên Hiển Thị (không bắt buộc):");
-        nickDialog.setContentText("Tên:");
-        Optional<String> nickResult = nickDialog.showAndWait();
+        Optional<String> nickResult = Dialogs.input(parent, "Cộng điểm thủ công", "Nhập Tên Hiển Thị (không bắt buộc):", "Tên:", uniqueId);
         String nickname = nickResult.orElse("").trim();
         if (nickname.isEmpty()) nickname = uniqueId;
 
-        TextInputDialog pointsDialog = new TextInputDialog("100");
-        pointsDialog.setTitle("Cộng điểm thủ công");
-        pointsDialog.setHeaderText("Nhập số Kim cương cần cộng (hoặc trừ nếu nhập số âm):");
-        pointsDialog.setContentText("Kim cương:");
-        Optional<String> pointsResult = pointsDialog.showAndWait();
+        Optional<String> pointsResult = Dialogs.input(parent, "Cộng điểm thủ công", "Nhập số Kim cương cần cộng (hoặc trừ nếu nhập số âm):", "Kim cương:", "100");
         if (pointsResult.isEmpty() || pointsResult.get().trim().isEmpty()) return;
 
         int points;
         try {
             points = Integer.parseInt(pointsResult.get().trim());
         } catch (NumberFormatException e) {
-            Alert err = new Alert(Alert.AlertType.ERROR, "Số kim cương không hợp lệ!", ButtonType.OK);
-            err.setTitle("Lỗi");
-            err.setHeaderText(null);
-            err.showAndWait();
+            Dialogs.error(parent, "Lỗi", "Số kim cương không hợp lệ!");
             return;
         }
 

@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.leaderboard.model.TeamMember;
 import com.leaderboard.ui.DashboardStage;
+import com.leaderboard.ui.Dialogs;
 import com.leaderboard.util.DataManager;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -350,21 +351,11 @@ public class TeamTab extends BorderPane {
     private void deleteSelectedMember() {
         TeamMember selected = tblMembers.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            Alert alert = new Alert(Alert.AlertType.WARNING, "Vui lòng chọn thành viên cần xoá!", ButtonType.OK);
-            alert.setTitle("Cảnh báo");
-            alert.setHeaderText(null);
-            alert.showAndWait();
+            Dialogs.warning(parent, "Cảnh báo", "Vui lòng chọn thành viên cần xoá!");
             return;
         }
 
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
-            "Bạn có chắc muốn xoá thành viên @" + selected.getUniqueId() + " khỏi danh sách?",
-            ButtonType.YES, ButtonType.NO);
-        confirm.setTitle("Xác nhận");
-        confirm.setHeaderText(null);
-        Optional<ButtonType> result = confirm.showAndWait();
-
-        if (result.isPresent() && result.get() == ButtonType.YES) {
+        if (Dialogs.confirm(parent, "Xác nhận", "Bạn có chắc muốn xoá thành viên @" + selected.getUniqueId() + " khỏi danh sách?", "Xoá")) {
             synchronized (DataManager.class) {
                 List<TeamMember> list = DataManager.getTeamMembers();
                 list.removeIf(m -> m.getUniqueId().equalsIgnoreCase(selected.getUniqueId()));
@@ -375,14 +366,7 @@ public class TeamTab extends BorderPane {
     }
 
     private void resetAllMembers() {
-        Alert confirm = new Alert(Alert.AlertType.WARNING,
-            "CẢNH BÁO: Hành động này sẽ xoá SẠCH danh sách thành viên hiện tại! Bạn có muốn tiếp tục?",
-            ButtonType.YES, ButtonType.NO);
-        confirm.setTitle("Xác nhận xoá sạch");
-        confirm.setHeaderText(null);
-        Optional<ButtonType> result = confirm.showAndWait();
-
-        if (result.isPresent() && result.get() == ButtonType.YES) {
+        if (Dialogs.confirm(parent, "Xác nhận xoá sạch", "Hành động này sẽ xoá sạch danh sách thành viên hiện tại. Bạn có muốn tiếp tục?", "Xoá sạch")) {
             synchronized (DataManager.class) {
                 DataManager.getTeamMembers().clear();
                 DataManager.save();
@@ -396,10 +380,7 @@ public class TeamTab extends BorderPane {
         List<TeamMember> exportList = new ArrayList<>(items);
 
         if (exportList.isEmpty()) {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Không có dữ liệu nào để xuất!", ButtonType.OK);
-            alert.setTitle("Thông báo");
-            alert.setHeaderText(null);
-            alert.showAndWait();
+            Dialogs.info(parent, "Thông báo", "Không có dữ liệu nào để xuất!");
             return;
         }
 
@@ -412,17 +393,9 @@ public class TeamTab extends BorderPane {
         if (fileToSave != null) {
             try (Writer writer = new OutputStreamWriter(new FileOutputStream(fileToSave), StandardCharsets.UTF_8)) {
                 GSON.toJson(exportList, writer);
-                Alert success = new Alert(Alert.AlertType.INFORMATION, 
-                    "Xuất file thành công!\nTổng số thành viên: " + exportList.size() + "\nĐường dẫn: " + fileToSave.getAbsolutePath(), 
-                    ButtonType.OK);
-                success.setTitle("Thành công");
-                success.setHeaderText(null);
-                success.showAndWait();
+                Dialogs.info(parent, "Thành công", "Xuất file thành công!\nTổng số thành viên: " + exportList.size() + "\nĐường dẫn: " + fileToSave.getAbsolutePath());
             } catch (Exception ex) {
-                Alert error = new Alert(Alert.AlertType.ERROR, "Lỗi khi lưu file: " + ex.getMessage(), ButtonType.OK);
-                error.setTitle("Lỗi");
-                error.setHeaderText(null);
-                error.showAndWait();
+                Dialogs.error(parent, "Lỗi", "Lỗi khi lưu file: " + ex.getMessage());
             }
         }
     }

@@ -1,6 +1,7 @@
 package com.leaderboard.ui.overlay;
 
 import com.leaderboard.util.ConfigManager;
+import com.leaderboard.util.IconManager;
 import javafx.animation.Animation;
 import javafx.animation.ScaleTransition;
 import javafx.application.Platform;
@@ -11,7 +12,6 @@ import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
-import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
@@ -34,14 +34,7 @@ public class LikeGoalOverlay extends Stage {
         initStyle(StageStyle.TRANSPARENT);
 
         // Load application window icon
-        try {
-            java.io.InputStream imgStream = getClass().getResourceAsStream("/icons/logo.png");
-            if (imgStream != null) {
-                getIcons().add(new Image(imgStream));
-            }
-        } catch (Exception e) {
-            System.err.println("Could not load application icon: " + e.getMessage());
-        }
+        IconManager.applyAppIcon(this);
 
         // Load like target from config
         this.targetLikes = ConfigManager.getConfig().getLikeTarget();
@@ -50,12 +43,11 @@ public class LikeGoalOverlay extends Stage {
         AnchorPane root = new AnchorPane();
         root.setPrefSize(320, 65);
         root.setStyle(
-            "-fx-background-color: rgba(9, 9, 11, 0.75);" + // Slate-dark Vercel dark base
-            "-fx-background-radius: 10px;" +
-            "-fx-border-color: rgba(255, 255, 255, 0.06);" +
-            "-fx-border-radius: 10px;" +
-            "-fx-border-width: 1px;"
-        );
+                "-fx-background-color: rgba(9, 9, 11, 0.75);" + // Slate-dark Vercel dark base
+                        "-fx-background-radius: 10px;" +
+                        "-fx-border-color: rgba(255, 255, 255, 0.06);" +
+                        "-fx-border-radius: 10px;" +
+                        "-fx-border-width: 1px;");
 
         // Drop shadow for elegant float
         DropShadow shadow = new DropShadow();
@@ -76,7 +68,8 @@ public class LikeGoalOverlay extends Stage {
 
         // 1. Draw Heart Icon (Pulsing SVG Path) - Soft Crimson Rose (#f43f5e)
         heartPath = new SVGPath();
-        heartPath.setContent("M 11 4 C 11 4 7 0 3 0 C 0 0 0 4 0 6 C 0 11 6 17 11 21 C 16 17 22 11 22 6 C 22 4 22 0 19 0 C 15 0 11 4 11 4 Z");
+        heartPath.setContent(
+                "M 11 4 C 11 4 7 0 3 0 C 0 0 0 4 0 6 C 0 11 6 17 11 21 C 16 17 22 11 22 6 C 22 4 22 0 19 0 C 15 0 11 4 11 4 Z");
         heartPath.setFill(Color.web("#f43f5e"));
 
         // Positioning the heart within AnchorPane
@@ -96,42 +89,41 @@ public class LikeGoalOverlay extends Stage {
         // 2. Goal Title Label
         lblTitle = new Label("MỤC TIÊU THẢ TIM");
         lblTitle.setStyle(
-            "-fx-text-fill: #e4e4e7;" +
-            "-fx-font-family: 'Segoe UI', system-ui;" +
-            "-fx-font-weight: bold;" +
-            "-fx-font-size: 11px;"
-        );
+                "-fx-text-fill: #e4e4e7;" +
+                        "-fx-font-family: 'Segoe UI', system-ui;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-font-size: 11px;");
         AnchorPane.setLeftAnchor(lblTitle, 45.0);
         AnchorPane.setTopAnchor(lblTitle, 13.0);
 
         // 3. Goal Status Text (e.g. 0 / 10,000)
         lblStatus = new Label("0 / 10,000");
         lblStatus.setStyle(
-            "-fx-text-fill: #a1a1aa;" +
-            "-fx-font-family: 'Segoe UI', system-ui;" +
-            "-fx-font-size: 11px;" +
-            "-fx-font-weight: bold;"
-        );
+                "-fx-text-fill: #a1a1aa;" +
+                        "-fx-font-family: 'Segoe UI', system-ui;" +
+                        "-fx-font-size: 11px;" +
+                        "-fx-font-weight: bold;");
         AnchorPane.setRightAnchor(lblStatus, 15.0);
         AnchorPane.setTopAnchor(lblStatus, 13.0);
 
         // 4. Progress Bar (Thin & elegant 8px height)
         progressBar = new ProgressBar(0.0);
         progressBar.setPrefHeight(8);
-        
+
         AnchorPane.setLeftAnchor(progressBar, 15.0);
         AnchorPane.setRightAnchor(progressBar, 15.0);
         AnchorPane.setTopAnchor(progressBar, 42.0);
 
         progressBar.setStyle(
-            "-fx-box-border: transparent;" +
-            "-fx-control-inner-background: rgba(24, 24, 27, 0.6);" +
-            "-fx-background-color: transparent;"
-        );
+                "-fx-box-border: transparent;" +
+                        "-fx-control-inner-background: rgba(24, 24, 27, 0.6);" +
+                        "-fx-background-color: transparent;");
 
         // Apply custom modern gradient CSS to ProgressBar bar
-        progressBar.getStylesheets().add(getClass().getResource("/css/progressbar.css") != null ? 
-            getClass().getResource("/css/progressbar.css").toExternalForm() : "");
+        progressBar.getStylesheets()
+                .add(getClass().getResource("/css/progressbar.css") != null
+                        ? getClass().getResource("/css/progressbar.css").toExternalForm()
+                        : "");
 
         // Assemble root
         root.getChildren().addAll(heartPath, lblTitle, lblStatus, progressBar);
@@ -148,7 +140,8 @@ public class LikeGoalOverlay extends Stage {
 
     private void updateProgressUI() {
         double pct = targetLikes > 0 ? (double) totalLikes / targetLikes : 0;
-        if (pct > 1.0) pct = 1.0;
+        if (pct > 1.0)
+            pct = 1.0;
         progressBar.setProgress(pct);
         lblStatus.setText(String.format("%,d / %,d", totalLikes, targetLikes));
     }
