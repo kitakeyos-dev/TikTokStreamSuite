@@ -207,7 +207,7 @@ public final class Dialogs {
         Scene scene = new Scene(root);
         scene.setFill(Color.TRANSPARENT);
 
-        var css = Dialogs.class.getResource(STYLESHEET);
+        java.net.URL css = Dialogs.class.getResource(STYLESHEET);
         if (css != null) {
             scene.getStylesheets().add(css.toExternalForm());
         }

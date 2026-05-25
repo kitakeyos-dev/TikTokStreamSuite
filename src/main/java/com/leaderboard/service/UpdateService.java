@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public class UpdateService {
-    public static final String CURRENT_VERSION = "1.0.0";
+    public static final String CURRENT_VERSION = "1.0.1";
     
     private static final OkHttpClient httpClient = new OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
@@ -157,7 +157,7 @@ public class UpdateService {
         progressBar.setPrefWidth(350);
         progressBar.setMaxWidth(350);
         
-        var progressCss = UpdateService.class.getResource("/css/progressbar.css");
+        java.net.URL progressCss = UpdateService.class.getResource("/css/progressbar.css");
         if (progressCss != null) {
             progressBar.getStylesheets().add(progressCss.toExternalForm());
         } else {
