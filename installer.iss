@@ -19,11 +19,11 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
-LicenseFile=d:\Documents\TikTokStreamSuite\LICENSE
+LicenseFile=LICENSE
 ; Output configuration
-OutputDir=d:\Documents\TikTokStreamSuite\dist
+OutputDir=dist
 OutputBaseFilename=TikTokStreamSuite_Setup
-SetupIconFile=d:\Documents\TikTokStreamSuite\src\main\resources\icons\logo.ico
+SetupIconFile=src\main\resources\icons\logo.ico
 Compression=lzma2/ultra
 SolidCompression=yes
 WizardStyle=modern
@@ -37,7 +37,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 ; Copy all files recursively from portable build folder
-Source: "d:\Documents\TikTokStreamSuite\dist\TikTokStreamSuite\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\TikTokStreamSuite\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on shared system files
 
 [Icons]
