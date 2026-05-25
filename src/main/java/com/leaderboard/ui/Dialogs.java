@@ -124,6 +124,7 @@ public final class Dialogs {
             stage.initOwner(owner);
         }
         stage.setResizable(false);
+        stage.setAlwaysOnTop(true);
         return stage;
     }
 

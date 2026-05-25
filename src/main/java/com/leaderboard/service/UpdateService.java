@@ -139,6 +139,7 @@ public class UpdateService {
             downloadStage.initOwner(owner);
         }
         downloadStage.setResizable(false);
+        downloadStage.setAlwaysOnTop(true);
 
         // Header Title & Icon
         FontIcon infoIcon = new FontIcon(Feather.DOWNLOAD);
