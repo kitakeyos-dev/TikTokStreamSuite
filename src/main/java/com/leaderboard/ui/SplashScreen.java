@@ -1,5 +1,6 @@
 package com.leaderboard.ui;
 
+import com.leaderboard.service.UpdateService;
 import com.leaderboard.util.IconManager;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -139,7 +140,7 @@ public class SplashScreen extends Stage {
         progressBox.getChildren().addAll(lblStatus, progressBar);
 
         // 4. Footer Small Tags
-        Label lblVersion = new Label("v1.0.2");
+        Label lblVersion = new Label("v" + UpdateService.CURRENT_VERSION);
         lblVersion.setStyle("-fx-text-fill: #52525b; -fx-font-size: 9px; " + FONT_FAMILY);
         AnchorPane.setBottomAnchor(lblVersion, 12.0);
         AnchorPane.setRightAnchor(lblVersion, 25.0);

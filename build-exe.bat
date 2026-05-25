@@ -69,7 +69,7 @@ jpackage --type app-image ^
   --main-class com.leaderboard.App ^
   --icon src\main\resources\icons\logo.ico ^
   --vendor "Hoàng Hữu Dũng" ^
-  --app-version "1.0.2" ^
+  --app-version "1.0.3" ^
   --java-options "-Dfile.encoding=UTF-8" ^
   --java-options "--add-opens=java.base/java.lang=ALL-UNNAMED" ^
   --java-options "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED" ^
