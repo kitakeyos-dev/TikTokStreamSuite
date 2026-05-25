@@ -30,7 +30,6 @@ public class DashboardStage extends Stage {
     private TeamTab teamTab;
     private ChatTab chatTab;
     private LikesTab likesTab;
-    private BankTab bankTab;
 
     private GiftLeaderboardOverlay overlayStage;
     private LiveChatOverlay chatOverlayStage;
@@ -82,8 +81,6 @@ public class DashboardStage extends Stage {
         setOnCloseRequest(e -> {
             saveInputSettings();
             TikTokConnector.disconnect();
-            if (bankTab != null)
-                bankTab.destroy();
             if (overlayStage != null)
                 overlayStage.dispose();
             if (chatOverlayStage != null)
@@ -158,12 +155,11 @@ public class DashboardStage extends Stage {
         teamTab = new TeamTab(this);
         chatTab = new ChatTab(this);
         likesTab = new LikesTab(this);
-        bankTab = new BankTab(this);
 
         contentArea = new StackPane();
         contentArea.setPadding(new Insets(0, 20, 20, 0));
         contentArea.getChildren().addAll(
-                overviewTab, leaderboardTab, teamTab, chatTab, likesTab, bankTab);
+                overviewTab, leaderboardTab, teamTab, chatTab, likesTab);
 
         VBox sidebar = buildSidebar();
         HBox dashboardBody = new HBox(0, sidebar, contentArea);
@@ -198,14 +194,12 @@ public class DashboardStage extends Stage {
                         "Kết nối livestream, overlay OBS và trạng thái hệ thống"),
                 createNavButton("Bảng Xếp Hạng", Feather.BAR_CHART_2, leaderboardTab,
                         "Theo dõi và quản lý top quà tặng"),
-                createNavButton("Thành Viên", Feather.USERS, teamTab,
-                        "Danh sách thành viên và fan club"),
-                createNavButton("Trò Chuyện", Feather.MESSAGE_CIRCLE, chatTab,
-                        "Live chat và overlay tin nhắn"),
                 createNavButton("Mục Tiêu Tim", Feather.HEART, likesTab,
                         "Theo dõi lượt tim và mục tiêu"),
-                createNavButton("Bank Pusher", Feather.DOLLAR_SIGN, bankTab,
-                        "Đồng bộ giao dịch ngân hàng ACB"));
+                createNavButton("Trò Chuyện", Feather.MESSAGE_CIRCLE, chatTab,
+                        "Live chat và overlay tin nhắn"),
+                createNavButton("Thành Viên", Feather.USERS, teamTab,
+                        "Danh sách thành viên và fan club"));
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);

@@ -5,8 +5,6 @@ import com.leaderboard.ui.DashboardStage;
 import com.leaderboard.ui.SplashScreen;
 import com.leaderboard.util.ConfigManager;
 import com.leaderboard.util.DataManager;
-import com.leaderboard.util.BankConfigManager;
-import com.leaderboard.util.BankDataManager;
 import javafx.animation.FadeTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -37,17 +35,7 @@ public class App extends Application {
                 Thread.sleep(300);
                 DataManager.load();
 
-                // Step 3: Load bank_config.json
-                splash.setStatus("Đang nạp cấu hình ngân hàng...", 0.6);
-                Thread.sleep(300);
-                BankConfigManager.load();
-
-                // Step 4: Load bank_data.json
-                splash.setStatus("Đang tải cơ sở dữ liệu giao dịch...", 0.8);
-                Thread.sleep(300);
-                BankDataManager.load();
-
-                // Step 5: Dựng giao diện chính
+                // Step 3: Dựng giao diện chính
                 splash.setStatus("Đang chuẩn bị màn hình điều khiển...", 0.95);
                 Thread.sleep(200);
 
