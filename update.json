@@ -1,6 +1,6 @@
 {
-  "version": "1.0.1",
-  "downloadUrl": "https://github.com/kitakeyos-dev/TikTokStreamSuite/releases/download/v1.0.1/TikTokStreamSuite_Setup.exe",
-  "changelog": "- Cải tiến tính năng Auto-Update luôn nổi trên cùng (Always-on-top).\n- Khắc phục lỗi tương thích biên dịch local JDK cho hiệu năng ổn định.\n- Nâng cao trải nghiệm cài đặt và sửa lỗi Bento UI.",
+  "version": "1.0.2",
+  "downloadUrl": "https://github.com/kitakeyos-dev/TikTokStreamSuite/releases/download/v1.0.2/TikTokStreamSuite_Setup.exe",
+  "changelog": "- Tích hợp tính năng tự động ngắt kết nối và hiển thị cảnh báo khi Livestream kết thúc (Live Ended).\n- Refactor toàn bộ mã nguồn sử dụng cú pháp Java 16+ Pattern Matching cho hiệu năng tối ưu.\n- Sửa lỗi tương thích biên dịch local JDK và làm sạch các tệp cấu hình đóng gói.",
   "forceUpdate": false
 }

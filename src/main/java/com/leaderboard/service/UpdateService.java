@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public class UpdateService {
-    public static final String CURRENT_VERSION = "1.0.1";
+    public static final String CURRENT_VERSION = "1.0.2";
     
     private static final OkHttpClient httpClient = new OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
