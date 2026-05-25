@@ -3,6 +3,7 @@ package com.leaderboard.service;
 import io.github.jwdeveloper.tiktok.TikTokLive;
 import io.github.jwdeveloper.tiktok.live.LiveClient;
 import io.github.jwdeveloper.tiktok.data.events.room.TikTokRoomInfoEvent;
+import io.github.jwdeveloper.tiktok.data.events.TikTokLiveEndedEvent;
 import io.github.jwdeveloper.tiktok.live.LiveRoomInfo;
 import io.github.jwdeveloper.tiktok.data.models.users.User;
 import io.github.jwdeveloper.tiktok.data.models.badges.Badge;
@@ -90,6 +91,14 @@ public class TikTokConnector {
                             isConnecting = false;
                             isConnected = false;
                             SwingUtilities.invokeLater(onDisconnected);
+                        })
+                        .onLiveEnded((client, event) -> {
+                            System.out.println("Livestream ended by host");
+                            javafx.application.Platform.runLater(() -> {
+                                com.leaderboard.ui.Dialogs.info(null, "Livestream Kết thúc", 
+                                    "Buổi phát sóng trực tiếp trên TikTok đã kết thúc!");
+                            });
+                            disconnect();
                         })
                         .onError((client, event) -> {
                             isConnecting = false;
