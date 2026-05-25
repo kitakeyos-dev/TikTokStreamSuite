@@ -53,11 +53,7 @@ public class DashboardStage extends Stage {
         // Load application window icon
         IconManager.applyAppIcon(this);
 
-        // Load configs and data
-        ConfigManager.load();
-        DataManager.load();
-        BankConfigManager.load();
-        BankDataManager.load();
+        // Configs and data are pre-loaded asynchronously during the SplashScreen phase!
 
         // Main Layout
         BorderPane root = new BorderPane();

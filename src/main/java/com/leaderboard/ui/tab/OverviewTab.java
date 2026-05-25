@@ -91,27 +91,27 @@ public class OverviewTab extends BorderPane {
         widgetsBox.setPadding(new Insets(10, 5, 10, 5));
 
         swToggleOverlay = DashboardLayout.newToggleSwitch();
-        swToggleOverlay.setOnToggle(() -> parent.toggleOverlayWindow());
+        swToggleOverlay.setOnToggle(parent::toggleOverlayWindow);
         chkLeaderboardOnTop = createOnTopCheckbox(ConfigManager.getConfig().isOverlayLeaderboardOnTop());
         chkLeaderboardOnTop.setOnAction(e -> {
             ConfigManager.getConfig().setOverlayLeaderboardOnTop(chkLeaderboardOnTop.isSelected());
             ConfigManager.save();
             parent.updateOverlayAlwaysOnTop();
         });
-        widgetsBox.getChildren().add(createWidgetBento("BẢNG XẾP HẠNG LIVE", "Hiển thị Top nhà tài trợ và quà tặng.", "#818cf8", Feather.BAR_CHART_2, swToggleOverlay, chkLeaderboardOnTop));
+        widgetsBox.getChildren().add(createWidgetBento("BẢNG XẾP HẠNG XU", "Hiển thị Top nhà tài trợ và quà tặng.", "#818cf8", Feather.BAR_CHART_2, swToggleOverlay, chkLeaderboardOnTop));
 
         swToggleChatOverlay = DashboardLayout.newToggleSwitch();
-        swToggleChatOverlay.setOnToggle(() -> parent.toggleChatOverlayWindow());
+        swToggleChatOverlay.setOnToggle(parent::toggleChatOverlayWindow);
         chkChatOnTop = createOnTopCheckbox(ConfigManager.getConfig().isOverlayChatOnTop());
         chkChatOnTop.setOnAction(e -> {
             ConfigManager.getConfig().setOverlayChatOnTop(chkChatOnTop.isSelected());
             ConfigManager.save();
             parent.updateOverlayAlwaysOnTop();
         });
-        widgetsBox.getChildren().add(createWidgetBento("KHUNG CHAT TRONG SUỐT", "Hiển thị dòng chat game capture trực tiếp.", "#818cf8", Feather.MESSAGE_SQUARE, swToggleChatOverlay, chkChatOnTop));
+        widgetsBox.getChildren().add(createWidgetBento("KHUNG CHAT", "Hiển thị dòng chat game capture trực tiếp.", "#818cf8", Feather.MESSAGE_SQUARE, swToggleChatOverlay, chkChatOnTop));
 
         swToggleLikeOverlay = DashboardLayout.newToggleSwitch();
-        swToggleLikeOverlay.setOnToggle(() -> parent.toggleLikeOverlayWindow());
+        swToggleLikeOverlay.setOnToggle(parent::toggleLikeOverlayWindow);
         chkLikeOnTop = createOnTopCheckbox(ConfigManager.getConfig().isOverlayLikeOnTop());
         chkLikeOnTop.setOnAction(e -> {
             ConfigManager.getConfig().setOverlayLikeOnTop(chkLikeOnTop.isSelected());
@@ -121,14 +121,14 @@ public class OverviewTab extends BorderPane {
         widgetsBox.getChildren().add(createWidgetBento("MỤC TIÊU THẢ TIM", "Thanh tim bay lơ lửng và đếm tim.", "#818cf8", Feather.HEART, swToggleLikeOverlay, chkLikeOnTop));
 
         swToggleTopLikeOverlay = DashboardLayout.newToggleSwitch();
-        swToggleTopLikeOverlay.setOnToggle(() -> parent.toggleTopLikeOverlayWindow());
+        swToggleTopLikeOverlay.setOnToggle(parent::toggleTopLikeOverlayWindow);
         chkTopLikeOnTop = createOnTopCheckbox(ConfigManager.getConfig().isOverlayTopLikeOnTop());
         chkTopLikeOnTop.setOnAction(e -> {
             ConfigManager.getConfig().setOverlayTopLikeOnTop(chkTopLikeOnTop.isSelected());
             ConfigManager.save();
             parent.updateOverlayAlwaysOnTop();
         });
-        widgetsBox.getChildren().add(createWidgetBento("TOP THẢ TIM", "Bảng xếp hạng thả tim thời gian thực.", "#818cf8", Feather.AWARD, swToggleTopLikeOverlay, chkTopLikeOnTop));
+        widgetsBox.getChildren().add(createWidgetBento("BẢNG XẾP HẠNG THẢ TIM", "Bảng xếp hạng thả tim thời gian thực.", "#818cf8", Feather.AWARD, swToggleTopLikeOverlay, chkTopLikeOnTop));
 
         cardWidgets.getChildren().add(widgetsBox);
         grid.add(cardWidgets, 1, 0);
