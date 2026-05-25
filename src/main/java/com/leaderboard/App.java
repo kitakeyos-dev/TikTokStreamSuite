@@ -1,6 +1,7 @@
 package com.leaderboard;
 
 import atlantafx.base.theme.Dracula;
+import com.leaderboard.service.UpdateService;
 import com.leaderboard.ui.DashboardStage;
 import com.leaderboard.ui.SplashScreen;
 import com.leaderboard.util.ConfigManager;
@@ -34,6 +35,11 @@ public class App extends Application {
                 splash.setStatus("Đang khởi tạo cơ sở dữ liệu...", 0.4);
                 Thread.sleep(300);
                 DataManager.load();
+
+                // Step 2b: Kiểm tra cập nhật ứng dụng ngầm
+                splash.setStatus("Kiểm tra bản cập nhật mới...", 0.7);
+                Thread.sleep(300);
+                UpdateService.checkForUpdates(null, true);
 
                 // Step 3: Dựng giao diện chính
                 splash.setStatus("Đang chuẩn bị màn hình điều khiển...", 0.95);

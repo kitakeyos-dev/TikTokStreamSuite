@@ -1,5 +1,6 @@
 package com.leaderboard.ui.tab;
 
+import com.leaderboard.service.UpdateService;
 import com.leaderboard.ui.DashboardLayout;
 import com.leaderboard.ui.DashboardStage;
 import com.leaderboard.ui.ToggleSwitch;
@@ -79,8 +80,17 @@ public class OverviewTab extends BorderPane {
         lblWebSocketDiag = createDiagRow(diagBox, "WebSocket", "CHƯA KẾT NỐI", "#71717a");
         lblLatencyDiag = createDiagRow(diagBox, "Độ trễ kết nối (Latency)", "--", "#f4f4f5");
         lblSyncDiag = createDiagRow(diagBox, "Đồng bộ mắt xem (Viewer Sync)", "INACTIVE", "#71717a");
+        createDiagRow(diagBox, "Phiên bản hiện tại", "v" + UpdateService.CURRENT_VERSION, "#818cf8");
 
-        leftContent.getChildren().addAll(lblUser, userFieldBox, lblKey, keyFieldBox, statusRow, sep, lblDiagTitle, diagBox);
+        Button btnCheckUpdate = DashboardLayout.newButton("Kiểm tra cập nhật");
+        FontIcon refreshIcon = new FontIcon(Feather.REFRESH_CW);
+        refreshIcon.setIconColor(Color.web("#818cf8"));
+        btnCheckUpdate.setGraphic(refreshIcon);
+        DashboardLayout.applySecondaryButton(btnCheckUpdate);
+        btnCheckUpdate.setMaxWidth(Double.MAX_VALUE);
+        btnCheckUpdate.setOnAction(e -> UpdateService.checkForUpdates(parent.getScene().getWindow(), false));
+
+        leftContent.getChildren().addAll(lblUser, userFieldBox, lblKey, keyFieldBox, statusRow, sep, lblDiagTitle, diagBox, btnCheckUpdate);
         cardConfig.getChildren().add(leftContent);
         grid.add(cardConfig, 0, 0);
         DashboardLayout.fillGridCell(cardConfig);
