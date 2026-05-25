@@ -1,127 +1,129 @@
 # 🎥 TikTokStreamSuite (TikTok Live Stream Suite)
 
+**English** | [Tiếng Việt](README_vi.md)
+
 [![Java Version](https://img.shields.io/badge/Java-17%2B-orange.svg?style=flat-square)](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
 [![JavaFX](https://img.shields.io/badge/JavaFX-21.0.2-blue.svg?style=flat-square)](https://openjfx.io/)
 [![Dracula Theme](https://img.shields.io/badge/Theme-AtlantaFX--Dracula-purple.svg?style=flat-square)](https://github.com/mkpaz/atlantafx)
 [![Build Status](https://img.shields.io/badge/Platform-Windows%20x64-blueviolet.svg?style=flat-square)](https://github.com/kitakeyos-dev/TikTokStreamSuite)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
 
-**TikTokStreamSuite** là giải pháp phần mềm chuyên nghiệp, toàn diện và trực quan được thiết kế đặc biệt dành cho các nhà sáng tạo nội dung và streamer trên nền tảng **TikTok Live**. Ứng dụng được xây dựng trên nền tảng **Java 17 & JavaFX 21**, mang giao diện tối Dracula hiện đại (AtlantaFX Dracula) cùng phong cách Bento Grid sang trọng và trực quan, giúp streamer tối ưu hóa tương tác phòng live, quản lý bảng xếp hạng và trò chuyện thời gian thực mà không cần cài đặt thêm các công cụ cồng kềnh.
+**TikTokStreamSuite** is a professional, comprehensive, and intuitive software solution designed specifically for content creators and streamers on the **TikTok Live** platform. Built on **Java 17 & JavaFX 21**, the application features a modern Dracula dark interface (AtlantaFX Dracula) paired with a premium Bento Grid layout. This design empowers streamers to optimize live room interaction, manage leaderboards, and handle real-time chat seamlessly without the need for bloated external tools.
 
 ---
 
-## ✨ Tính Năng Nổi Bật
+## ✨ Key Features
 
-### 🔊 1. Trình Đọc Bình Luận Trí Tuệ Nhân Tạo (Smart Vietnamese TTS)
-*   **Công nghệ in-memory:** Giải mã trực tiếp luồng âm thanh MP3 từ Google Translate API sang PCM thông qua thư viện `JLayer` trong bộ nhớ RAM, tuyệt đối không tạo file ghi âm tạm thời để tăng tốc độ phản hồi và bảo vệ ổ cứng.
-*   **Định tuyến Mixer linh hoạt:** Cho phép streamer chọn chính xác cổng ra âm thanh (audio output interface) như tai nghe riêng biệt hoặc card âm thanh phụ, tránh làm âm thanh phát ra trực tiếp trên luồng live nếu streamer không mong muốn.
-*   **Tự động tăng tốc độ đọc (Dynamic Rate Scaling):** Tự động phát hiện khi phòng chat có tần suất bình luận cao (backlog > 2 hoặc > 4 tin nhắn) để tăng tốc độ đọc từ `1.0x` lên `1.25x` và `1.5x` bằng cách tái mẫu mẫu tần số phát sóng (sample rate scale) linh hoạt.
-*   **Bộ lọc từ ngữ nhạy cảm:** Tích hợp bộ lọc từ cấm, từ tục tĩu (Blocked/Profanity Words Filter) giúp streamer giữ môi trường live sạch sẽ.
-*   **Cá nhân hóa đọc tên:** Tùy chỉnh bật/tắt đọc biệt danh (nickname) của người dùng trước khi đọc bình luận.
+### 🔊 1. AI-Powered Text-To-Speech Reader (Smart Vietnamese TTS)
+*   **In-Memory Processing:** Directly decodes MP3 audio streams from the Google Translate API to PCM in RAM using the `JLayer` library. No temporary audio files are written, significantly boosting response time and protecting hard drive lifespan.
+*   **Flexible Mixer Routing:** Allows streamers to select the exact audio output interface (e.g., dedicated headphones or secondary sound cards), preventing TTS audio from leaking into the live stream if undesired.
+*   **Dynamic Rate Scaling:** Automatically detects high-frequency chat activity (backlog > 2 or > 4 messages) and dynamically scales the reading rate from `1.0x` to `1.25x` or `1.5x` by modifying the playback frequency sample rate on the fly.
+*   **Profanity & Sensitive Word Filter:** Features a built-in blocked/profanity words filter to help streamers maintain a clean and welcoming live environment.
+*   **Personalized Nickname Reading:** Toggleable option to read the user's nickname before pronouncing their comment.
 
-### 📊 2. Quản Lý Thống Kê & Bảng Xếp Hạng Thời Gian Thực
-*   **Overview Bento Tab:** Giao diện Bento grid thời thượng hiển thị các chỉ số cốt lõi (Số người xem hiện tại, lượt thích, tổng số quà tặng, trạng thái kết nối).
-*   **Leaderboard Tab:** Bảng xếp hạng trực tiếp vinh danh những người ủng hộ (top tặng quà, top tương tác thả tim) cập nhật tự động trong từng giây.
-*   **Team & Likes Tracker:** Theo dõi tiến trình thi đấu tổ đội (team) và định lượng chỉ số thả tim theo các mốc tương tác thời gian thực.
-*   **Chat Tab:** Luồng tin nhắn tập trung, hiển thị bình luận sắc nét với font chữ hiện đại, hỗ trợ lọc và xem danh sách tương tác mượt mà.
+### 📊 2. Real-Time Analytics & Leaderboard Management
+*   **Overview Bento Tab:** A stylish Bento grid interface displaying core metrics (current viewers, likes, total gifts, and connection status).
+*   **Leaderboard Tab:** A live leaderboard honoring top supporters (top gifters, top interactive likers) updated second-by-second.
+*   **Team & Likes Tracker:** Tracks team match progress and quantifies like milestones in real-time.
+*   **Chat Tab:** A centralized message stream displaying comments in a clean, modern font, complete with interactive filtering options.
 
-### 🚀 3. Hệ Thống Tự Động Cập Nhật Hiện Đại (Silent Auto-Updater)
-*   **Asynchronous Checker:** Tự động kết nối kiểm tra phiên bản mới từ máy chủ GitHub Metadata thông qua giao thức bảo mật API mà không gây đứng hình ứng dụng.
-*   **Indigo Premium Progress UI:** Giao diện tiến trình Dracula-Indigo trong suốt độc đáo hiển thị phần trăm dung lượng tải xuống thời gian thực.
-*   **Zero-Lock Installer Trigger:** Sau khi tải xong trình cài đặt `.exe`, ứng dụng tự động đóng luồng Java chính để mở khóa tệp tin hệ thống và kích hoạt chương trình cài đặt mới giúp quá trình nâng cấp diễn ra hoàn toàn tự động.
-
----
-
-## 🛠️ Yêu Cầu Hệ Thống & Cài Đặt
-
-*   **Hệ điều hành:** Windows 10/11 (64-bit).
-*   **Bộ xử lý Java:** JDK 17 hoặc mới hơn (nếu chạy từ mã nguồn).
-*   **Kết nối Internet:** Yêu cầu đường truyền mạng để kết nối TikTok Live API và Google Translate TTS API.
+### 🚀 3. Silent Auto-Updater
+*   **Asynchronous Checker:** Silently checks for new versions from the GitHub Metadata server using a secure API protocol without interrupting the application's responsiveness.
+*   **Indigo Premium Progress UI:** A transparent Dracula-Indigo progress interface displaying download percentage in real-time.
+*   **Zero-Lock Installer Trigger:** Upon completing the `.exe` installer download, the main Java process terminates automatically to release file locks, launching the installer for a seamless, completely hands-free upgrade experience.
 
 ---
 
-## 💻 Hướng Dẫn Biên Dịch & Chạy Mã Nguồn
+## 🛠️ System Requirements & Installation
 
-Dự án được quản lý hoàn toàn bằng **Maven**. Bạn có thể dễ dàng tải về, build mã nguồn và đóng gói thành tệp tin chạy trực tiếp trên Windows theo hướng dẫn dưới đây.
+*   **Operating System:** Windows 10/11 (64-bit).
+*   **Java Runtime:** JDK 17 or higher (if running from source).
+*   **Internet Connection:** Required for connecting to the TikTok Live API and Google Translate TTS API.
 
-### Bước 1: Clone dự án về máy tính
+---
+
+## 💻 Building & Running from Source
+
+The project is fully managed using **Maven**. You can easily clone, build, and package the application into a standalone Windows executable using the instructions below.
+
+### Step 1: Clone the Repository
 ```bash
 git clone https://github.com/kitakeyos-dev/TikTokStreamSuite.git
 cd TikTokStreamSuite
 ```
 
-### Bước 2: Biên dịch ứng dụng
-Sử dụng Maven để tải các thư viện phụ thuộc và biên dịch ứng dụng JavaFX:
+### Step 2: Compile the Application
+Use Maven to download dependencies and compile the JavaFX application:
 ```bash
 mvn clean compile
 ```
 
-### Bước 3: Khởi chạy ở chế độ Phát triển (Development)
-Chạy ứng dụng trực tiếp bằng JavaFX plugin:
+### Step 3: Run in Development Mode
+Launch the application directly using the JavaFX plugin:
 ```bash
 mvn javafx:run
 ```
 
-### Bước 4: Đóng gói thành phần mềm cài đặt (`.exe`) cho Windows
-Ứng dụng tích hợp sẵn tập lệnh đóng gói chuyên nghiệp `build-exe.bat` sử dụng tính năng **jlink** và **jpackage** để đóng gói một JRE thu gọn đi kèm JavaFX. Bạn chỉ cần chạy lệnh sau:
+### Step 4: Package as a Standalone Installer (`.exe`) for Windows
+The application includes a professional packaging script `build-exe.bat` that uses **jlink** and **jpackage** to bundle a lightweight JRE with JavaFX. Simply run:
 ```cmd
 build-exe.bat
 ```
-*Sau khi chạy thành công, thư mục `dist\TikTokStreamSuite\` chứa phần mềm chạy trực tiếp cực kỳ mượt mà mà không yêu cầu máy khách phải cài đặt sẵn Java.*
+*After successful execution, the `dist\TikTokStreamSuite\` directory will contain a self-contained executable that runs smoothly without requiring Java to be pre-installed on the host machine.*
 
 ---
 
-## 📂 Cấu Trúc Dự Án
+## 📂 Project Structure
 
 ```text
 TikTokStreamSuite/
-├── .github/                 # Cấu hình GitHub Actions / workflows
-├── javafx-jmods.zip         # Gói JavaFX JMods dùng để đóng gói jpackage
-├── pom.xml                  # Tệp cấu hình các dependency (Retrofit, JLayer, AtlantaFX, OkHttp...)
-├── build-exe.bat            # Script đóng gói ứng dụng di động cho Windows
+├── .github/                 # GitHub Actions configuration & workflows
+├── javafx-jmods.zip         # JavaFX JMods package used for jpackage bundling
+├── pom.xml                  # Maven configuration file (Retrofit, JLayer, AtlantaFX, OkHttp...)
+├── build-exe.bat            # Windows application packaging script
 ├── src/main/
 │   ├── java/com/leaderboard/
-│   │   ├── App.java         # Lớp khởi chạy ứng dụng chính & Splash Screen
+│   │   ├── App.java         # Main entry point & Splash Screen
 │   │   ├── service/
-│   │   │   ├── TTSService.java       # Bộ xử lý âm thanh PCM/MP3, đọc Text-To-Speech thông minh
-│   │   │   ├── UpdateService.java    # Xử lý luồng kiểm tra bản cập nhật và tải về bất đồng bộ
-│   │   │   └── TikTokConnector.java  # Kết nối thời gian thực với TikTok Live API
+│   │   │   ├── TTSService.java       # PCM/MP3 audio processor & smart TTS service
+│   │   │   ├── UpdateService.java    # Asynchronous update checker & downloader service
+│   │   │   └── TikTokConnector.java  # Real-time TikTok Live API connector
 │   │   ├── ui/
-│   │   │   ├── Dialogs.java          # Bộ thông báo cảnh báo Dracula theme tùy chỉnh
-│   │   │   ├── DashboardLayout.java  # Bố cục giao diện dashboard chính
+│   │   │   ├── Dialogs.java          # Custom Dracula-themed warning & dialog utilities
+│   │   │   ├── DashboardLayout.java  # Main dashboard layout container
 │   │   │   └── tab/
-│   │   │       ├── OverviewTab.java  # Tab bento hiển thị tổng quan thông số live
-│   │   │       └── TtsTab.java       # Tab tùy chỉnh nâng cao các thông số của bộ đọc TTS
+│   │   │       ├── OverviewTab.java  # Bento-style overview tab
+│   │   │       └── TtsTab.java       # Advanced TTS configuration tab
 │   └── resources/
-│       ├── css/             # Tập tin định hình phong cách giao diện (Progressbar, custom css)
-│       └── icons/           # Logo và bộ icon đại diện của ứng dụng
+│       ├── css/             # Stylesheets (ProgressBar, custom css styling)
+│       └── icons/           # Logo and application icons
 ```
 
 ---
 
-## ⚙️ Cấu Hình Cập Nhật (`update.json`)
+## ⚙️ Auto-Update Configuration (`update.json`)
 
-Hệ thống cập nhật ứng dụng hoạt động dựa trên tệp metadata trực tuyến `update.json` cấu trúc như sau:
+The automatic updater reads a remote `update.json` metadata file structured as follows:
 
 ```json
 {
   "version": "1.0.1",
   "downloadUrl": "https://github.com/kitakeyos-dev/TikTokStreamSuite/releases/download/v1.0.1/TikTokStreamSuite_Setup.exe",
-  "changelog": "- Cải tiến tốc độ đọc bình luận tiếng Việt siêu mượt mà.\n- Cập nhật bộ lọc từ cấm ngăn ngừa vi phạm chính sách của TikTok.\n- Thiết kế lại các icon theo định dạng hình vuông 38x38 chuẩn Bento UI cực đẹp.",
+  "changelog": "- Improved Vietnamese comment reading speed for ultra-smooth playback.\n- Updated profanity filters to ensure compliance with TikTok policies.\n- Redesigned icons to 38x38 square layout matching the sleek Bento UI.",
   "forceUpdate": false
 }
 ```
 
 ---
 
-## 📝 Bản Quyền & Giấy Phép
+## 📝 License
 
-Dự án này thuộc sở hữu của **Hoàng Hữu Dũng (kitakeyos)** và được phát hành theo Giấy phép **MIT License**. Bạn có thể tự do phát triển, sao chép và thương mại hóa theo các điều khoản trong giấy phép.
+This project is owned by **Hoàng Hữu Dũng (kitakeyos)** and released under the **MIT License**. You are free to modify, distribute, and commercialize the code in accordance with the license terms.
 
 ---
 
-## 🤝 Hỗ Trợ Dự Án
+## 🤝 Support the Project
 
-Nếu bạn thấy bộ công cụ này hữu ích cho phòng live của mình, hãy tặng dự án một **⭐️ Star** trên GitHub để ủng hộ nhà phát triển nhé! 
+If you find this suite helpful for your live streams, please consider giving it a **⭐️ Star** on GitHub to support the developer!
 
-*Chúc các streamer có những buổi phát sóng bùng nổ tương tác! 🚀*
+*Wishing all streamers a highly engaging and successful broadcast! 🚀*
