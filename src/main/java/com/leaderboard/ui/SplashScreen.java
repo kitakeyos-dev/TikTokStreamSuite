@@ -29,6 +29,7 @@ public class SplashScreen extends Stage {
 
         // Try applying application window icon
         IconManager.applyAppIcon(this);
+        setAlwaysOnTop(true);
 
         // Root Pane - Glassmorphism Slate-dark panels matching OBS overlay themes
         AnchorPane root = new AnchorPane();
@@ -138,7 +139,7 @@ public class SplashScreen extends Stage {
         progressBox.getChildren().addAll(lblStatus, progressBar);
 
         // 4. Footer Small Tags
-        Label lblVersion = new Label("v1.0.0");
+        Label lblVersion = new Label("v1.0.2");
         lblVersion.setStyle("-fx-text-fill: #52525b; -fx-font-size: 9px; " + FONT_FAMILY);
         AnchorPane.setBottomAnchor(lblVersion, 12.0);
         AnchorPane.setRightAnchor(lblVersion, 25.0);
