@@ -29,7 +29,7 @@ import java.util.List;
 public class LikesTab extends BorderPane {
     private final DashboardStage parent;
     private TableView<Liker> tblLikers;
-    private ObservableList<Liker> likerList = FXCollections.observableArrayList();
+    private final ObservableList<Liker> likerList = FXCollections.observableArrayList();
     private FilteredList<Liker> filteredList;
 
     private TextField txtSearch;

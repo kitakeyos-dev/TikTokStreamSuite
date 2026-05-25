@@ -19,8 +19,7 @@ public class EmojiParser {
         if (cp >= 0x2B50 && cp <= 0x2B55) return true;   // Stars/shapes
         if (cp >= 0xFE00 && cp <= 0xFE0F) return true;   // Variation selectors
         if (cp == 0x200D) return true;                   // Zero Width Joiner
-        if (cp >= 0xE0020 && cp <= 0xE007F) return true; // Tags
-        return false;
+        return cp >= 0xE0020 && cp <= 0xE007F; // Tags
     }
 
     public static TextFlow createEmojiTextFlow(String text, double fontSize, Color textColor, Font font) {

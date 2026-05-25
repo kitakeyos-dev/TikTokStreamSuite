@@ -27,7 +27,7 @@ import javafx.util.Duration;
 public class LeaderboardTab extends BorderPane {
     private final DashboardStage parent;
     private TableView<Gifter> tblGifters;
-    private ObservableList<Gifter> gifterList = FXCollections.observableArrayList();
+    private final ObservableList<Gifter> gifterList = FXCollections.observableArrayList();
     private FilteredList<Gifter> filteredList;
 
     private TextField txtSearch;

@@ -34,7 +34,7 @@ import java.util.Optional;
 public class TeamTab extends BorderPane {
     private final DashboardStage parent;
     private TableView<TeamMember> tblMembers;
-    private ObservableList<TeamMember> memberList = FXCollections.observableArrayList();
+    private final ObservableList<TeamMember> memberList = FXCollections.observableArrayList();
     private FilteredList<TeamMember> filteredList;
 
     private TextField txtSearch;

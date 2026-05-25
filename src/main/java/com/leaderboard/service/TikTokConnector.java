@@ -1,9 +1,8 @@
 package com.leaderboard.service;
 
+import com.leaderboard.ui.Dialogs;
 import io.github.jwdeveloper.tiktok.TikTokLive;
 import io.github.jwdeveloper.tiktok.live.LiveClient;
-import io.github.jwdeveloper.tiktok.data.events.room.TikTokRoomInfoEvent;
-import io.github.jwdeveloper.tiktok.data.events.TikTokLiveEndedEvent;
 import io.github.jwdeveloper.tiktok.live.LiveRoomInfo;
 import io.github.jwdeveloper.tiktok.data.models.users.User;
 import io.github.jwdeveloper.tiktok.data.models.badges.Badge;
@@ -11,8 +10,8 @@ import io.github.jwdeveloper.tiktok.data.models.badges.CombineBadge;
 import io.github.jwdeveloper.tiktok.data.models.badges.TextBadge;
 import io.github.jwdeveloper.tiktok.data.models.badges.StringBadge;
 import com.leaderboard.model.Gifter;
-import com.leaderboard.util.ConfigManager;
 import com.leaderboard.util.DataManager;
+import javafx.application.Platform;
 
 import javax.swing.SwingUtilities;
 import java.util.Collections;
@@ -80,7 +79,7 @@ public class TikTokConnector {
                             if (apiKey != null && !apiKey.trim().isEmpty()) {
                                 settings.setApiKey(apiKey.trim());
                             }
-                            settings.setClientLanguage("vi_VN"); // display localized gift events
+                            settings.setClientLanguage("vi_VN");
                         })
                         .onConnected((client, event) -> {
                             isConnecting = false;
@@ -93,9 +92,8 @@ public class TikTokConnector {
                             SwingUtilities.invokeLater(onDisconnected);
                         })
                         .onLiveEnded((client, event) -> {
-                            System.out.println("Livestream ended by host");
-                            javafx.application.Platform.runLater(() -> {
-                                com.leaderboard.ui.Dialogs.info(null, "Livestream Kết thúc", 
+                            Platform.runLater(() -> {
+                                Dialogs.info(null, "Livestream Kết thúc",
                                     "Buổi phát sóng trực tiếp trên TikTok đã kết thúc!");
                             });
                             disconnect();
@@ -264,9 +262,8 @@ public class TikTokConnector {
 
         if (user.getBadges() != null) {
             for (Badge badge : user.getBadges()) {
-                if (badge instanceof CombineBadge) {
-                    CombineBadge cb = (CombineBadge) badge;
-                    
+                if (badge instanceof CombineBadge cb) {
+
                     String picLink = (cb.getPicture() != null) ? cb.getPicture().getLink() : "";
                     if (picLink != null && picLink.contains("fans_badge_icon")) {
                         // Fan Club Badge!
@@ -293,13 +290,11 @@ public class TikTokConnector {
                             giftGiverLevel = Math.max(giftGiverLevel, Integer.parseInt(cb.getText()));
                         }
                     }
-                } else if (badge instanceof TextBadge) {
-                    TextBadge tb = (TextBadge) badge;
+                } else if (badge instanceof TextBadge tb) {
                     if (tb.getText() != null && tb.getText().matches("\\d+")) {
                         giftGiverLevel = Math.max(giftGiverLevel, Integer.parseInt(tb.getText()));
                     }
-                } else if (badge instanceof StringBadge) {
-                    StringBadge sb = (StringBadge) badge;
+                } else if (badge instanceof StringBadge sb) {
                     if (sb.getText() != null && sb.getText().matches("\\d+")) {
                         giftGiverLevel = Math.max(giftGiverLevel, Integer.parseInt(sb.getText()));
                     }

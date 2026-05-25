@@ -264,10 +264,10 @@ public class TTSService {
                                 currentLine = (SourceDataLine) mixer.getLine(info);
                             } catch (Exception ex) {
                                 System.err.println("Selected mixer failed to get line: " + ex.getMessage() + ". Falling back to default system device.");
-                                currentLine = (SourceDataLine) AudioSystem.getSourceDataLine(format);
+                                currentLine = AudioSystem.getSourceDataLine(format);
                             }
                         } else {
-                            currentLine = (SourceDataLine) AudioSystem.getSourceDataLine(format);
+                            currentLine = AudioSystem.getSourceDataLine(format);
                         }
 
                         currentLine.open(format);
@@ -331,7 +331,7 @@ public class TTSService {
 
         for (String chunk : chunks) {
             String url = "https://translate.googleapis.com/translate_tts?client=gtx&ie=UTF-8&tl=vi&q="
-                    + URLEncoder.encode(chunk, StandardCharsets.UTF_8.name());
+                    + URLEncoder.encode(chunk, StandardCharsets.UTF_8);
 
             Request request = new Request.Builder()
                     .url(url)

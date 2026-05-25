@@ -2,13 +2,10 @@ package com.leaderboard.ui.tab;
 
 import com.leaderboard.ui.DashboardLayout;
 import com.leaderboard.ui.DashboardStage;
-import com.leaderboard.ui.ToggleSwitch;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -20,7 +17,7 @@ import java.time.format.DateTimeFormatter;
 public class ChatTab extends BorderPane {
     private final DashboardStage parent;
     private TableView<ChatRow> tblChatLog;
-    private ObservableList<ChatRow> chatList = FXCollections.observableArrayList();
+    private final ObservableList<ChatRow> chatList = FXCollections.observableArrayList();
     private FilteredList<ChatRow> filteredList;
 
     private TextField txtSearch;
@@ -28,26 +25,7 @@ public class ChatTab extends BorderPane {
 
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    public static class ChatRow {
-        private final String time;
-        private final String uniqueId;
-        private final String nickname;
-        private final String comment;
-        private final String avatarUrl;
-
-        public ChatRow(String time, String uniqueId, String nickname, String comment, String avatarUrl) {
-            this.time = time;
-            this.uniqueId = uniqueId;
-            this.nickname = nickname;
-            this.comment = comment;
-            this.avatarUrl = avatarUrl;
-        }
-
-        public String getTime() { return time; }
-        public String getUniqueId() { return uniqueId; }
-        public String getNickname() { return nickname; }
-        public String getComment() { return comment; }
-        public String getAvatarUrl() { return avatarUrl; }
+    public record ChatRow(String time, String uniqueId, String nickname, String comment, String avatarUrl) {
     }
 
     public ChatTab(DashboardStage parent) {
@@ -71,21 +49,21 @@ public class ChatTab extends BorderPane {
         tblChatLog = DashboardLayout.createTable();
 
         TableColumn<ChatRow, String> colTime = new TableColumn<>("Thời Gian");
-        colTime.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getTime()));
+        colTime.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().time()));
         colTime.setPrefWidth(90);
         colTime.setStyle("-fx-alignment: CENTER; -fx-text-fill: #71717a;");
 
         TableColumn<ChatRow, String> colId = new TableColumn<>("TikTok ID");
-        colId.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getUniqueId()));
+        colId.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().uniqueId()));
         colId.setPrefWidth(120);
         colId.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-fill: #818cf8;");
 
         TableColumn<ChatRow, String> colNick = new TableColumn<>("Tên Hiển Thị");
-        colNick.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getNickname()));
+        colNick.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().nickname()));
         colNick.setPrefWidth(150);
 
         TableColumn<ChatRow, String> colComment = new TableColumn<>("Nội Dung Bình Luận");
-        colComment.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getComment()));
+        colComment.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().comment()));
         colComment.setPrefWidth(430);
 
         tblChatLog.getColumns().addAll(colTime, colId, colNick, colComment);
@@ -98,9 +76,9 @@ public class ChatTab extends BorderPane {
             filteredList.setPredicate(row -> {
                 if (newValue == null || newValue.isEmpty()) return true;
                 String lower = newValue.toLowerCase().trim();
-                return row.getUniqueId().toLowerCase().contains(lower) || 
-                       row.getNickname().toLowerCase().contains(lower) || 
-                       row.getComment().toLowerCase().contains(lower);
+                return row.uniqueId().toLowerCase().contains(lower) ||
+                       row.nickname().toLowerCase().contains(lower) ||
+                       row.comment().toLowerCase().contains(lower);
             });
         });
 

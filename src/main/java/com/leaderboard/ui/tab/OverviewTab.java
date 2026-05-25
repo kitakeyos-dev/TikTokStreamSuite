@@ -16,24 +16,24 @@ import org.kordamp.ikonli.feather.Feather;
 public class OverviewTab extends BorderPane {
     private final DashboardStage parent;
 
-    private TextField txtUsername;
-    private PasswordField txtApiKey;
-    private Label lblStatusBadge;
-    private Button btnConnect;
+    private final TextField txtUsername;
+    private final PasswordField txtApiKey;
+    private final Label lblStatusBadge;
+    private final Button btnConnect;
 
-    private ToggleSwitch swToggleOverlay;
-    private ToggleSwitch swToggleChatOverlay;
-    private ToggleSwitch swToggleLikeOverlay;
-    private ToggleSwitch swToggleTopLikeOverlay;
+    private final ToggleSwitch swToggleOverlay;
+    private final ToggleSwitch swToggleChatOverlay;
+    private final ToggleSwitch swToggleLikeOverlay;
+    private final ToggleSwitch swToggleTopLikeOverlay;
 
-    private CheckBox chkLeaderboardOnTop;
-    private CheckBox chkChatOnTop;
-    private CheckBox chkLikeOnTop;
-    private CheckBox chkTopLikeOnTop;
+    private final CheckBox chkLeaderboardOnTop;
+    private final CheckBox chkChatOnTop;
+    private final CheckBox chkLikeOnTop;
+    private final CheckBox chkTopLikeOnTop;
 
-    private Label lblWebSocketDiag;
-    private Label lblLatencyDiag;
-    private Label lblSyncDiag;
+    private final Label lblWebSocketDiag;
+    private final Label lblLatencyDiag;
+    private final Label lblSyncDiag;
 
     public OverviewTab(DashboardStage parent) {
         this.parent = parent;
