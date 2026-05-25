@@ -64,8 +64,16 @@ public class UpdateService {
 
         new Thread(() -> {
             try {
+                // Append cache-busting timestamp to bypass CDN caching (e.g. raw.githubusercontent.com CDN)
+                String targetUrl = metadataUrl;
+                if (metadataUrl.contains("?")) {
+                    targetUrl += "&t=" + System.currentTimeMillis();
+                } else {
+                    targetUrl += "?t=" + System.currentTimeMillis();
+                }
+
                 Request request = new Request.Builder()
-                        .url(metadataUrl)
+                        .url(targetUrl)
                         .header("User-Agent", "Mozilla/5.0")
                         .build();
 
