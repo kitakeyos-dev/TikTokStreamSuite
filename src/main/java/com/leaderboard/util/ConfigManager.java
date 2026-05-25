@@ -23,7 +23,7 @@ public class ConfigManager {
         private int ttsMaxQueue = 8;
         private double ttsVolume = 1.0;
         private String ttsAudioDeviceName = "Default";
-        private String updateMetadataUrl = "https://raw.githubusercontent.com/Kitak/TikTokStreamSuite/master/update.json";
+        private String updateMetadataUrl = "https://raw.githubusercontent.com/kitakeyos-dev/TikTokStreamSuite/master/update.json";
 
         public String getStreamerUsername() { return streamerUsername; }
         public void setStreamerUsername(String v) { this.streamerUsername = v; }
@@ -83,7 +83,7 @@ public class ConfigManager {
 
         public String getUpdateMetadataUrl() {
             if (updateMetadataUrl == null || updateMetadataUrl.trim().isEmpty()) {
-                updateMetadataUrl = "https://raw.githubusercontent.com/Kitak/TikTokStreamSuite/master/update.json";
+                updateMetadataUrl = "https://raw.githubusercontent.com/kitakeyos-dev/TikTokStreamSuite/master/update.json";
             }
             return updateMetadataUrl;
         }

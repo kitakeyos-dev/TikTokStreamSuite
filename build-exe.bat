@@ -68,7 +68,7 @@ jpackage --type app-image ^
   --main-jar tiktok-leaderboard-1.0-SNAPSHOT.jar ^
   --main-class com.leaderboard.App ^
   --icon src\main\resources\icons\logo.ico ^
-  --vendor "Kitak" ^
+  --vendor "Hoàng Hữu Dũng" ^
   --app-version "1.0.0" ^
   --java-options "-Dfile.encoding=UTF-8" ^
   --java-options "--add-opens=java.base/java.lang=ALL-UNNAMED" ^
