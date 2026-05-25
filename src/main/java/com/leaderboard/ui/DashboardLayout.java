@@ -13,7 +13,7 @@ import org.kordamp.ikonli.javafx.FontIcon;
  * Shared dashboard layout tokens and factories for consistent tab UI.
  */
 public final class DashboardLayout {
-    public static final Insets PAGE_PADDING = new Insets(15, 0, 15, 0);
+    public static final Insets PAGE_PADDING = new Insets(20, 20, 20, 20);
     public static final Insets CARD_PADDING = new Insets(15, 20, 15, 20);
     public static final Insets SECTION_PADDING = new Insets(10, 0, 10, 0);
     public static final double GRID_HGAP = 24;

@@ -40,7 +40,6 @@ public class DashboardStage extends Stage {
     private Label lblPageTitle;
     private StackPane contentArea;
     private Button activeNavButton;
-    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
     private int connectionAttemptId = 0;
     private boolean connectionErrorShown = false;
 
@@ -157,7 +156,7 @@ public class DashboardStage extends Stage {
         likesTab = new LikesTab(this);
 
         contentArea = new StackPane();
-        contentArea.setPadding(new Insets(0, 20, 20, 0));
+        contentArea.setPadding(new Insets(0, 0, 0, 0));
         contentArea.getChildren().addAll(
                 overviewTab, leaderboardTab, teamTab, chatTab, likesTab);
 

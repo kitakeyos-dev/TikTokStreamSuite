@@ -12,6 +12,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -29,9 +30,12 @@ public class LikesTab extends BorderPane {
     private final DashboardStage parent;
     private TableView<Liker> tblLikers;
     private ObservableList<Liker> likerList = FXCollections.observableArrayList();
+    private FilteredList<Liker> filteredList;
 
+    private TextField txtSearch;
     private TextField txtLikeTarget;
     private Label lblTotalLikes;
+    private Label lblActiveLikersVal;
     private Label lblPercent;
     private Label lblRemaining;
     private ProgressBar progressBar;
@@ -54,33 +58,58 @@ public class LikesTab extends BorderPane {
     }
 
     private void initComponents() {
-        GridPane grid = DashboardLayout.createTwoColumnGrid();
-
-        VBox cardStats = DashboardLayout.createCard("MỤC TIÊU THẢ TIM & THỐNG KÊ");
-        VBox leftContent = DashboardLayout.createSectionContent();
-
-        Label lblLikesTitle = DashboardLayout.createFieldLabel("TỔNG SỐ TIM ĐÃ NHẬN TỪ LIVE CLIENT:");
+        VBox cardMain = DashboardLayout.createPageContainer();
 
         lblTotalLikes = new Label("0");
-        lblTotalLikes.setStyle(
-            "-fx-font-size: 48px;" +
-            "-fx-font-weight: bold;" +
-            "-fx-text-fill: #f4f4f5;"
+        lblActiveLikersVal = new Label("0");
+
+        HBox headerRight = DashboardLayout.createHeaderActions(
+                DashboardLayout.createMiniStatCard("TỔNG SỐ TIM", lblTotalLikes, "#f43f5e"),
+                DashboardLayout.createMiniStatCard("NGƯỜI THẢ TIM", lblActiveLikersVal, "#e4e4e7")
         );
 
-        Label lblTargetTitle = DashboardLayout.createFieldLabel("MỤC TIÊU THẢ TIM TIẾP THEO (LIKE GOAL):");
+        cardMain.getChildren().add(DashboardLayout.createPageHeader(
+                "MỤC TIÊU & BẢNG XẾP HẠNG THẢ TIM TÍCH LŨY",
+                "Theo dõi mục tiêu thả tim và quản lý danh sách người ủng hộ thả tim cộng dồn.",
+                headerRight
+        ));
+
+        // Single-Row Premium Bento Bar (All elements aligned horizontally in 1 line)
+        HBox goalBar = new HBox(15);
+        goalBar.setAlignment(Pos.CENTER_LEFT);
+        goalBar.setPadding(new Insets(10, 16, 10, 16));
+        goalBar.setStyle(
+                "-fx-background-color: rgba(255, 255, 255, 0.01);" +
+                "-fx-background-radius: 8px;" +
+                "-fx-border-color: rgba(255, 255, 255, 0.05);" +
+                "-fx-border-radius: 8px;" +
+                "-fx-border-width: 1px;"
+        );
+
+        // 1. Goal Settings controls (Left-aligned)
+        Label lblTargetTitle = new Label("LIKE GOAL:");
+        lblTargetTitle.setStyle("-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #71717a;");
 
         txtLikeTarget = DashboardLayout.newTextField();
         txtLikeTarget.setText(String.valueOf(ConfigManager.getConfig().getLikeTarget()));
+        txtLikeTarget.setPrefWidth(90);
         FontIcon iconTarget = new FontIcon(Feather.TARGET);
         iconTarget.setIconColor(Color.web("#71717a"));
-        HBox txtLikeTargetBox = DashboardLayout.wrapTextField(txtLikeTarget, "Nhập số tim mục tiêu...", iconTarget);
+        HBox txtLikeTargetBox = DashboardLayout.wrapTextField(txtLikeTarget, "Mục tiêu...", iconTarget);
+        txtLikeTargetBox.setPrefWidth(120);
 
-        Label lblProgressTitle = DashboardLayout.createFieldLabel("TIẾN TRÌNH HIỆN TẠI:");
+        btnUpdateTarget = DashboardLayout.newButton("Cập nhật");
+        FontIcon checkIcon = new FontIcon(Feather.CHECK);
+        checkIcon.setIconColor(Color.web("#818cf8"));
+        btnUpdateTarget.setGraphic(checkIcon);
+        DashboardLayout.applyPrimaryButton(btnUpdateTarget);
+        btnUpdateTarget.setOnAction(e -> updateLikeTarget());
 
+        // 2. Sleek Progress Bar (Middle, auto-stretches to fill space)
         progressBar = new ProgressBar(0.0);
-        progressBar.setPrefHeight(16);
+        progressBar.setPrefHeight(10);
         progressBar.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(progressBar, Priority.ALWAYS);
         progressBar.setStyle(
             "-fx-box-border: transparent;" +
             "-fx-control-inner-background: #18181b;" +
@@ -89,41 +118,31 @@ public class LikesTab extends BorderPane {
         progressBar.getStylesheets().add(getClass().getResource("/css/progressbar.css") != null ? 
             getClass().getResource("/css/progressbar.css").toExternalForm() : "");
 
-        HBox progressLabels = new HBox();
-        progressLabels.setAlignment(Pos.CENTER_LEFT);
+        // 3. Progress percentage & remaining status (Right-aligned)
+        HBox progressLabelsBox = new HBox(8);
+        progressLabelsBox.setAlignment(Pos.CENTER_LEFT);
 
         lblPercent = new Label("0.0%");
-        lblPercent.setStyle("-fx-text-fill: #818cf8; -fx-font-size: 11px; -fx-font-weight: bold;");
-        HBox.setHgrow(lblPercent, Priority.ALWAYS);
-        lblPercent.setMaxWidth(Double.MAX_VALUE);
+        lblPercent.setStyle("-fx-text-fill: #f43f5e; -fx-font-size: 12px; -fx-font-weight: bold;");
 
-        lblRemaining = new Label("Đang chờ kết nối...");
+        lblRemaining = new Label("(Đang chờ kết nối...)");
         lblRemaining.setStyle("-fx-text-fill: #71717a; -fx-font-size: 11px;");
 
-        progressLabels.getChildren().addAll(lblPercent, lblRemaining);
+        progressLabelsBox.getChildren().addAll(lblPercent, lblRemaining);
 
-        VBox targetControls = new VBox(8);
-        targetControls.setPadding(new Insets(10, 0, 0, 0));
-        targetControls.setMaxWidth(Double.MAX_VALUE);
+        goalBar.getChildren().addAll(
+                lblTargetTitle, txtLikeTargetBox, btnUpdateTarget, 
+                progressBar, 
+                progressLabelsBox
+        );
+        cardMain.getChildren().add(goalBar);
 
-        btnUpdateTarget = DashboardLayout.newButton("Cập nhật mục tiêu");
-        FontIcon checkIcon = new FontIcon(Feather.CHECK);
-        checkIcon.setIconColor(Color.web("#818cf8"));
-        btnUpdateTarget.setGraphic(checkIcon);
-        DashboardLayout.applyPrimaryButton(btnUpdateTarget);
-        DashboardLayout.allowButtonGrow(btnUpdateTarget);
-        btnUpdateTarget.setOnAction(e -> updateLikeTarget());
+        // Search Box
+        txtSearch = DashboardLayout.newSearchField();
+        cardMain.getChildren().add(DashboardLayout.createSearchBox(
+                txtSearch, "Tìm kiếm TikTok ID hoặc Tên hiển thị..."));
 
-        targetControls.getChildren().addAll(btnUpdateTarget);
-
-        leftContent.getChildren().addAll(lblLikesTitle, lblTotalLikes, lblTargetTitle, txtLikeTargetBox, lblProgressTitle, progressBar, progressLabels, targetControls);
-        cardStats.getChildren().add(leftContent);
-        grid.add(cardStats, 0, 0);
-        DashboardLayout.fillGridCell(cardStats);
-
-        // Column 2: Persistent Top Likers Leaderboard Card
-        VBox cardLikers = DashboardLayout.createCard("BẢNG XẾP HẠNG THẢ TIM TÍCH LŨY");
-
+        // Table
         tblLikers = DashboardLayout.createTable();
 
         TableColumn<Liker, Integer> colRank = new TableColumn<>("Hạng");
@@ -133,20 +152,34 @@ public class LikesTab extends BorderPane {
 
         TableColumn<Liker, String> colId = new TableColumn<>("TikTok ID");
         colId.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getUniqueId()));
-        colId.setPrefWidth(140);
+        colId.setPrefWidth(160);
 
         TableColumn<Liker, String> colNick = new TableColumn<>("Tên Hiển Thị");
         colNick.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getNickname()));
-        colNick.setPrefWidth(180);
+        colNick.setPrefWidth(220);
 
         TableColumn<Liker, Integer> colLikesCount = new TableColumn<>("Số Tim Thả");
         colLikesCount.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getLikes()).asObject());
-        colLikesCount.setPrefWidth(120);
+        colLikesCount.setPrefWidth(160);
         colLikesCount.setStyle("-fx-alignment: CENTER; -fx-text-fill: #f43f5e; -fx-font-weight: bold;");
 
         tblLikers.getColumns().addAll(colRank, colId, colNick, colLikesCount);
-        tblLikers.setItems(likerList);
+        
+        filteredList = new FilteredList<>(likerList, p -> true);
+        tblLikers.setItems(filteredList);
 
+        txtSearch.textProperty().addListener((observable, oldValue, newValue) -> {
+            filteredList.setPredicate(l -> {
+                if (newValue == null || newValue.isEmpty()) return true;
+                String lower = newValue.toLowerCase().trim();
+                return l.getUniqueId().toLowerCase().contains(lower) || 
+                       l.getNickname().toLowerCase().contains(lower);
+            });
+        });
+
+        cardMain.getChildren().add(tblLikers);
+
+        // Actions Row
         btnDeleteSelected = DashboardLayout.newButton("Xoá Người Chọn");
         FontIcon trashIcon = new FontIcon(Feather.TRASH_2);
         trashIcon.setIconColor(Color.web("#a1a1aa"));
@@ -168,12 +201,10 @@ public class LikesTab extends BorderPane {
         DashboardLayout.applyPrimaryButton(btnAddManual);
         btnAddManual.setOnAction(e -> addManualLikes());
 
-        cardLikers.getChildren().addAll(tblLikers, DashboardLayout.createActionsRow(
+        cardMain.getChildren().add(DashboardLayout.createActionsRow(
                 btnDeleteSelected, btnResetAll, btnAddManual));
-        grid.add(cardLikers, 1, 0);
-        DashboardLayout.fillGridCell(cardLikers);
 
-        setCenter(grid);
+        setCenter(cardMain);
     }
 
     private void updateLikeTarget() {
@@ -185,7 +216,7 @@ public class LikesTab extends BorderPane {
 
         int target;
         try {
-            target = Integer.parseInt(targetStr.replace(",", ""));
+            target = Integer.parseInt(targetStr.replaceAll("[^\\d]", ""));
             if (target <= 0) throw new NumberFormatException();
         } catch (NumberFormatException e) {
             Dialogs.error(parent, "Lỗi", "Mục tiêu tim phải là một số nguyên dương!");
@@ -198,7 +229,7 @@ public class LikesTab extends BorderPane {
         parent.updateLikeTargetOverlay(target);
 
         try {
-            int current = Integer.parseInt(lblTotalLikes.getText().replace(",", ""));
+            int current = Integer.parseInt(lblTotalLikes.getText().replaceAll("[^\\d]", ""));
             updateProgress(current);
         } catch (Exception ex) {
             updateProgress(0);
@@ -217,18 +248,17 @@ public class LikesTab extends BorderPane {
             lblPercent.setText(String.format("%.1f%%", percent));
             
             if (totalLikes >= target) {
-                lblRemaining.setText("Mục tiêu đã hoàn thành!");
+                lblRemaining.setText("(Mục tiêu đã hoàn thành!)");
                 lblRemaining.setStyle("-fx-text-fill: #818cf8; -fx-font-size: 11px; -fx-font-weight: bold;");
             } else {
                 int remaining = Math.max(0, target - totalLikes);
-                lblRemaining.setText(String.format("Còn thiếu %,d tim", remaining));
+                lblRemaining.setText(String.format("(Còn thiếu %,d tim)", remaining));
                 lblRemaining.setStyle("-fx-text-fill: #71717a; -fx-font-size: 11px;");
             }
         });
     }
 
     public void addLikeRow(String uniqueId, String nickname, int likesSent) {
-        // Obsolete event log handler, kept for compatibility with connector callback
         refreshLikerTableData();
     }
 
@@ -272,6 +302,10 @@ public class LikesTab extends BorderPane {
 
         FXCollections.sort(likerList);
         tblLikers.refresh();
+
+        if (lblActiveLikersVal != null) {
+            lblActiveLikersVal.setText(String.format("%,d", source.size()));
+        }
     }
 
     private void deleteSelectedLiker() {
