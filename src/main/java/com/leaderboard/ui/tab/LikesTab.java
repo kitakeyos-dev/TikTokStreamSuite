@@ -1,9 +1,12 @@
 package com.leaderboard.ui.tab;
 
+import com.leaderboard.model.Liker;
 import com.leaderboard.ui.DashboardLayout;
 import com.leaderboard.ui.DashboardStage;
 import com.leaderboard.ui.Dialogs;
 import com.leaderboard.util.ConfigManager;
+import com.leaderboard.util.DataManager;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -14,15 +17,18 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.feather.Feather;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class LikesTab extends BorderPane {
     private final DashboardStage parent;
-    private TableView<LikeRow> tblLikeLog;
-    private ObservableList<LikeRow> likeList = FXCollections.observableArrayList();
+    private TableView<Liker> tblLikers;
+    private ObservableList<Liker> likerList = FXCollections.observableArrayList();
 
     private TextField txtLikeTarget;
     private Label lblTotalLikes;
@@ -31,36 +37,20 @@ public class LikesTab extends BorderPane {
     private ProgressBar progressBar;
 
     private Button btnUpdateTarget;
-    private Button btnToggleLikeOverlayTab4;
-    private Button btnToggleTopLikeOverlayTab4;
-    private Button btnResetLikes;
+    private Button btnDeleteSelected;
+    private Button btnResetAll;
+    private Button btnAddManual;
 
-    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
-
-    public static class LikeRow {
-        private final String time;
-        private final String uniqueId;
-        private final String nickname;
-        private final int likesSent;
-
-        public LikeRow(String time, String uniqueId, String nickname, int likesSent) {
-            this.time = time;
-            this.uniqueId = uniqueId;
-            this.nickname = nickname;
-            this.likesSent = likesSent;
-        }
-
-        public String getTime() { return time; }
-        public String getUniqueId() { return uniqueId; }
-        public String getNickname() { return nickname; }
-        public int getLikesSent() { return likesSent; }
-    }
+    private final PauseTransition refreshThrottle = new PauseTransition(Duration.millis(500));
+    private boolean pendingRefresh = false;
 
     public LikesTab(DashboardStage parent) {
         this.parent = parent;
         DashboardLayout.stylePage(this);
+        refreshThrottle.setOnFinished(e -> doRefreshLikerTableData());
         initComponents();
         updateProgress(0);
+        refreshLikerTableData();
     }
 
     private void initComponents() {
@@ -112,7 +102,6 @@ public class LikesTab extends BorderPane {
 
         progressLabels.getChildren().addAll(lblPercent, lblRemaining);
 
-        // Buttons — full width stack in narrow config column
         VBox targetControls = new VBox(8);
         targetControls.setPadding(new Insets(10, 0, 0, 0));
         targetControls.setMaxWidth(Double.MAX_VALUE);
@@ -125,65 +114,64 @@ public class LikesTab extends BorderPane {
         DashboardLayout.allowButtonGrow(btnUpdateTarget);
         btnUpdateTarget.setOnAction(e -> updateLikeTarget());
 
-        btnToggleLikeOverlayTab4 = DashboardLayout.newButton("Bật mục tiêu tim");
-        DashboardLayout.applySecondaryButton(btnToggleLikeOverlayTab4);
-        DashboardLayout.allowButtonGrow(btnToggleLikeOverlayTab4);
-        btnToggleLikeOverlayTab4.setOnAction(e -> parent.toggleLikeOverlayWindow());
-
-        btnToggleTopLikeOverlayTab4 = DashboardLayout.newButton("Bật top tim");
-        DashboardLayout.applySecondaryButton(btnToggleTopLikeOverlayTab4);
-        DashboardLayout.allowButtonGrow(btnToggleTopLikeOverlayTab4);
-        btnToggleTopLikeOverlayTab4.setOnAction(e -> parent.toggleTopLikeOverlayWindow());
-
-        targetControls.getChildren().addAll(btnUpdateTarget, btnToggleLikeOverlayTab4, btnToggleTopLikeOverlayTab4);
+        targetControls.getChildren().addAll(btnUpdateTarget);
 
         leftContent.getChildren().addAll(lblLikesTitle, lblTotalLikes, lblTargetTitle, txtLikeTargetBox, lblProgressTitle, progressBar, progressLabels, targetControls);
         cardStats.getChildren().add(leftContent);
         grid.add(cardStats, 0, 0);
         DashboardLayout.fillGridCell(cardStats);
 
-        // Column 2: Real-time Like Activity Log Card
-        VBox cardLikesLog = DashboardLayout.createCard("DÒNG SỰ KIỆN THẢ TIM THỰC TẾ");
+        // Column 2: Persistent Top Likers Leaderboard Card
+        VBox cardLikers = DashboardLayout.createCard("BẢNG XẾP HẠNG THẢ TIM TÍCH LŨY");
 
-        tblLikeLog = DashboardLayout.createTable();
+        tblLikers = DashboardLayout.createTable();
 
-        TableColumn<LikeRow, String> colTime = new TableColumn<>("Thời Gian");
-        colTime.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getTime()));
-        colTime.setPrefWidth(90);
-        colTime.setStyle("-fx-alignment: CENTER; -fx-text-fill: #71717a;");
+        TableColumn<Liker, Integer> colRank = new TableColumn<>("Hạng");
+        colRank.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getRank()).asObject());
+        colRank.setPrefWidth(60);
+        colRank.setStyle("-fx-alignment: CENTER; -fx-text-fill: #818cf8; -fx-font-weight: bold;");
 
-        TableColumn<LikeRow, String> colId = new TableColumn<>("TikTok ID");
+        TableColumn<Liker, String> colId = new TableColumn<>("TikTok ID");
         colId.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getUniqueId()));
-        colId.setPrefWidth(120);
-        colId.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-fill: #818cf8;");
+        colId.setPrefWidth(140);
 
-        TableColumn<LikeRow, String> colNick = new TableColumn<>("Tên Hiển Thị");
+        TableColumn<Liker, String> colNick = new TableColumn<>("Tên Hiển Thị");
         colNick.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getNickname()));
-        colNick.setPrefWidth(140);
+        colNick.setPrefWidth(180);
 
-        TableColumn<LikeRow, Integer> colLikes = new TableColumn<>("Số Tim Thả");
-        colLikes.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getLikesSent()).asObject());
-        colLikes.setPrefWidth(90);
-        colLikes.setStyle("-fx-alignment: CENTER; -fx-text-fill: #e4e4e7;");
+        TableColumn<Liker, Integer> colLikesCount = new TableColumn<>("Số Tim Thả");
+        colLikesCount.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getLikes()).asObject());
+        colLikesCount.setPrefWidth(120);
+        colLikesCount.setStyle("-fx-alignment: CENTER; -fx-text-fill: #f43f5e; -fx-font-weight: bold;");
 
-        tblLikeLog.getColumns().addAll(colTime, colId, colNick, colLikes);
-        tblLikeLog.setItems(likeList);
+        tblLikers.getColumns().addAll(colRank, colId, colNick, colLikesCount);
+        tblLikers.setItems(likerList);
 
-        btnResetLikes = DashboardLayout.newButton("Xoá Lịch Sử");
+        btnDeleteSelected = DashboardLayout.newButton("Xoá Người Chọn");
         FontIcon trashIcon = new FontIcon(Feather.TRASH_2);
-        trashIcon.setIconColor(Color.web("#f87171"));
-        btnResetLikes.setGraphic(trashIcon);
-        DashboardLayout.applyDangerButton(btnResetLikes);
-        btnResetLikes.setOnAction(e -> {
-            likeList.clear();
-            lblTotalLikes.setText("0");
-            parent.resetLikesOverlay();
-            updateProgress(0);
-        });
+        trashIcon.setIconColor(Color.web("#a1a1aa"));
+        btnDeleteSelected.setGraphic(trashIcon);
+        DashboardLayout.applySecondaryButton(btnDeleteSelected);
+        btnDeleteSelected.setOnAction(e -> deleteSelectedLiker());
 
-        cardLikesLog.getChildren().addAll(tblLikeLog, DashboardLayout.createActionsRow(btnResetLikes));
-        grid.add(cardLikesLog, 1, 0);
-        DashboardLayout.fillGridCell(cardLikesLog);
+        btnResetAll = DashboardLayout.newButton("Xoá Hết Bảng");
+        FontIcon refreshIcon = new FontIcon(Feather.REFRESH_CW);
+        refreshIcon.setIconColor(Color.web("#f87171"));
+        btnResetAll.setGraphic(refreshIcon);
+        DashboardLayout.applyDangerButton(btnResetAll);
+        btnResetAll.setOnAction(e -> resetLikers());
+
+        btnAddManual = DashboardLayout.newButton("Cộng Tim Thủ Công");
+        FontIcon plusIcon = new FontIcon(Feather.PLUS_CIRCLE);
+        plusIcon.setIconColor(Color.web("#f43f5e"));
+        btnAddManual.setGraphic(plusIcon);
+        DashboardLayout.applyPrimaryButton(btnAddManual);
+        btnAddManual.setOnAction(e -> addManualLikes());
+
+        cardLikers.getChildren().addAll(tblLikers, DashboardLayout.createActionsRow(
+                btnDeleteSelected, btnResetAll, btnAddManual));
+        grid.add(cardLikers, 1, 0);
+        DashboardLayout.fillGridCell(cardLikers);
 
         setCenter(grid);
     }
@@ -209,7 +197,6 @@ public class LikesTab extends BorderPane {
 
         parent.updateLikeTargetOverlay(target);
 
-        // Refresh progress visuals
         try {
             int current = Integer.parseInt(lblTotalLikes.getText().replace(",", ""));
             updateProgress(current);
@@ -241,20 +228,123 @@ public class LikesTab extends BorderPane {
     }
 
     public void addLikeRow(String uniqueId, String nickname, int likesSent) {
-        String time = LocalTime.now().format(TIME_FORMATTER);
-        LikeRow row = new LikeRow(time, uniqueId, nickname, likesSent);
-        likeList.add(0, row); // Insert at top like in Swing
-        if (likeList.size() > 100) {
-            likeList.remove(100, likeList.size());
+        // Obsolete event log handler, kept for compatibility with connector callback
+        refreshLikerTableData();
+    }
+
+    public void refreshLikerTableData() {
+        pendingRefresh = true;
+        refreshThrottle.playFromStart();
+    }
+
+    private void doRefreshLikerTableData() {
+        pendingRefresh = false;
+        List<Liker> source;
+        synchronized (DataManager.class) {
+            source = new ArrayList<>(DataManager.getLikers());
+        }
+
+        // --- Incremental update to prevent flicker ---
+        java.util.Map<String, Liker> currentMap = new java.util.HashMap<>();
+        for (Liker l : likerList) {
+            currentMap.put(l.getUniqueId().toLowerCase(), l);
+        }
+
+        int rank = 1;
+        for (Liker fresh : source) {
+            fresh.setRank(rank++);
+            String key = fresh.getUniqueId().toLowerCase();
+            Liker existing = currentMap.get(key);
+            if (existing != null) {
+                existing.setRank(fresh.getRank());
+                existing.setLikes(fresh.getLikes());
+                existing.setNickname(fresh.getNickname());
+                existing.setAvatarUrl(fresh.getAvatarUrl());
+                currentMap.remove(key);
+            } else {
+                likerList.add(fresh);
+            }
+        }
+
+        if (!currentMap.isEmpty()) {
+            likerList.removeIf(l -> currentMap.containsKey(l.getUniqueId().toLowerCase()));
+        }
+
+        FXCollections.sort(likerList);
+        tblLikers.refresh();
+    }
+
+    private void deleteSelectedLiker() {
+        Liker selected = tblLikers.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            Dialogs.warning(parent, "Cảnh báo", "Vui lòng chọn người cần xoá!");
+            return;
+        }
+
+        if (Dialogs.confirm(parent, "Xác nhận xoá", "Bạn có chắc muốn xoá người dùng @" + selected.getUniqueId() + " khỏi bảng xếp hạng thả tim?", "Xoá")) {
+            synchronized (DataManager.class) {
+                List<Liker> list = DataManager.getLikers();
+                list.removeIf(l -> l.getUniqueId().equalsIgnoreCase(selected.getUniqueId()));
+                DataManager.save();
+            }
+            refreshLikerTableData();
+            parent.updateTopLikeOverlay();
         }
     }
 
-    public void updateOverlayButtonStates(boolean isLikeOpen, boolean isTopLikeOpen) {
-        styleToggleButton(btnToggleLikeOverlayTab4, "mục tiêu tim", isLikeOpen);
-        styleToggleButton(btnToggleTopLikeOverlayTab4, "top tim", isTopLikeOpen);
+    private void resetLikers() {
+        if (Dialogs.confirm(parent, "Xác nhận xoá sạch", "Hành động này sẽ xoá sạch bảng xếp hạng thả tim hiện tại. Bạn có muốn tiếp tục?", "Xoá sạch")) {
+            synchronized (DataManager.class) {
+                DataManager.getLikers().clear();
+                DataManager.save();
+            }
+            refreshLikerTableData();
+            parent.updateTopLikeOverlay();
+        }
     }
 
-    private void styleToggleButton(Button btn, String title, boolean isActive) {
-        DashboardLayout.applyToggleButton(btn, title, isActive);
+    private void addManualLikes() {
+        java.util.Optional<String> idResult = Dialogs.input(parent, "Cộng tim thủ công", "Nhập TikTok ID (ví dụ: user123):", "TikTok ID:", "");
+        if (idResult.isEmpty() || idResult.get().trim().isEmpty()) return;
+        String uniqueId = idResult.get().trim();
+
+        java.util.Optional<String> nickResult = Dialogs.input(parent, "Cộng tim thủ công", "Nhập Tên Hiển Thị (không bắt buộc):", "Tên:", uniqueId);
+        String nickname = nickResult.orElse("").trim();
+        if (nickname.isEmpty()) nickname = uniqueId;
+
+        java.util.Optional<String> likesResult = Dialogs.input(parent, "Cộng tim thủ công", "Nhập số tim cần cộng (hoặc trừ nếu nhập số âm):", "Số tim:", "100");
+        if (likesResult.isEmpty() || likesResult.get().trim().isEmpty()) return;
+
+        int likes;
+        try {
+            likes = Integer.parseInt(likesResult.get().trim());
+        } catch (NumberFormatException e) {
+            Dialogs.error(parent, "Lỗi", "Số tim không hợp lệ!");
+            return;
+        }
+
+        final String finalUniqueId = uniqueId;
+        final String finalNickname = nickname;
+        final int finalLikes = likes;
+
+        synchronized (DataManager.class) {
+            List<Liker> list = DataManager.getLikers();
+            java.util.Optional<Liker> existing = list.stream()
+                    .filter(l -> l.getUniqueId().equalsIgnoreCase(finalUniqueId))
+                    .findFirst();
+
+            if (existing.isPresent()) {
+                existing.get().addLikes(finalLikes);
+                existing.get().setNickname(finalNickname);
+            } else {
+                list.add(new Liker(finalUniqueId, finalNickname, null, Math.max(0, finalLikes)));
+            }
+
+            Collections.sort(list);
+            DataManager.save();
+        }
+
+        refreshLikerTableData();
+        parent.updateTopLikeOverlay();
     }
 }

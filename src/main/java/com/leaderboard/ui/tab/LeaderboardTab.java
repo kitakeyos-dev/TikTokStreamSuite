@@ -10,13 +10,12 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.feather.Feather;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -38,7 +37,6 @@ public class LeaderboardTab extends BorderPane {
     private Button btnDeleteSelected;
     private Button btnResetAll;
     private Button btnAddManual;
-    private Button btnToggleOverlayTab2;
 
     // Throttle: limit refreshes to once per 500ms to avoid flicker from rapid events
     private final PauseTransition refreshThrottle = new PauseTransition(Duration.millis(500));
@@ -58,14 +56,10 @@ public class LeaderboardTab extends BorderPane {
 
         lblTotalDiamondsVal = new Label("0");
         lblActiveDonorsVal = new Label("0");
-        btnToggleOverlayTab2 = DashboardLayout.newButton("Bật bảng xếp hạng");
-        DashboardLayout.applySecondaryButton(btnToggleOverlayTab2);
-        btnToggleOverlayTab2.setOnAction(e -> parent.toggleOverlayWindow());
 
         HBox headerRight = DashboardLayout.createHeaderActions(
                 DashboardLayout.createMiniStatCard("TỔNG KIM CƯƠNG", lblTotalDiamondsVal, "#818cf8"),
-                DashboardLayout.createMiniStatCard("NHÀ TÀI TRỢ", lblActiveDonorsVal, "#e4e4e7"),
-                btnToggleOverlayTab2
+                DashboardLayout.createMiniStatCard("NHÀ TÀI TRỢ", lblActiveDonorsVal, "#e4e4e7")
         );
 
         cardLeaderboard.getChildren().add(DashboardLayout.createPageHeader(
@@ -150,7 +144,10 @@ public class LeaderboardTab extends BorderPane {
 
     private void doRefreshTableData() {
         pendingRefresh = false;
-        List<Gifter> source = DataManager.getGifters();
+        List<Gifter> source;
+        synchronized (DataManager.class) {
+            source = new ArrayList<>(DataManager.getGifters());
+        }
         int totalDiamonds = 0;
 
         // --- Incremental update: avoid clear() to prevent TableView flicker ---
@@ -270,9 +267,5 @@ public class LeaderboardTab extends BorderPane {
 
         refreshTableData();
         parent.updateLeaderboardOverlay();
-    }
-
-    public void updateOverlayButtonState(boolean isOpen) {
-        DashboardLayout.applyToggleButton(btnToggleOverlayTab2, "bảng xếp hạng", isOpen);
     }
 }

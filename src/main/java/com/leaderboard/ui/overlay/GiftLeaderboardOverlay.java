@@ -145,7 +145,10 @@ public class GiftLeaderboardOverlay extends Stage {
     }
 
     private void smartUpdate() {
-        List<Gifter> list = DataManager.getGifters();
+        List<Gifter> list;
+        synchronized (DataManager.class) {
+            list = new ArrayList<>(DataManager.getGifters());
+        }
         int limit = Math.min(list.size(), 10);
 
         // Build current snapshot IDs

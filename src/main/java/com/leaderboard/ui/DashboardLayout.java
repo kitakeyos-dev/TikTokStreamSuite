@@ -332,6 +332,38 @@ public final class DashboardLayout {
         return btn;
     }
 
+    /** Creates a full-size ToggleButton with tss-toggle CSS class. */
+    public static ToggleButton newToggleButton(String offLabel, String onLabel) {
+        ToggleButton btn = new ToggleButton(offLabel);
+        btn.setPrefHeight(BUTTON_HEIGHT);
+        btn.setMinHeight(BUTTON_HEIGHT);
+        btn.getStyleClass().setAll("tss-toggle");
+        btn.selectedProperty().addListener((obs, wasSelected, isSelected) ->
+                btn.setText(isSelected ? onLabel : offLabel));
+        return btn;
+    }
+
+    /** Creates a compact ToggleButton (bento widget) with tss-toggle-compact CSS class. */
+    public static ToggleButton newCompactToggleButton() {
+        ToggleButton btn = new ToggleButton("Bật");
+        btn.setPrefHeight(28);
+        btn.setMinHeight(28);
+        btn.setMinWidth(72);
+        btn.getStyleClass().setAll("tss-toggle-compact");
+        btn.selectedProperty().addListener((obs, wasSelected, isSelected) ->
+                btn.setText(isSelected ? "Tắt" : "Bật"));
+        return btn;
+    }
+
+    /** Creates a ToggleSwitch (iOS-style sliding toggle) with an optional label. */
+    public static ToggleSwitch newToggleSwitch(String labelText) {
+        return new ToggleSwitch(labelText);
+    }
+
+    public static ToggleSwitch newToggleSwitch() {
+        return new ToggleSwitch();
+    }
+
     public static void styleButton(Button btn) {
         btn.setPrefHeight(BUTTON_HEIGHT);
         btn.setMinHeight(BUTTON_HEIGHT);
@@ -361,6 +393,15 @@ public final class DashboardLayout {
     public static void allowButtonGrow(Button btn) {
         btn.setMaxWidth(Double.MAX_VALUE);
         btn.setWrapText(false);
+    }
+
+    public static void allowButtonGrow(ToggleButton btn) {
+        btn.setMaxWidth(Double.MAX_VALUE);
+        btn.setWrapText(false);
+    }
+
+    public static void allowButtonGrow(ToggleSwitch sw) {
+        sw.setMaxWidth(Double.MAX_VALUE);
     }
 
     public static void applyButtonStyle(Button btn, String style, double fontSizePx) {

@@ -2,6 +2,7 @@ package com.leaderboard.ui.tab;
 
 import com.leaderboard.ui.DashboardLayout;
 import com.leaderboard.ui.DashboardStage;
+import com.leaderboard.ui.ToggleSwitch;
 import com.leaderboard.util.ConfigManager;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -19,10 +20,10 @@ public class OverviewTab extends BorderPane {
     private Label lblStatusBadge;
     private Button btnConnect;
 
-    private Button btnToggleOverlay;
-    private Button btnToggleChatOverlay;
-    private Button btnToggleLikeOverlay;
-    private Button btnToggleTopLikeOverlay;
+    private ToggleSwitch swToggleOverlay;
+    private ToggleSwitch swToggleChatOverlay;
+    private ToggleSwitch swToggleLikeOverlay;
+    private ToggleSwitch swToggleTopLikeOverlay;
 
     private CheckBox chkLeaderboardOnTop;
     private CheckBox chkChatOnTop;
@@ -89,45 +90,45 @@ public class OverviewTab extends BorderPane {
         VBox widgetsBox = new VBox(12);
         widgetsBox.setPadding(new Insets(10, 5, 10, 5));
 
-        btnToggleOverlay = DashboardLayout.newButton("Bật");
-        btnToggleOverlay.setOnAction(e -> parent.toggleOverlayWindow());
+        swToggleOverlay = DashboardLayout.newToggleSwitch();
+        swToggleOverlay.setOnToggle(() -> parent.toggleOverlayWindow());
         chkLeaderboardOnTop = createOnTopCheckbox(ConfigManager.getConfig().isOverlayLeaderboardOnTop());
         chkLeaderboardOnTop.setOnAction(e -> {
             ConfigManager.getConfig().setOverlayLeaderboardOnTop(chkLeaderboardOnTop.isSelected());
             ConfigManager.save();
             parent.updateOverlayAlwaysOnTop();
         });
-        widgetsBox.getChildren().add(createWidgetBento("BẢNG XẾP HẠNG LIVE", "Hiển thị Top nhà tài trợ và quà tặng.", "#818cf8", Feather.BAR_CHART_2, btnToggleOverlay, chkLeaderboardOnTop));
+        widgetsBox.getChildren().add(createWidgetBento("BẢNG XẾP HẠNG LIVE", "Hiển thị Top nhà tài trợ và quà tặng.", "#818cf8", Feather.BAR_CHART_2, swToggleOverlay, chkLeaderboardOnTop));
 
-        btnToggleChatOverlay = DashboardLayout.newButton("Bật");
-        btnToggleChatOverlay.setOnAction(e -> parent.toggleChatOverlayWindow());
+        swToggleChatOverlay = DashboardLayout.newToggleSwitch();
+        swToggleChatOverlay.setOnToggle(() -> parent.toggleChatOverlayWindow());
         chkChatOnTop = createOnTopCheckbox(ConfigManager.getConfig().isOverlayChatOnTop());
         chkChatOnTop.setOnAction(e -> {
             ConfigManager.getConfig().setOverlayChatOnTop(chkChatOnTop.isSelected());
             ConfigManager.save();
             parent.updateOverlayAlwaysOnTop();
         });
-        widgetsBox.getChildren().add(createWidgetBento("KHUNG CHAT TRONG SUỐT", "Hiển thị dòng chat game capture trực tiếp.", "#818cf8", Feather.MESSAGE_SQUARE, btnToggleChatOverlay, chkChatOnTop));
+        widgetsBox.getChildren().add(createWidgetBento("KHUNG CHAT TRONG SUỐT", "Hiển thị dòng chat game capture trực tiếp.", "#818cf8", Feather.MESSAGE_SQUARE, swToggleChatOverlay, chkChatOnTop));
 
-        btnToggleLikeOverlay = DashboardLayout.newButton("Bật");
-        btnToggleLikeOverlay.setOnAction(e -> parent.toggleLikeOverlayWindow());
+        swToggleLikeOverlay = DashboardLayout.newToggleSwitch();
+        swToggleLikeOverlay.setOnToggle(() -> parent.toggleLikeOverlayWindow());
         chkLikeOnTop = createOnTopCheckbox(ConfigManager.getConfig().isOverlayLikeOnTop());
         chkLikeOnTop.setOnAction(e -> {
             ConfigManager.getConfig().setOverlayLikeOnTop(chkLikeOnTop.isSelected());
             ConfigManager.save();
             parent.updateOverlayAlwaysOnTop();
         });
-        widgetsBox.getChildren().add(createWidgetBento("MỤC TIÊU THẢ TIM", "Thanh tim bay lơ lửng và đếm tim.", "#818cf8", Feather.HEART, btnToggleLikeOverlay, chkLikeOnTop));
+        widgetsBox.getChildren().add(createWidgetBento("MỤC TIÊU THẢ TIM", "Thanh tim bay lơ lửng và đếm tim.", "#818cf8", Feather.HEART, swToggleLikeOverlay, chkLikeOnTop));
 
-        btnToggleTopLikeOverlay = DashboardLayout.newButton("Bật");
-        btnToggleTopLikeOverlay.setOnAction(e -> parent.toggleTopLikeOverlayWindow());
+        swToggleTopLikeOverlay = DashboardLayout.newToggleSwitch();
+        swToggleTopLikeOverlay.setOnToggle(() -> parent.toggleTopLikeOverlayWindow());
         chkTopLikeOnTop = createOnTopCheckbox(ConfigManager.getConfig().isOverlayTopLikeOnTop());
         chkTopLikeOnTop.setOnAction(e -> {
             ConfigManager.getConfig().setOverlayTopLikeOnTop(chkTopLikeOnTop.isSelected());
             ConfigManager.save();
             parent.updateOverlayAlwaysOnTop();
         });
-        widgetsBox.getChildren().add(createWidgetBento("TOP THẢ TIM", "Bảng xếp hạng thả tim thời gian thực.", "#818cf8", Feather.AWARD, btnToggleTopLikeOverlay, chkTopLikeOnTop));
+        widgetsBox.getChildren().add(createWidgetBento("TOP THẢ TIM", "Bảng xếp hạng thả tim thời gian thực.", "#818cf8", Feather.AWARD, swToggleTopLikeOverlay, chkTopLikeOnTop));
 
         cardWidgets.getChildren().add(widgetsBox);
         grid.add(cardWidgets, 1, 0);
@@ -162,7 +163,7 @@ public class OverviewTab extends BorderPane {
         return chk;
     }
 
-    private HBox createWidgetBento(String title, String desc, String iconColorHex, Feather icon, Button toggleBtn, CheckBox onTopChk) {
+    private HBox createWidgetBento(String title, String desc, String iconColorHex, Feather icon, ToggleSwitch sw, CheckBox onTopChk) {
         HBox row = new HBox(12);
         row.setPadding(new Insets(5, 5, 8, 5));
         row.setAlignment(Pos.CENTER_LEFT);
@@ -204,10 +205,7 @@ public class OverviewTab extends BorderPane {
 
         textGroup.getChildren().addAll(lblTitle, lblDesc, onTopChk);
 
-        toggleBtn.setMinWidth(72);
-        DashboardLayout.applyCompactSecondaryButton(toggleBtn);
-
-        row.getChildren().addAll(iconBox, textGroup, toggleBtn);
+        row.getChildren().addAll(iconBox, textGroup, sw);
         return row;
     }
 
@@ -322,10 +320,10 @@ public class OverviewTab extends BorderPane {
     }
 
     public void updateOverlayButtonStates(boolean isLeaderboardOpen, boolean isChatOpen, boolean isLikeOpen, boolean isTopLikeOpen) {
-        DashboardLayout.applyCompactToggleButton(btnToggleOverlay, "bảng xếp hạng", isLeaderboardOpen);
-        DashboardLayout.applyCompactToggleButton(btnToggleChatOverlay, "khung chat", isChatOpen);
-        DashboardLayout.applyCompactToggleButton(btnToggleLikeOverlay, "mục tiêu tim", isLikeOpen);
-        DashboardLayout.applyCompactToggleButton(btnToggleTopLikeOverlay, "top tim", isTopLikeOpen);
+        swToggleOverlay.setSelected(isLeaderboardOpen);
+        swToggleChatOverlay.setSelected(isChatOpen);
+        swToggleLikeOverlay.setSelected(isLikeOpen);
+        swToggleTopLikeOverlay.setSelected(isTopLikeOpen);
     }
 
     public String getUsername() { return txtUsername.getText().trim(); }

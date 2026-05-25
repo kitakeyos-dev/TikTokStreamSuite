@@ -74,7 +74,74 @@
     -fx-text-fill: #818cf8;
 }
 
-/* Spinner */
+/* ToggleButton — tss-toggle (normal size) */
+.tss-toggle {
+    -fx-background-color: transparent, transparent, transparent, transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 8px;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-text-fill: #a1a1aa;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-padding: 0 12 0 12;
+    -fx-cursor: hand;
+}
+
+.tss-toggle:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04);
+    -fx-text-fill: #e4e4e7;
+}
+
+.tss-toggle:selected {
+    -fx-background-color: rgba(99, 102, 241, 0.12), rgba(99, 102, 241, 0.12), rgba(99, 102, 241, 0.12), rgba(99, 102, 241, 0.12);
+    -fx-border-color: rgba(99, 102, 241, 0.4);
+    -fx-text-fill: #818cf8;
+}
+
+.tss-toggle:selected:hover {
+    -fx-background-color: rgba(99, 102, 241, 0.18), rgba(99, 102, 241, 0.18), rgba(99, 102, 241, 0.18), rgba(99, 102, 241, 0.18);
+}
+
+.tss-toggle:focused {
+    -fx-background-color: transparent, transparent, transparent, transparent;
+}
+
+/* ToggleButton — tss-toggle-compact (bento widget, smaller) */
+.tss-toggle-compact {
+    -fx-background-color: transparent, transparent, transparent, transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 8px;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 8px;
+    -fx-border-width: 1px;
+    -fx-text-fill: #a1a1aa;
+    -fx-font-weight: bold;
+    -fx-font-size: 10px;
+    -fx-padding: 0 10 0 10;
+    -fx-cursor: hand;
+    -fx-min-width: 72px;
+}
+
+.tss-toggle-compact:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.04);
+    -fx-text-fill: #e4e4e7;
+}
+
+.tss-toggle-compact:selected {
+    -fx-background-color: rgba(99, 102, 241, 0.12), rgba(99, 102, 241, 0.12), rgba(99, 102, 241, 0.12), rgba(99, 102, 241, 0.12);
+    -fx-border-color: rgba(99, 102, 241, 0.4);
+    -fx-text-fill: #818cf8;
+}
+
+.tss-toggle-compact:selected:hover {
+    -fx-background-color: rgba(99, 102, 241, 0.18), rgba(99, 102, 241, 0.18), rgba(99, 102, 241, 0.18), rgba(99, 102, 241, 0.18);
+}
+
+.tss-toggle-compact:focused {
+    -fx-background-color: transparent, transparent, transparent, transparent;
+}
 .tss-spinner .text-field {
     -fx-background-color: #18181b;
     -fx-background-radius: 8px 0 0 8px;

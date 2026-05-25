@@ -147,7 +147,10 @@ public class TopLikeOverlay extends Stage {
     }
 
     private void smartUpdate() {
-        List<Liker> list = DataManager.getLikers();
+        List<Liker> list;
+        synchronized (DataManager.class) {
+            list = new ArrayList<>(DataManager.getLikers());
+        }
         int limit = Math.min(list.size(), 10);
 
         // Build current snapshot

@@ -6,11 +6,7 @@ import com.leaderboard.ui.overlay.LikeGoalOverlay;
 import com.leaderboard.ui.overlay.LiveChatOverlay;
 import com.leaderboard.ui.overlay.TopLikeOverlay;
 import com.leaderboard.ui.tab.*;
-import com.leaderboard.util.BankConfigManager;
-import com.leaderboard.util.BankDataManager;
-import com.leaderboard.util.ConfigManager;
-import com.leaderboard.util.DataManager;
-import com.leaderboard.util.IconManager;
+import com.leaderboard.util.*;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -212,7 +208,7 @@ public class DashboardStage extends Stage {
                         "Live chat và overlay tin nhắn"),
                 createNavButton("Mục Tiêu Tim", Feather.HEART, likesTab,
                         "Theo dõi lượt tim và mục tiêu"),
-                createNavButton("BankPusher", Feather.DOLLAR_SIGN, bankTab,
+                createNavButton("Bank Pusher", Feather.DOLLAR_SIGN, bankTab,
                         "Đồng bộ giao dịch ngân hàng ACB"));
 
         Region spacer = new Region();
@@ -418,6 +414,7 @@ public class DashboardStage extends Stage {
                     () -> Platform.runLater(() -> {
                         leaderboardTab.refreshTableData();
                         teamTab.refreshTableData();
+                        likesTab.refreshLikerTableData();
                         if (overlayStage != null) {
                             overlayStage.updateLeaderboard();
                         }
@@ -485,20 +482,23 @@ public class DashboardStage extends Stage {
     }
 
     public void updateOverlayButtonStates() {
-        boolean isLeaderboardOpen = (overlayStage != null);
-        boolean isChatOpen = (chatOverlayStage != null);
-        boolean isLikeOpen = (likeOverlayStage != null);
-        boolean isTopLikeOpen = (topLikeOverlayStage != null);
+        boolean isLeaderboardOpen = !(overlayStage == null || !overlayStage.isShowing());
+        boolean isChatOpen = !(chatOverlayStage == null || !chatOverlayStage.isShowing());
+        boolean isLikeOpen = !(likeOverlayStage == null || !likeOverlayStage.isShowing());
+        boolean isTopLikeOpen = !(topLikeOverlayStage == null || !topLikeOverlayStage.isShowing());
 
         overviewTab.updateOverlayButtonStates(isLeaderboardOpen, isChatOpen, isLikeOpen, isTopLikeOpen);
-        leaderboardTab.updateOverlayButtonState(isLeaderboardOpen);
-        chatTab.updateOverlayButtonState(isChatOpen);
-        likesTab.updateOverlayButtonStates(isLikeOpen, isTopLikeOpen);
     }
 
     public void updateLeaderboardOverlay() {
         if (overlayStage != null) {
             overlayStage.updateLeaderboard();
+        }
+    }
+
+    public void updateTopLikeOverlay() {
+        if (topLikeOverlayStage != null) {
+            topLikeOverlayStage.updateLeaderboard();
         }
     }
 

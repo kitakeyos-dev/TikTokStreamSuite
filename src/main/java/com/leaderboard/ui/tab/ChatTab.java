@@ -2,6 +2,7 @@ package com.leaderboard.ui.tab;
 
 import com.leaderboard.ui.DashboardLayout;
 import com.leaderboard.ui.DashboardStage;
+import com.leaderboard.ui.ToggleSwitch;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -24,7 +25,6 @@ public class ChatTab extends BorderPane {
 
     private TextField txtSearch;
     private Button btnClearChat;
-    private Button btnToggleChatOverlayTab3;
 
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
 
@@ -59,14 +59,9 @@ public class ChatTab extends BorderPane {
     private void initComponents() {
         VBox cardChat = DashboardLayout.createPageContainer();
 
-        btnToggleChatOverlayTab3 = DashboardLayout.newButton("Bật khung chat");
-        DashboardLayout.applySecondaryButton(btnToggleChatOverlayTab3);
-        btnToggleChatOverlayTab3.setOnAction(e -> parent.toggleChatOverlayWindow());
-
         cardChat.getChildren().add(DashboardLayout.createPageHeader(
                 "LỊCH SỬ TRÒ CHUYỆN TRỰC TIẾP",
-                "Xem tin nhắn thời gian thực truyền trực tiếp từ cổng kết nối Live stream.",
-                btnToggleChatOverlayTab3
+                "Xem tin nhắn thời gian thực truyền trực tiếp từ cổng kết nối Live stream."
         ));
 
         txtSearch = DashboardLayout.newSearchField();
@@ -130,9 +125,5 @@ public class ChatTab extends BorderPane {
         if (chatList.size() > 100) {
             chatList.remove(100, chatList.size());
         }
-    }
-
-    public void updateOverlayButtonState(boolean isOpen) {
-        DashboardLayout.applyToggleButton(btnToggleChatOverlayTab3, "khung chat", isOpen);
     }
 }

@@ -207,7 +207,10 @@ public class TeamTab extends BorderPane {
 
     public void refreshTableData() {
         memberList.clear();
-        List<TeamMember> list = DataManager.getTeamMembers();
+        List<TeamMember> list;
+        synchronized (DataManager.class) {
+            list = new ArrayList<>(DataManager.getTeamMembers());
+        }
         int subsCount = 0;
         int fanClubCount = 0;
 
