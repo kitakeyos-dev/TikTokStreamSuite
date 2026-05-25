@@ -22,6 +22,7 @@ import javafx.stage.Window;
 import org.kordamp.ikonli.feather.Feather;
 import org.kordamp.ikonli.javafx.FontIcon;
 
+import com.leaderboard.util.I18n;
 import java.util.Optional;
 
 public final class Dialogs {
@@ -49,7 +50,7 @@ public final class Dialogs {
         VBox card = createCard(Alert.AlertType.CONFIRMATION, title, message);
         HBox actions = createActions();
 
-        Button cancelButton = secondaryButton("Huỷ");
+        Button cancelButton = secondaryButton(I18n.get("dialog.cancel"));
         cancelButton.setOnAction(e -> stage.close());
 
         Button confirmButton = primaryButton(confirmText, "danger-button");
@@ -82,10 +83,10 @@ public final class Dialogs {
         card.getChildren().add(fieldBox);
 
         HBox actions = createActions();
-        Button cancelButton = secondaryButton("Huỷ");
+        Button cancelButton = secondaryButton(I18n.get("dialog.cancel"));
         cancelButton.setOnAction(e -> stage.close());
 
-        Button okButton = primaryButton("OK", "default-button");
+        Button okButton = primaryButton(I18n.get("dialog.ok"), "default-button");
         okButton.setOnAction(e -> {
             value[0] = input.getText();
             stage.close();
@@ -109,7 +110,7 @@ public final class Dialogs {
         VBox card = createCard(type, title, message);
 
         HBox actions = createActions();
-        Button okButton = primaryButton("OK", "default-button");
+        Button okButton = primaryButton(I18n.get("dialog.ok"), "default-button");
         okButton.setOnAction(e -> stage.close());
         actions.getChildren().add(okButton);
         card.getChildren().add(actions);

@@ -19,11 +19,14 @@ public class ConfigManager {
         private boolean overlayTopLikeOnTop = true;
         private boolean ttsEnabled = false;
         private boolean ttsReadUsername = true;
-        private String ttsBlockedWords = "địt, cặc, lồn, buồi, đéo, đĩ, chó ngu, ngu lồn, cặc chó, ăn cứt, ăn lồn, óc chó, ngu si, vcl, vkl, dcm, đkm, đm, vú, chim, bướm, fuck, bitch";
+        private String ttsBlockedWords = null;
+        private String ttsBlockedWordsVi = "địt, cặc, lồn, buồi, đéo, đĩ, chó ngu, ngu lồn, cặc chó, ăn cứt, ăn lồn, óc chó, ngu si, vcl, vkl, dcm, đkm, đm, vú, chim, bướm, fuck, bitch";
+        private String ttsBlockedWordsEn = "fuck, bitch, shit, asshole, bastard, cunt, dick, pussy, motherfucker, cock, whore, slut, retard, trash";
         private int ttsMaxQueue = 8;
         private double ttsVolume = 1.0;
         private String ttsAudioDeviceName = "Default";
         private String updateMetadataUrl = "https://raw.githubusercontent.com/kitakeyos-dev/TikTokStreamSuite/master/update.json";
+        private String language = "vi";
 
         public String getStreamerUsername() { return streamerUsername; }
         public void setStreamerUsername(String v) { this.streamerUsername = v; }
@@ -56,12 +59,36 @@ public class ConfigManager {
         public void setTtsReadUsername(boolean v) { this.ttsReadUsername = v; }
 
         public String getTtsBlockedWords() {
-            if (ttsBlockedWords == null) {
-                ttsBlockedWords = "địt, cặc, lồn, buồi, đéo, đĩ, chó ngu, ngu lồn, cặc chó, ăn cứt, ăn lồn, óc chó, ngu si, vcl, vkl, dcm, đkm, đm, vú, chim, bướm, fuck, bitch";
+            // Migration check: if they have a legacy config with custom blocked words, migrate it to the active language!
+            if (ttsBlockedWords != null && !ttsBlockedWords.trim().isEmpty()) {
+                if ("en".equals(getLanguage())) {
+                    ttsBlockedWordsEn = ttsBlockedWords;
+                } else {
+                    ttsBlockedWordsVi = ttsBlockedWords;
+                }
+                ttsBlockedWords = null; // Clear migration flag
             }
-            return ttsBlockedWords;
+
+            if ("en".equals(getLanguage())) {
+                if (ttsBlockedWordsEn == null) {
+                    ttsBlockedWordsEn = "fuck, bitch, shit, asshole, bastard, cunt, dick, pussy, motherfucker, cock, whore, slut, retard, trash";
+                }
+                return ttsBlockedWordsEn;
+            } else {
+                if (ttsBlockedWordsVi == null) {
+                    ttsBlockedWordsVi = "địt, cặc, lồn, buồi, đéo, đĩ, chó ngu, ngu lồn, cặc chó, ăn cứt, ăn lồn, óc chó, ngu si, vcl, vkl, dcm, đkm, đm, vú, chim, bướm, fuck, bitch";
+                }
+                return ttsBlockedWordsVi;
+            }
         }
-        public void setTtsBlockedWords(String v) { this.ttsBlockedWords = v; }
+
+        public void setTtsBlockedWords(String v) {
+            if ("en".equals(getLanguage())) {
+                this.ttsBlockedWordsEn = v;
+            } else {
+                this.ttsBlockedWordsVi = v;
+            }
+        }
 
         public int getTtsMaxQueue() {
             if (ttsMaxQueue <= 0) ttsMaxQueue = 8;
@@ -88,6 +115,14 @@ public class ConfigManager {
             return updateMetadataUrl;
         }
         public void setUpdateMetadataUrl(String v) { this.updateMetadataUrl = v; }
+
+        public String getLanguage() {
+            if (language == null || (!language.equals("vi") && !language.equals("en"))) {
+                language = "vi";
+            }
+            return language;
+        }
+        public void setLanguage(String v) { this.language = v; }
     }
 
     private static AppConfig currentConfig = new AppConfig();

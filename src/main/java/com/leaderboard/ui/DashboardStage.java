@@ -23,8 +23,6 @@ import javafx.stage.Stage;
 import org.kordamp.ikonli.feather.Feather;
 import org.kordamp.ikonli.javafx.FontIcon;
 
-import java.time.format.DateTimeFormatter;
-
 public class DashboardStage extends Stage {
     private OverviewTab overviewTab;
     private LeaderboardTab leaderboardTab;
@@ -46,7 +44,7 @@ public class DashboardStage extends Stage {
     private boolean connectionErrorShown = false;
 
     public DashboardStage() {
-        setTitle("TikTok Live Stream Suite - Bảng Điều Khiển");
+        setTitle("TikTok Live Stream Suite - " + I18n.get("nav.overview"));
         setWidth(1200);
         setHeight(850);
 
@@ -115,14 +113,14 @@ public class DashboardStage extends Stage {
         iconDot.getChildren().addAll(pulseCircle, coreCircle);
 
         VBox titleGroup = new VBox(2);
-        Label lblTitle = new Label("LIVE STREAM SUITE");
+        Label lblTitle = new Label(I18n.get("header.title"));
         lblTitle.setStyle(
                 "-fx-text-fill: #f4f4f5;" +
                         "-fx-font-weight: bold;" +
                         "-fx-font-size: 18px;" +
                         "-fx-font-family: 'Segoe UI', system-ui;");
 
-        lblSubtitle = new Label("Kết nối livestream, overlay OBS và trạng thái hệ thống");
+        lblSubtitle = new Label(I18n.get("header.subtitle"));
         lblSubtitle.setStyle(
                 "-fx-text-fill: #a1a1aa;" +
                         "-fx-font-size: 11px;" +
@@ -132,7 +130,7 @@ public class DashboardStage extends Stage {
         headerTextGroup.getChildren().addAll(iconDot, titleGroup);
         headerBar.setLeft(headerTextGroup);
 
-        lblPageTitle = new Label("Tổng Quan");
+        lblPageTitle = new Label(I18n.get("nav.overview"));
         lblPageTitle.setStyle(
                 "-fx-text-fill: #f4f4f5;" +
                         "-fx-font-weight: bold;" +
@@ -169,7 +167,7 @@ public class DashboardStage extends Stage {
         dashboardBody.setPadding(new Insets(0, 0, 0, 0));
 
         root.setCenter(dashboardBody);
-        selectNav(activeNavButton, overviewTab, "Tổng Quan", "Kết nối livestream, overlay OBS và trạng thái hệ thống");
+        selectNav(activeNavButton, overviewTab, I18n.get("nav.overview"), I18n.get("nav.overview.desc"));
     }
 
     private VBox buildSidebar() {
@@ -183,7 +181,7 @@ public class DashboardStage extends Stage {
                         "-fx-border-color: #27272a;" +
                         "-fx-border-width: 0 1 0 0;");
 
-        Label lblMenu = new Label("ĐIỀU HƯỚNG");
+        Label lblMenu = new Label(I18n.get("nav.title"));
         lblMenu.setStyle("-fx-text-fill: #52525b; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 0 0 4 8;");
 
         Separator menuSep = new Separator();
@@ -192,18 +190,18 @@ public class DashboardStage extends Stage {
         sidebar.getChildren().addAll(
                 lblMenu,
                 menuSep,
-                createNavButton("Tổng Quan", Feather.HOME, overviewTab,
-                        "Kết nối livestream, overlay OBS và trạng thái hệ thống"),
-                createNavButton("Bảng Xếp Hạng", Feather.BAR_CHART_2, leaderboardTab,
-                        "Theo dõi và quản lý top quà tặng"),
-                createNavButton("Mục Tiêu Tim", Feather.HEART, likesTab,
-                        "Theo dõi lượt tim và mục tiêu"),
-                createNavButton("Trò Chuyện", Feather.MESSAGE_CIRCLE, chatTab,
-                        "Live chat và overlay tin nhắn"),
-                createNavButton("Đọc Giọng Nói", Feather.VOLUME_2, ttsTab,
-                        "Cấu hình Text-to-Speech đọc bình luận tự động"),
-                createNavButton("Thành Viên", Feather.USERS, teamTab,
-                        "Danh sách thành viên và fan club"));
+                createNavButton(I18n.get("nav.overview"), Feather.HOME, overviewTab,
+                        I18n.get("nav.overview.desc")),
+                createNavButton(I18n.get("nav.leaderboard"), Feather.BAR_CHART_2, leaderboardTab,
+                        I18n.get("nav.leaderboard.desc")),
+                createNavButton(I18n.get("nav.likes"), Feather.HEART, likesTab,
+                        I18n.get("nav.likes.desc")),
+                createNavButton(I18n.get("nav.chat"), Feather.MESSAGE_CIRCLE, chatTab,
+                        I18n.get("nav.chat.desc")),
+                createNavButton(I18n.get("nav.tts"), Feather.VOLUME_2, ttsTab,
+                        I18n.get("nav.tts.desc")),
+                createNavButton(I18n.get("nav.members"), Feather.USERS, teamTab,
+                        I18n.get("nav.members.desc")));
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -313,11 +311,11 @@ public class DashboardStage extends Stage {
                 // 1. Update Subtitle in header bar
                 if (title != null && !title.trim().isEmpty()) {
                     String username = ConfigManager.getConfig().getStreamerUsername();
-                    lblSubtitle.setText("Phiên LIVE: @" + username + " - \"" + title + "\"");
+                    lblSubtitle.setText(I18n.get("header.session", username, title));
                 }
 
                 // 2. Update diagnostics
-                overviewTab.getLblSyncDiag().setText(String.format("HOẠT ĐỘNG (%,d người xem)", viewers));
+                overviewTab.getLblSyncDiag().setText(I18n.get("overview.diag.sync.viewers", viewers));
                 overviewTab.getLblSyncDiag()
                         .setStyle("-fx-text-fill: #25f4ee; -fx-font-size: 11px; -fx-font-weight: bold;");
 
@@ -382,7 +380,7 @@ public class DashboardStage extends Stage {
             overviewTab.setDisconnectingState();
             TikTokConnector.disconnect();
             overviewTab.updateDiagnostics(false, "--");
-            lblSubtitle.setText("Kết nối livestream, overlay OBS và trạng thái hệ thống");
+            lblSubtitle.setText(I18n.get("header.subtitle"));
         } else {
             String username = overviewTab.getUsername();
             if (username.isEmpty()) {
@@ -408,7 +406,7 @@ public class DashboardStage extends Stage {
                             return;
                         overviewTab.setConnectionState(false);
                         overviewTab.updateDiagnostics(false, "--");
-                        lblSubtitle.setText("Kết nối livestream, overlay OBS và trạng thái hệ thống");
+                        lblSubtitle.setText(I18n.get("header.subtitle"));
                     }),
                     errorMsg -> Platform.runLater(() -> {
                         if (attemptId != connectionAttemptId || connectionErrorShown)
@@ -417,7 +415,7 @@ public class DashboardStage extends Stage {
                         Dialogs.error(this, "Lỗi kết nối", "Kết nối thất bại: " + errorMsg);
                         overviewTab.setConnectionState(false);
                         overviewTab.updateDiagnostics(false, "--");
-                        lblSubtitle.setText("Kết nối livestream, overlay OBS và trạng thái hệ thống");
+                        lblSubtitle.setText(I18n.get("header.subtitle"));
                     }),
                     () -> Platform.runLater(() -> {
                         leaderboardTab.refreshTableData();

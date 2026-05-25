@@ -6,6 +6,7 @@ import com.leaderboard.ui.DashboardStage;
 import com.leaderboard.ui.Dialogs;
 import com.leaderboard.ui.ToggleSwitch;
 import com.leaderboard.util.ConfigManager;
+import com.leaderboard.util.I18n;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -43,7 +44,7 @@ public class TtsTab extends BorderPane {
         GridPane grid = DashboardLayout.createTwoColumnGrid();
 
         // --- COLUMN 1: CONFIG & TEST ---
-        VBox cardConfig = DashboardLayout.createCard("CẤU HÌNH GIỌNG NÓI (TTS)");
+        VBox cardConfig = DashboardLayout.createCard(I18n.get("tts.card.config"));
         VBox leftContent = DashboardLayout.createSectionContent();
 
         // Setting 1: Enable/Disable TTS
@@ -57,8 +58,8 @@ public class TtsTab extends BorderPane {
             }
         });
         HBox rowTts = createSettingRow(
-                "ĐỌC BÌNH LUẬN (TTS)",
-                "Tự động phát giọng đọc tiếng Việt khi có người xem bình luận trên Live stream.",
+                I18n.get("tts.setting.read"),
+                I18n.get("tts.setting.read.desc"),
                 "#818cf8",
                 Feather.VOLUME_2,
                 swTtsEnabled
@@ -72,8 +73,8 @@ public class TtsTab extends BorderPane {
             ConfigManager.save();
         });
         HBox rowUsername = createSettingRow(
-                "ĐỌC TÊN NGƯỜI CHAT",
-                "Đọc kèm tên người dùng. Ví dụ: 'Nguyễn Văn A nói: Xin chào'. Nếu tắt, chỉ đọc 'Xin chào'.",
+                I18n.get("tts.setting.name"),
+                I18n.get("tts.setting.name.desc"),
                 "#818cf8",
                 Feather.USER,
                 swTtsReadUsername
@@ -100,8 +101,8 @@ public class TtsTab extends BorderPane {
             }
         });
         HBox rowAudioDevice = createComboSettingRow(
-                "THIẾT BỊ ĐẦU RA ÂM THANH",
-                "Chọn loa, tai nghe hoặc cáp âm thanh ảo để phát riêng biệt tiếng đọc bình luận.",
+                I18n.get("tts.setting.output"),
+                I18n.get("tts.setting.output.desc"),
                 "#818cf8",
                 Feather.HEADPHONES,
                 comboAudioDevice
@@ -120,8 +121,8 @@ public class TtsTab extends BorderPane {
             TTSService.updateVolume(vol); // Cập nhật trực tiếp âm lượng đang phát nếu có
         });
         HBox rowVolume = createSliderSettingRow(
-                "ÂM LƯỢNG GIỌNG ĐỌC",
-                "Điều chỉnh độ to nhỏ của âm thanh TTS phát ra từ ứng dụng.",
+                I18n.get("tts.setting.volume"),
+                I18n.get("tts.setting.volume.desc"),
                 "#818cf8",
                 Feather.SPEAKER,
                 sliderVolume,
@@ -130,7 +131,7 @@ public class TtsTab extends BorderPane {
 
         // Setting 5: Max Queue Limit Slider
         int initialQueueLimit = ConfigManager.getConfig().getTtsMaxQueue();
-        lblQueueLimitVal = new Label(initialQueueLimit + " bình luận");
+        lblQueueLimitVal = new Label(I18n.get("tts.setting.queue.val", initialQueueLimit));
         sliderQueueLimit = new Slider(1, 25, initialQueueLimit);
         sliderQueueLimit.setBlockIncrement(1);
         sliderQueueLimit.setSnapToTicks(true);
@@ -138,11 +139,11 @@ public class TtsTab extends BorderPane {
             int limit = newVal.intValue();
             ConfigManager.getConfig().setTtsMaxQueue(limit);
             ConfigManager.save();
-            lblQueueLimitVal.setText(limit + " bình luận");
+            lblQueueLimitVal.setText(I18n.get("tts.setting.queue.val", limit));
         });
         HBox rowQueueLimit = createSliderSettingRow(
-                "GIỚI HẠN HÀNG ĐỢI (CHỐNG NGHẼN)",
-                "Số lượng bình luận chờ đọc tối đa. Vượt quá mức này sẽ bỏ qua các bình luận cũ nhất.",
+                I18n.get("tts.setting.queue"),
+                I18n.get("tts.setting.queue.desc"),
                 "#818cf8",
                 Feather.SLIDERS,
                 sliderQueueLimit,
@@ -154,12 +155,12 @@ public class TtsTab extends BorderPane {
         sep.setStyle("-fx-opacity: 0.08; -fx-padding: 10 0 10 0;");
 
         // Section Test TTS
-        Label lblTestTitle = DashboardLayout.createFieldLabel("PHÁT THỬ GIỌNG NÓI / HÀNG ĐỢI:");
+        Label lblTestTitle = DashboardLayout.createFieldLabel(I18n.get("tts.label.test"));
         txtTestTts = DashboardLayout.newTextField();
-        HBox testFieldBox = DashboardLayout.wrapTextField(txtTestTts, "Nhập nội dung cần đọc thử vào đây...");
+        HBox testFieldBox = DashboardLayout.wrapTextField(txtTestTts, I18n.get("tts.prompt.test"));
 
         // Play and Clear Queue buttons
-        btnPlayTest = DashboardLayout.newButton("Đọc Thử");
+        btnPlayTest = DashboardLayout.newButton(I18n.get("tts.btn.play"));
         FontIcon playIcon = new FontIcon(Feather.PLAY);
         playIcon.setIconColor(Color.web("#4ade80"));
         btnPlayTest.setGraphic(playIcon);
@@ -175,7 +176,7 @@ public class TtsTab extends BorderPane {
             }
         });
 
-        btnClearQueue = DashboardLayout.newButton("Dừng & Xoá Hàng Đợi");
+        btnClearQueue = DashboardLayout.newButton(I18n.get("tts.btn.clear"));
         FontIcon stopIcon = new FontIcon(Feather.STOP_CIRCLE);
         stopIcon.setIconColor(Color.web("#f87171"));
         btnClearQueue.setGraphic(stopIcon);
@@ -193,16 +194,16 @@ public class TtsTab extends BorderPane {
         DashboardLayout.fillGridCell(cardConfig);
 
         // --- COLUMN 2: BAD WORDS FILTER ---
-        VBox cardBlockedWords = DashboardLayout.createCard("BỘ LỌC TỪ KHÓA CẤM / PHẢN CẢM");
+        VBox cardBlockedWords = DashboardLayout.createCard(I18n.get("tts.card.blocked"));
         VBox rightContent = DashboardLayout.createSectionContent();
 
-        Label lblBlockedInfo = DashboardLayout.createFieldLabel("TỪ KHÓA CHẶN ĐỌC TTS (CÁCH NHAU BẰNG DẤU PHẨY HOẶC XUỐNG DÒNG):");
+        Label lblBlockedInfo = DashboardLayout.createFieldLabel(I18n.get("tts.label.blocked"));
         
         taBlockedWords = new TextArea();
         taBlockedWords.setPrefHeight(300);
         taBlockedWords.setWrapText(true);
         taBlockedWords.setText(ConfigManager.getConfig().getTtsBlockedWords());
-        taBlockedWords.setPromptText("Nhập các từ phản cảm, tục tĩu tại đây để tránh phát âm thanh vi phạm...");
+        taBlockedWords.setPromptText(I18n.get("tts.prompt.blocked"));
         taBlockedWords.setStyle(
                 "-fx-control-inner-background: #18181b;" +
                 "-fx-background-color: #18181b;" +
@@ -214,7 +215,7 @@ public class TtsTab extends BorderPane {
                 "-fx-font-family: 'Segoe UI', system-ui;"
         );
 
-        btnSaveConfig = DashboardLayout.newButton("Lưu Bộ Lọc Từ Cấm");
+        btnSaveConfig = DashboardLayout.newButton(I18n.get("tts.btn.saveblocked"));
         FontIcon saveIcon = new FontIcon(Feather.SAVE);
         saveIcon.setIconColor(Color.web("#818cf8"));
         btnSaveConfig.setGraphic(saveIcon);
@@ -223,7 +224,7 @@ public class TtsTab extends BorderPane {
             ConfigManager.getConfig().setTtsBlockedWords(taBlockedWords.getText().trim());
             ConfigManager.save();
             
-            Dialogs.info(getScene().getWindow(), "Thông báo", "Đã lưu danh sách từ khóa cấm thành công!");
+            Dialogs.info(getScene().getWindow(), I18n.get("dialog.success"), I18n.get("tts.saveblocked.success"));
         });
 
         HBox saveRow = DashboardLayout.createActionsRow(btnSaveConfig);

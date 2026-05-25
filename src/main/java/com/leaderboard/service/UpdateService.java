@@ -3,11 +3,11 @@ package com.leaderboard.service;
 import com.google.gson.Gson;
 import com.leaderboard.ui.Dialogs;
 import com.leaderboard.util.ConfigManager;
+import com.leaderboard.util.I18n;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.effect.DropShadow;
@@ -57,7 +57,7 @@ public class UpdateService {
         String metadataUrl = ConfigManager.getConfig().getUpdateMetadataUrl();
         if (metadataUrl == null || metadataUrl.trim().isEmpty()) {
             if (!silent) {
-                Platform.runLater(() -> Dialogs.error(owner, "Lỗi cập nhật", "Đường dẫn kiểm tra cập nhật chưa được cấu hình!"));
+                Platform.runLater(() -> Dialogs.error(owner, I18n.get("update.err.title"), I18n.get("update.err.url")));
             }
             return;
         }
@@ -79,23 +79,23 @@ public class UpdateService {
                                 Platform.runLater(() -> promptUpdate(owner, info));
                             } else {
                                 if (!silent) {
-                                    Platform.runLater(() -> Dialogs.info(owner, "Cập nhật ứng dụng", 
-                                            "Bạn đang sử dụng phiên bản mới nhất (v" + CURRENT_VERSION + ")!"));
+                                    Platform.runLater(() -> Dialogs.info(owner, I18n.get("update.title"), 
+                                            I18n.get("update.label.version", CURRENT_VERSION)));
                                 }
                             }
                         }
                     } else {
                         if (!silent) {
-                            Platform.runLater(() -> Dialogs.error(owner, "Lỗi kết nối", 
-                                    "Không thể kết nối tới máy chủ cập nhật! Mã lỗi: " + response.code()));
+                            Platform.runLater(() -> Dialogs.error(owner, I18n.get("update.err.conn.title"), 
+                                    I18n.get("update.err.conn", response.code())));
                         }
                     }
                 }
             } catch (Exception e) {
                 System.err.println("Error checking for updates: " + e.getMessage());
                 if (!silent) {
-                    Platform.runLater(() -> Dialogs.error(owner, "Lỗi kết nối", 
-                            "Gặp lỗi khi kiểm tra cập nhật: " + e.getMessage()));
+                    Platform.runLater(() -> Dialogs.error(owner, I18n.get("update.err.conn.title"), 
+                            I18n.get("update.err.check", e.getMessage())));
                 }
             }
         }).start();
@@ -121,11 +121,9 @@ public class UpdateService {
     }
 
     private static void promptUpdate(Window owner, UpdateInfo info) {
-        String message = "Phát hiện phiên bản mới: v" + info.version + "\n\n" +
-                "Nội dung cập nhật:\n" + (info.changelog != null ? info.changelog : "Không có mô tả chi tiết.") + "\n\n" +
-                "Bạn có muốn tải về trình cài đặt và tự động nâng cấp ứng dụng ngay bây giờ không?";
+        String message = I18n.get("update.prompt.msg", info.version, (info.changelog != null ? info.changelog : I18n.get("update.prompt.changelog.empty")));
         
-        boolean confirm = Dialogs.confirm(owner, "Phát hiện Bản cập nhật mới", message, "Cập nhật ngay");
+        boolean confirm = Dialogs.confirm(owner, I18n.get("update.prompt.title"), message, I18n.get("update.prompt.btn"));
         if (confirm) {
             startDownloadProcess(owner, info.downloadUrl, info.version);
         }
@@ -146,7 +144,7 @@ public class UpdateService {
         infoIcon.setIconSize(22);
         infoIcon.setIconColor(Color.web("#818cf8"));
 
-        Label titleLabel = new Label("Đang tải bản cập nhật (v" + newVersion + ")");
+        Label titleLabel = new Label(I18n.get("update.download.stage.title", newVersion));
         titleLabel.setStyle("-fx-text-fill: #f4f4f5; -fx-font-weight: bold; -fx-font-size: 14px; -fx-font-family: 'Segoe UI', system-ui;");
 
         HBox header = new HBox(10, infoIcon, titleLabel);
@@ -165,7 +163,7 @@ public class UpdateService {
             progressBar.setStyle("-fx-accent: #818cf8;");
         }
 
-        Label statusLabel = new Label("Đang chuẩn bị kết nối...");
+        Label statusLabel = new Label(I18n.get("update.download.preparing"));
         statusLabel.setStyle("-fx-text-fill: #a1a1aa; -fx-font-size: 11px; -fx-font-family: 'Segoe UI', system-ui;");
 
         Label sizeLabel = new Label("0 MB / 0 MB");
@@ -233,12 +231,12 @@ public class UpdateService {
                             totalBytesRead += bytesRead;
 
                             final double progress = contentLength > 0 ? (double) totalBytesRead / contentLength : -1;
-                            final String sizeInfo = formatSize(totalBytesRead) + " / " + (contentLength > 0 ? formatSize(contentLength) : "Không rõ");
+                            final String sizeInfo = formatSize(totalBytesRead) + " / " + (contentLength > 0 ? formatSize(contentLength) : I18n.get("update.download.unknown"));
                             final int percent = contentLength > 0 ? (int) (progress * 100) : 0;
 
                             Platform.runLater(() -> {
                                 progressBar.setProgress(progress);
-                                statusLabel.setText("Đang tải bản cập nhật: " + percent + "%");
+                                statusLabel.setText(I18n.get("update.download.progress", percent));
                                 sizeLabel.setText("(" + sizeInfo + ")");
                             });
                         }
@@ -247,7 +245,7 @@ public class UpdateService {
                     // Success! Start Installer and Exit App
                     Platform.runLater(() -> {
                         progressBar.setProgress(1.0);
-                        statusLabel.setText("Đang khởi chạy trình cài đặt mới...");
+                        statusLabel.setText(I18n.get("update.download.launching"));
                         downloadStage.close();
                     });
 
@@ -268,7 +266,7 @@ public class UpdateService {
                 final File fileToDelete = tempInstaller;
                 Platform.runLater(() -> {
                     downloadStage.close();
-                    Dialogs.error(owner, "Lỗi tải xuống", "Không thể tải tệp tin cài đặt: " + e.getMessage());
+                    Dialogs.error(owner, I18n.get("update.download.err.title"), I18n.get("update.download.err", e.getMessage()));
                     if (fileToDelete != null && fileToDelete.exists()) {
                         fileToDelete.delete();
                     }

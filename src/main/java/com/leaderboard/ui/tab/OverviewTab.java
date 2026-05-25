@@ -3,6 +3,7 @@ package com.leaderboard.ui.tab;
 import com.leaderboard.service.UpdateService;
 import com.leaderboard.ui.DashboardLayout;
 import com.leaderboard.ui.DashboardStage;
+import com.leaderboard.ui.Dialogs;
 import com.leaderboard.ui.ToggleSwitch;
 import com.leaderboard.util.ConfigManager;
 import javafx.geometry.Insets;
@@ -12,6 +13,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.feather.Feather;
+import com.leaderboard.util.I18n;
 
 public class OverviewTab extends BorderPane {
     private final DashboardStage parent;
@@ -41,28 +43,49 @@ public class OverviewTab extends BorderPane {
 
         GridPane grid = DashboardLayout.createTwoColumnGrid();
 
-        VBox cardConfig = DashboardLayout.createCard("CẤU HÌNH KẾT NỐI");
+        VBox cardConfig = DashboardLayout.createCard(I18n.get("overview.card.config"));
         VBox leftContent = DashboardLayout.createSectionContent();
 
         // TikTok Username
-        Label lblUser = DashboardLayout.createFieldLabel("TIKTOK USERNAME (TÊN KÊNH LIVE):");
+        Label lblUser = DashboardLayout.createFieldLabel(I18n.get("overview.label.username"));
         txtUsername = DashboardLayout.newTextField();
         txtUsername.setText(ConfigManager.getConfig().getStreamerUsername());
         Label lblAt = new Label("@");
         lblAt.setStyle("-fx-text-fill: #71717a; -fx-font-size: 14px; -fx-font-weight: bold;");
-        HBox userFieldBox = DashboardLayout.wrapTextField(txtUsername, "Ví dụ: streamer_live", lblAt);
+        HBox userFieldBox = DashboardLayout.wrapTextField(txtUsername, I18n.get("overview.prompt.username"), lblAt);
 
         // API Key
-        Label lblKey = DashboardLayout.createFieldLabel("EULERSTREAM API KEY (TÙY CHỌN):");
+        Label lblKey = DashboardLayout.createFieldLabel(I18n.get("overview.label.apikey"));
         txtApiKey = DashboardLayout.newPasswordField();
         txtApiKey.setText(ConfigManager.getConfig().getEulerstreamKey());
         FontIcon keyIcon = new FontIcon(Feather.KEY);
         keyIcon.setIconColor(Color.web("#71717a"));
-        HBox keyFieldBox = DashboardLayout.wrapPasswordField(txtApiKey, "Nhập API Key để livestream ổn định...", keyIcon);
+        HBox keyFieldBox = DashboardLayout.wrapPasswordField(txtApiKey, I18n.get("overview.prompt.apikey"), keyIcon);
+
+        // Language
+        Label lblLang = DashboardLayout.createFieldLabel(I18n.get("overview.language.label"));
+        ComboBox<String> cbLanguage = new ComboBox<>();
+        cbLanguage.getItems().addAll("Tiếng Việt", "English");
+        cbLanguage.setValue(ConfigManager.getConfig().getLanguage().equals("vi") ? "Tiếng Việt" : "English");
+        DashboardLayout.styleComboBox(cbLanguage);
+        cbLanguage.setMaxWidth(Double.MAX_VALUE);
+        cbLanguage.setOnAction(e -> {
+            String selected = cbLanguage.getValue();
+            String langCode = selected.equals("Tiếng Việt") ? "vi" : "en";
+            if (!langCode.equals(ConfigManager.getConfig().getLanguage())) {
+                ConfigManager.getConfig().setLanguage(langCode);
+                ConfigManager.save();
+                I18n.loadBundle();
+                
+                String title = I18n.get("overview.language.restart.title");
+                String msg = I18n.get("overview.language.restart.msg");
+                Dialogs.info(parent.getScene().getWindow(), title, msg);
+            }
+        });
 
         // Status Row
-        lblStatusBadge = DashboardLayout.createStatusBadge("CHƯA KẾT NỐI");
-        btnConnect = DashboardLayout.newButton("Kết nối LIVE");
+        lblStatusBadge = DashboardLayout.createStatusBadge(I18n.get("overview.status.offline"));
+        btnConnect = DashboardLayout.newButton(I18n.get("overview.btn.connect"));
         DashboardLayout.applyPrimaryButton(btnConnect);
         btnConnect.setOnAction(e -> parent.toggleConnection());
         HBox statusRow = DashboardLayout.createStatusRow(lblStatusBadge, btnConnect);
@@ -72,17 +95,17 @@ public class OverviewTab extends BorderPane {
         sep.setStyle("-fx-opacity: 0.08; -fx-padding: 5 0 5 0;");
 
         // System Diagnostics Section
-        Label lblDiagTitle = DashboardLayout.createFieldLabel("TRẠNG THÁI HỆ THỐNG / DIAGNOSTICS:");
+        Label lblDiagTitle = DashboardLayout.createFieldLabel(I18n.get("overview.label.diag"));
 
         VBox diagBox = new VBox(10);
         diagBox.setPadding(new Insets(5, 10, 5, 10));
 
-        lblWebSocketDiag = createDiagRow(diagBox, "WebSocket", "CHƯA KẾT NỐI", "#71717a");
-        lblLatencyDiag = createDiagRow(diagBox, "Độ trễ kết nối (Latency)", "--", "#f4f4f5");
-        lblSyncDiag = createDiagRow(diagBox, "Đồng bộ mắt xem (Viewer Sync)", "INACTIVE", "#71717a");
-        createDiagRow(diagBox, "Phiên bản hiện tại", "v" + UpdateService.CURRENT_VERSION, "#818cf8");
+        lblWebSocketDiag = createDiagRow(diagBox, "WebSocket", I18n.get("overview.status.offline"), "#71717a");
+        lblLatencyDiag = createDiagRow(diagBox, I18n.get("overview.diag.latency"), "--", "#f4f4f5");
+        lblSyncDiag = createDiagRow(diagBox, I18n.get("overview.diag.sync"), I18n.get("overview.diag.sync.inactive"), "#71717a");
+        createDiagRow(diagBox, I18n.get("overview.diag.version"), "v" + UpdateService.CURRENT_VERSION, "#818cf8");
 
-        Button btnCheckUpdate = DashboardLayout.newButton("Kiểm tra cập nhật");
+        Button btnCheckUpdate = DashboardLayout.newButton(I18n.get("overview.btn.checkupdate"));
         FontIcon refreshIcon = new FontIcon(Feather.REFRESH_CW);
         refreshIcon.setIconColor(Color.web("#818cf8"));
         btnCheckUpdate.setGraphic(refreshIcon);
@@ -90,13 +113,13 @@ public class OverviewTab extends BorderPane {
         btnCheckUpdate.setMaxWidth(Double.MAX_VALUE);
         btnCheckUpdate.setOnAction(e -> UpdateService.checkForUpdates(parent.getScene().getWindow(), false));
 
-        leftContent.getChildren().addAll(lblUser, userFieldBox, lblKey, keyFieldBox, statusRow, sep, lblDiagTitle, diagBox, btnCheckUpdate);
+        leftContent.getChildren().addAll(lblUser, userFieldBox, lblKey, keyFieldBox, statusRow, sep, lblDiagTitle, diagBox, lblLang, cbLanguage, btnCheckUpdate);
         cardConfig.getChildren().add(leftContent);
         grid.add(cardConfig, 0, 0);
         DashboardLayout.fillGridCell(cardConfig);
 
         // Column 2: Quick OBS Overlays controls (Bento)
-        VBox cardWidgets = DashboardLayout.createCard("ĐIỀU KHIỂN WIDGETS OBS");
+        VBox cardWidgets = DashboardLayout.createCard(I18n.get("overview.card.widgets"));
         VBox widgetsBox = new VBox(12);
         widgetsBox.setPadding(new Insets(10, 5, 10, 5));
 
@@ -108,7 +131,7 @@ public class OverviewTab extends BorderPane {
             ConfigManager.save();
             parent.updateOverlayAlwaysOnTop();
         });
-        widgetsBox.getChildren().add(createWidgetBento("BẢNG XẾP HẠNG XU", "Hiển thị Top nhà tài trợ và quà tặng.", "#818cf8", Feather.BAR_CHART_2, swToggleOverlay, chkLeaderboardOnTop));
+        widgetsBox.getChildren().add(createWidgetBento(I18n.get("overview.widget.leaderboard.title"), I18n.get("overview.widget.leaderboard.desc"), "#818cf8", Feather.BAR_CHART_2, swToggleOverlay, chkLeaderboardOnTop));
 
         swToggleChatOverlay = DashboardLayout.newToggleSwitch();
         swToggleChatOverlay.setOnToggle(parent::toggleChatOverlayWindow);
@@ -118,7 +141,7 @@ public class OverviewTab extends BorderPane {
             ConfigManager.save();
             parent.updateOverlayAlwaysOnTop();
         });
-        widgetsBox.getChildren().add(createWidgetBento("KHUNG CHAT", "Hiển thị dòng chat game capture trực tiếp.", "#818cf8", Feather.MESSAGE_SQUARE, swToggleChatOverlay, chkChatOnTop));
+        widgetsBox.getChildren().add(createWidgetBento(I18n.get("overview.widget.chat.title"), I18n.get("overview.widget.chat.desc"), "#818cf8", Feather.MESSAGE_SQUARE, swToggleChatOverlay, chkChatOnTop));
 
         swToggleLikeOverlay = DashboardLayout.newToggleSwitch();
         swToggleLikeOverlay.setOnToggle(parent::toggleLikeOverlayWindow);
@@ -128,7 +151,7 @@ public class OverviewTab extends BorderPane {
             ConfigManager.save();
             parent.updateOverlayAlwaysOnTop();
         });
-        widgetsBox.getChildren().add(createWidgetBento("MỤC TIÊU THẢ TIM", "Thanh tim bay lơ lửng và đếm tim.", "#818cf8", Feather.HEART, swToggleLikeOverlay, chkLikeOnTop));
+        widgetsBox.getChildren().add(createWidgetBento(I18n.get("overview.widget.likes.title"), I18n.get("overview.widget.likes.desc"), "#818cf8", Feather.HEART, swToggleLikeOverlay, chkLikeOnTop));
 
         swToggleTopLikeOverlay = DashboardLayout.newToggleSwitch();
         swToggleTopLikeOverlay.setOnToggle(parent::toggleTopLikeOverlayWindow);
@@ -138,7 +161,7 @@ public class OverviewTab extends BorderPane {
             ConfigManager.save();
             parent.updateOverlayAlwaysOnTop();
         });
-        widgetsBox.getChildren().add(createWidgetBento("BẢNG XẾP HẠNG THẢ TIM", "Bảng xếp hạng thả tim thời gian thực.", "#818cf8", Feather.AWARD, swToggleTopLikeOverlay, chkTopLikeOnTop));
+        widgetsBox.getChildren().add(createWidgetBento(I18n.get("overview.widget.toplike.title"), I18n.get("overview.widget.toplike.desc"), "#818cf8", Feather.AWARD, swToggleTopLikeOverlay, chkTopLikeOnTop));
 
         cardWidgets.getChildren().add(widgetsBox);
         grid.add(cardWidgets, 1, 0);
@@ -167,7 +190,7 @@ public class OverviewTab extends BorderPane {
     }
 
     private CheckBox createOnTopCheckbox(boolean initialState) {
-        CheckBox chk = new CheckBox("Luôn trên cùng");
+        CheckBox chk = new CheckBox(I18n.get("overview.widget.ontop"));
         chk.setSelected(initialState);
         chk.setStyle("-fx-text-fill: #71717a; -fx-font-size: 10px;");
         return chk;
@@ -223,25 +246,25 @@ public class OverviewTab extends BorderPane {
 
     public void updateDiagnostics(boolean isConnected, String latency) {
         if (isConnected) {
-            lblWebSocketDiag.setText("ĐÃ KẾT NỐI (CONNECTED)");
+            lblWebSocketDiag.setText(I18n.get("overview.diag.ws.online"));
             lblWebSocketDiag.setStyle("-fx-text-fill: #818cf8; -fx-font-size: 11px; -fx-font-weight: bold;");
             lblLatencyDiag.setText(latency);
             lblLatencyDiag.setStyle("-fx-text-fill: #f4f4f5; -fx-font-size: 11px; -fx-font-weight: bold;");
-            lblSyncDiag.setText("HOẠT ĐỘNG (ACTIVE)");
+            lblSyncDiag.setText(I18n.get("overview.diag.sync.active"));
             lblSyncDiag.setStyle("-fx-text-fill: #818cf8; -fx-font-size: 11px; -fx-font-weight: bold;");
         } else {
-            lblWebSocketDiag.setText("CHƯA KẾT NỐI (OFFLINE)");
+            lblWebSocketDiag.setText(I18n.get("overview.diag.ws.offline"));
             lblWebSocketDiag.setStyle("-fx-text-fill: #71717a; -fx-font-size: 11px; -fx-font-weight: bold;");
             lblLatencyDiag.setText("--");
             lblLatencyDiag.setStyle("-fx-text-fill: #71717a; -fx-font-size: 11px; -fx-font-weight: bold;");
-            lblSyncDiag.setText("TẮT (INACTIVE)");
+            lblSyncDiag.setText(I18n.get("overview.diag.sync.inactive"));
             lblSyncDiag.setStyle("-fx-text-fill: #71717a; -fx-font-size: 11px; -fx-font-weight: bold;");
         }
     }
 
     public void setConnectionState(boolean isConnected) {
         if (isConnected) {
-            lblStatusBadge.setText("ĐÃ KẾT NỐI");
+            lblStatusBadge.setText(I18n.get("overview.status.connected"));
             lblStatusBadge.setStyle(
                 "-fx-background-color: rgba(99, 102, 241, 0.08);" +
                 "-fx-background-radius: 8px;" +
@@ -252,13 +275,13 @@ public class OverviewTab extends BorderPane {
                 "-fx-font-weight: bold;" +
                 "-fx-font-size: 11px;"
             );
-            btnConnect.setText("Ngắt kết nối LIVE");
+            btnConnect.setText(I18n.get("overview.btn.disconnect"));
             DashboardLayout.applyDangerButton(btnConnect);
             btnConnect.setDisable(false);
             txtUsername.setDisable(true);
             txtApiKey.setDisable(true);
         } else {
-            lblStatusBadge.setText("CHƯA KẾT NỐI");
+            lblStatusBadge.setText(I18n.get("overview.status.offline"));
             lblStatusBadge.setStyle(
                 "-fx-background-color: rgba(255, 255, 255, 0.03);" +
                 "-fx-background-radius: 8px;" +
@@ -269,7 +292,7 @@ public class OverviewTab extends BorderPane {
                 "-fx-font-weight: bold;" +
                 "-fx-font-size: 11px;"
             );
-            btnConnect.setText("Kết nối LIVE");
+            btnConnect.setText(I18n.get("overview.btn.connect"));
             DashboardLayout.applyPrimaryButton(btnConnect);
             btnConnect.setDisable(false);
             txtUsername.setDisable(false);
@@ -278,7 +301,7 @@ public class OverviewTab extends BorderPane {
     }
 
     public void setConnectingState() {
-        lblStatusBadge.setText("ĐANG KẾT NỐI...");
+        lblStatusBadge.setText(I18n.get("overview.status.connecting"));
         lblStatusBadge.setStyle(
             "-fx-background-color: rgba(168, 85, 247, 0.08);" +
             "-fx-background-radius: 8px;" +
@@ -289,7 +312,7 @@ public class OverviewTab extends BorderPane {
             "-fx-font-weight: bold;" +
             "-fx-font-size: 11px;"
         );
-        btnConnect.setText("Đang kết nối...");
+        btnConnect.setText(I18n.get("overview.btn.connecting"));
         DashboardLayout.applyButtonStyle(btnConnect,
                 "-fx-background-color: rgba(168, 85, 247, 0.04);" +
                         "-fx-text-fill: #c084fc;" +
@@ -305,7 +328,7 @@ public class OverviewTab extends BorderPane {
     }
 
     public void setDisconnectingState() {
-        lblStatusBadge.setText("ĐANG NGẮT...");
+        lblStatusBadge.setText(I18n.get("overview.status.disconnecting"));
         lblStatusBadge.setStyle(
             "-fx-background-color: rgba(251, 146, 60, 0.08);" +
             "-fx-background-radius: 8px;" +
@@ -316,7 +339,7 @@ public class OverviewTab extends BorderPane {
             "-fx-font-weight: bold;" +
             "-fx-font-size: 11px;"
         );
-        btnConnect.setText("Đang ngắt...");
+        btnConnect.setText(I18n.get("overview.btn.disconnecting"));
         DashboardLayout.applyButtonStyle(btnConnect,
                 "-fx-background-color: rgba(251, 146, 60, 0.04);" +
                         "-fx-text-fill: #fdba74;" +

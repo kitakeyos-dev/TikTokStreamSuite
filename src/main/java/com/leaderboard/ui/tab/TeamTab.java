@@ -7,12 +7,12 @@ import com.leaderboard.ui.DashboardLayout;
 import com.leaderboard.ui.DashboardStage;
 import com.leaderboard.ui.Dialogs;
 import com.leaderboard.util.DataManager;
+import com.leaderboard.util.I18n;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -29,7 +29,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 public class TeamTab extends BorderPane {
     private final DashboardStage parent;
@@ -66,14 +65,14 @@ public class TeamTab extends BorderPane {
         lblTotalFanClubVal = new Label("0");
 
         HBox headerRight = DashboardLayout.createHeaderActions(
-                DashboardLayout.createMiniStatCard("THÀNH VIÊN", lblTotalMembersVal, "#e4e4e7"),
-                DashboardLayout.createMiniStatCard("SUBSCRIBERS", lblTotalSubsVal, "#818cf8"),
-                DashboardLayout.createMiniStatCard("TIM ĐỘI", lblTotalFanClubVal, "#a1a1aa")
+                DashboardLayout.createMiniStatCard(I18n.get("team.stat.members"), lblTotalMembersVal, "#e4e4e7"),
+                DashboardLayout.createMiniStatCard(I18n.get("team.stat.subs"), lblTotalSubsVal, "#818cf8"),
+                DashboardLayout.createMiniStatCard(I18n.get("team.stat.fancollective"), lblTotalFanClubVal, "#a1a1aa")
         );
 
         cardMain.getChildren().add(DashboardLayout.createPageHeader(
-                "QUẢN LÝ THÀNH VIÊN TIM ĐỘI / SUBSCRIBER",
-                "Danh sách người xem có vai trò đặc biệt tương tác trực tiếp trong phiên live.",
+                I18n.get("team.title"),
+                I18n.get("team.subtitle"),
                 headerRight
         ));
 
@@ -82,11 +81,11 @@ public class TeamTab extends BorderPane {
 
         txtSearch = DashboardLayout.newSearchField();
         HBox searchBox = DashboardLayout.createSearchBox(
-                txtSearch, "Tìm kiếm TikTok ID hoặc Tên hiển thị...");
+                txtSearch, I18n.get("team.prompt.search"));
         HBox.setHgrow(searchBox, Priority.ALWAYS);
 
         cbFilter = new ComboBox<>(FXCollections.observableArrayList(
-                "Lọc: Tất cả", "Lọc: Chỉ Subscriber", "Lọc: Chỉ Fan Club"));
+                I18n.get("team.filter.all"), I18n.get("team.filter.subs"), I18n.get("team.filter.fanclub")));
         cbFilter.getSelectionModel().select(0);
         cbFilter.setPrefWidth(180);
         DashboardLayout.styleComboBox(cbFilter);
@@ -96,27 +95,27 @@ public class TeamTab extends BorderPane {
 
         tblMembers = DashboardLayout.createTable();
 
-        TableColumn<TeamMember, Integer> colStt = new TableColumn<>("STT");
+        TableColumn<TeamMember, Integer> colStt = new TableColumn<>(I18n.get("team.col.stt"));
         colStt.setCellValueFactory(cell -> new SimpleIntegerProperty(memberList.indexOf(cell.getValue()) + 1).asObject());
         colStt.setPrefWidth(50);
         colStt.setStyle("-fx-alignment: CENTER; -fx-text-fill: #71717a;");
 
-        TableColumn<TeamMember, String> colId = new TableColumn<>("TikTok ID");
+        TableColumn<TeamMember, String> colId = new TableColumn<>(I18n.get("team.col.id"));
         colId.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getUniqueId()));
         colId.setPrefWidth(120);
 
-        TableColumn<TeamMember, String> colNick = new TableColumn<>("Tên Hiển Thị");
+        TableColumn<TeamMember, String> colNick = new TableColumn<>(I18n.get("team.col.nick"));
         colNick.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getNickname()));
         colNick.setPrefWidth(160);
 
-        TableColumn<TeamMember, String> colRole = new TableColumn<>("Vai Trò");
+        TableColumn<TeamMember, String> colRole = new TableColumn<>(I18n.get("team.col.role"));
         colRole.setCellValueFactory(cell -> {
             TeamMember m = cell.getValue();
-            String role = "Người dùng";
+            String role = I18n.get("team.role.user");
             if (m.isSubscriber() && m.getTeamName() != null) {
-                role = "Sub & Fan Club";
+                role = I18n.get("team.role.subfan");
             } else if (m.isSubscriber()) {
-                role = "Subscriber";
+                role = I18n.get("team.role.sub");
             } else if (m.getTeamName() != null) {
                 role = m.getTeamName();
             }
@@ -125,21 +124,21 @@ public class TeamTab extends BorderPane {
         colRole.setPrefWidth(140);
         colRole.setStyle("-fx-alignment: CENTER; -fx-text-fill: #818cf8; -fx-font-weight: bold;");
 
-        TableColumn<TeamMember, String> colTeamLvl = new TableColumn<>("Cấp Tim");
+        TableColumn<TeamMember, String> colTeamLvl = new TableColumn<>(I18n.get("team.col.teamlvl"));
         colTeamLvl.setCellValueFactory(cell -> new SimpleStringProperty(
-            cell.getValue().getTeamLevel() > 0 ? "Cấp " + cell.getValue().getTeamLevel() : "--"
+            cell.getValue().getTeamLevel() > 0 ? I18n.get("team.level.prefix", cell.getValue().getTeamLevel()) : "--"
         ));
         colTeamLvl.setPrefWidth(80);
         colTeamLvl.setStyle("-fx-alignment: CENTER; -fx-text-fill: #a1a1aa; -fx-font-weight: bold;");
 
-        TableColumn<TeamMember, String> colGiftLvl = new TableColumn<>("Cấp Xanh");
+        TableColumn<TeamMember, String> colGiftLvl = new TableColumn<>(I18n.get("team.col.giftlvl"));
         colGiftLvl.setCellValueFactory(cell -> new SimpleStringProperty(
-            cell.getValue().getGiftGiverLevel() > 0 ? "Cấp " + cell.getValue().getGiftGiverLevel() : "--"
+            cell.getValue().getGiftGiverLevel() > 0 ? I18n.get("team.level.prefix", cell.getValue().getGiftGiverLevel()) : "--"
         ));
         colGiftLvl.setPrefWidth(90);
         colGiftLvl.setStyle("-fx-alignment: CENTER; -fx-text-fill: #e4e4e7; -fx-font-weight: bold;");
 
-        TableColumn<TeamMember, String> colLastActive = new TableColumn<>("Tương Tác Cuối");
+        TableColumn<TeamMember, String> colLastActive = new TableColumn<>(I18n.get("team.col.lastactive"));
         colLastActive.setCellValueFactory(cell -> new SimpleStringProperty(
             TIME_FORMAT.format(new Date(cell.getValue().getLastActive()))
         ));
@@ -178,21 +177,21 @@ public class TeamTab extends BorderPane {
 
         cardMain.getChildren().add(tblMembers);
 
-        btnDeleteSelected = DashboardLayout.newButton("Xoá Thành Viên Chọn");
+        btnDeleteSelected = DashboardLayout.newButton(I18n.get("team.btn.delete"));
         FontIcon trashIcon = new FontIcon(Feather.TRASH_2);
         trashIcon.setIconColor(Color.web("#a1a1aa"));
         btnDeleteSelected.setGraphic(trashIcon);
         DashboardLayout.applySecondaryButton(btnDeleteSelected);
         btnDeleteSelected.setOnAction(e -> deleteSelectedMember());
 
-        btnResetAll = DashboardLayout.newButton("Xoá Hết Bảng");
+        btnResetAll = DashboardLayout.newButton(I18n.get("team.btn.reset"));
         FontIcon refreshIcon = new FontIcon(Feather.REFRESH_CW);
         refreshIcon.setIconColor(Color.web("#f87171"));
         btnResetAll.setGraphic(refreshIcon);
         DashboardLayout.applyDangerButton(btnResetAll);
         btnResetAll.setOnAction(e -> resetAllMembers());
 
-        btnExportJson = DashboardLayout.newButton("Xuất File JSON");
+        btnExportJson = DashboardLayout.newButton(I18n.get("team.btn.export"));
         FontIcon exportIcon = new FontIcon(Feather.DOWNLOAD);
         exportIcon.setIconColor(Color.web("#818cf8"));
         btnExportJson.setGraphic(exportIcon);
@@ -234,11 +233,11 @@ public class TeamTab extends BorderPane {
     private void deleteSelectedMember() {
         TeamMember selected = tblMembers.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            Dialogs.warning(parent, "Cảnh báo", "Vui lòng chọn thành viên cần xoá!");
+            Dialogs.warning(parent, I18n.get("dialog.warning"), I18n.get("team.warn.select"));
             return;
         }
 
-        if (Dialogs.confirm(parent, "Xác nhận", "Bạn có chắc muốn xoá thành viên @" + selected.getUniqueId() + " khỏi danh sách?", "Xoá")) {
+        if (Dialogs.confirm(parent, I18n.get("dialog.confirm"), I18n.get("team.confirm.delete.msg", selected.getUniqueId()), I18n.get("team.confirm.delete.btn"))) {
             synchronized (DataManager.class) {
                 List<TeamMember> list = DataManager.getTeamMembers();
                 list.removeIf(m -> m.getUniqueId().equalsIgnoreCase(selected.getUniqueId()));
@@ -249,7 +248,7 @@ public class TeamTab extends BorderPane {
     }
 
     private void resetAllMembers() {
-        if (Dialogs.confirm(parent, "Xác nhận xoá sạch", "Hành động này sẽ xoá sạch danh sách thành viên hiện tại. Bạn có muốn tiếp tục?", "Xoá sạch")) {
+        if (Dialogs.confirm(parent, I18n.get("team.confirm.reset.title"), I18n.get("team.confirm.reset.msg"), I18n.get("team.confirm.reset.btn"))) {
             synchronized (DataManager.class) {
                 DataManager.getTeamMembers().clear();
                 DataManager.save();
@@ -263,22 +262,22 @@ public class TeamTab extends BorderPane {
         List<TeamMember> exportList = new ArrayList<>(items);
 
         if (exportList.isEmpty()) {
-            Dialogs.info(parent, "Thông báo", "Không có dữ liệu nào để xuất!");
+            Dialogs.info(parent, I18n.get("dialog.success"), I18n.get("team.export.empty"));
             return;
         }
 
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Lưu file JSON danh sách thành viên");
-        fileChooser.setInitialFileName("danh_sach_thanh_vien.json");
+        fileChooser.setTitle(I18n.get("team.export.title"));
+        fileChooser.setInitialFileName(I18n.get("team.export.filename"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("JSON File (*.json)", "*.json"));
 
         File fileToSave = fileChooser.showSaveDialog(parent);
         if (fileToSave != null) {
             try (Writer writer = new OutputStreamWriter(new FileOutputStream(fileToSave), StandardCharsets.UTF_8)) {
                 GSON.toJson(exportList, writer);
-                Dialogs.info(parent, "Thành công", "Xuất file thành công!\nTổng số thành viên: " + exportList.size() + "\nĐường dẫn: " + fileToSave.getAbsolutePath());
+                Dialogs.info(parent, I18n.get("dialog.success"), I18n.get("team.export.success", exportList.size(), fileToSave.getAbsolutePath()));
             } catch (Exception ex) {
-                Dialogs.error(parent, "Lỗi", "Lỗi khi lưu file: " + ex.getMessage());
+                Dialogs.error(parent, I18n.get("dialog.error"), I18n.get("dialog.error") + ": " + ex.getMessage());
             }
         }
     }

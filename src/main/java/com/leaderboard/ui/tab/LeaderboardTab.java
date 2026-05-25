@@ -5,6 +5,7 @@ import com.leaderboard.ui.DashboardLayout;
 import com.leaderboard.ui.DashboardStage;
 import com.leaderboard.ui.Dialogs;
 import com.leaderboard.util.DataManager;
+import com.leaderboard.util.I18n;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -58,36 +59,36 @@ public class LeaderboardTab extends BorderPane {
         lblActiveDonorsVal = new Label("0");
 
         HBox headerRight = DashboardLayout.createHeaderActions(
-                DashboardLayout.createMiniStatCard("TỔNG KIM CƯƠNG", lblTotalDiamondsVal, "#818cf8"),
-                DashboardLayout.createMiniStatCard("NHÀ TÀI TRỢ", lblActiveDonorsVal, "#e4e4e7")
+                DashboardLayout.createMiniStatCard(I18n.get("leaderboard.stat.diamonds"), lblTotalDiamondsVal, "#818cf8"),
+                DashboardLayout.createMiniStatCard(I18n.get("leaderboard.stat.donors"), lblActiveDonorsVal, "#e4e4e7")
         );
 
         cardLeaderboard.getChildren().add(DashboardLayout.createPageHeader(
-                "BẢNG XẾP HẠNG DONATE TÍCH LŨY",
-                "Quản lý danh sách người ủng hộ tích lũy và tổng số kim cương nhận được.",
+                I18n.get("leaderboard.title"),
+                I18n.get("leaderboard.subtitle"),
                 headerRight
         ));
 
         txtSearch = DashboardLayout.newSearchField();
         cardLeaderboard.getChildren().add(DashboardLayout.createSearchBox(
-                txtSearch, "Tìm kiếm TikTok ID hoặc Tên hiển thị..."));
+                txtSearch, I18n.get("leaderboard.prompt.search")));
 
         tblGifters = DashboardLayout.createTable();
 
-        TableColumn<Gifter, Integer> colRank = new TableColumn<>("Hạng");
+        TableColumn<Gifter, Integer> colRank = new TableColumn<>(I18n.get("leaderboard.col.rank"));
         colRank.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getRank()).asObject());
         colRank.setPrefWidth(60);
         colRank.setStyle("-fx-alignment: CENTER; -fx-text-fill: #818cf8; -fx-font-weight: bold;");
 
-        TableColumn<Gifter, String> colId = new TableColumn<>("TikTok ID");
+        TableColumn<Gifter, String> colId = new TableColumn<>(I18n.get("leaderboard.col.id"));
         colId.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getUniqueId()));
         colId.setPrefWidth(140);
 
-        TableColumn<Gifter, String> colNick = new TableColumn<>("Tên Hiển Thị");
+        TableColumn<Gifter, String> colNick = new TableColumn<>(I18n.get("leaderboard.col.nick"));
         colNick.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getNickname()));
         colNick.setPrefWidth(200);
 
-        TableColumn<Gifter, Integer> colPoints = new TableColumn<>("Điểm (Kim cương)");
+        TableColumn<Gifter, Integer> colPoints = new TableColumn<>(I18n.get("leaderboard.col.points"));
         colPoints.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getPoints()).asObject());
         colPoints.setPrefWidth(140);
         colPoints.setStyle("-fx-alignment: CENTER; -fx-text-fill: #e4e4e7; -fx-font-weight: bold;");
@@ -109,21 +110,21 @@ public class LeaderboardTab extends BorderPane {
 
         cardLeaderboard.getChildren().add(tblGifters);
 
-        btnDeleteSelected = DashboardLayout.newButton("Xoá Người Chọn");
+        btnDeleteSelected = DashboardLayout.newButton(I18n.get("leaderboard.btn.delete"));
         FontIcon trashIcon = new FontIcon(Feather.TRASH_2);
         trashIcon.setIconColor(Color.web("#a1a1aa"));
         btnDeleteSelected.setGraphic(trashIcon);
         DashboardLayout.applySecondaryButton(btnDeleteSelected);
         btnDeleteSelected.setOnAction(e -> deleteSelectedGifter());
 
-        btnResetAll = DashboardLayout.newButton("Xoá Hết Bảng");
+        btnResetAll = DashboardLayout.newButton(I18n.get("leaderboard.btn.reset"));
         FontIcon refreshIcon = new FontIcon(Feather.REFRESH_CW);
         refreshIcon.setIconColor(Color.web("#f87171"));
         btnResetAll.setGraphic(refreshIcon);
         DashboardLayout.applyDangerButton(btnResetAll);
         btnResetAll.setOnAction(e -> resetLeaderboard());
 
-        btnAddManual = DashboardLayout.newButton("Cộng Điểm Thủ Công");
+        btnAddManual = DashboardLayout.newButton(I18n.get("leaderboard.btn.add"));
         FontIcon plusIcon = new FontIcon(Feather.PLUS_CIRCLE);
         plusIcon.setIconColor(Color.web("#818cf8"));
         btnAddManual.setGraphic(plusIcon);
@@ -198,11 +199,11 @@ public class LeaderboardTab extends BorderPane {
     private void deleteSelectedGifter() {
         Gifter selected = tblGifters.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            Dialogs.warning(parent, "Cảnh báo", "Vui lòng chọn người cần xoá!");
+            Dialogs.warning(parent, I18n.get("dialog.warning"), I18n.get("leaderboard.warn.select"));
             return;
         }
 
-        if (Dialogs.confirm(parent, "Xác nhận xoá", "Bạn có chắc muốn xoá người dùng @" + selected.getUniqueId() + " khỏi bảng xếp hạng?", "Xoá")) {
+        if (Dialogs.confirm(parent, I18n.get("leaderboard.confirm.delete.title"), I18n.get("leaderboard.confirm.delete.msg", selected.getUniqueId()), I18n.get("leaderboard.confirm.delete.btn"))) {
             synchronized (DataManager.class) {
                 List<Gifter> list = DataManager.getGifters();
                 list.removeIf(g -> g.getUniqueId().equalsIgnoreCase(selected.getUniqueId()));
@@ -214,7 +215,7 @@ public class LeaderboardTab extends BorderPane {
     }
 
     private void resetLeaderboard() {
-        if (Dialogs.confirm(parent, "Xác nhận xoá sạch", "Hành động này sẽ xoá sạch bảng xếp hạng hiện tại. Bạn có muốn tiếp tục?", "Xoá sạch")) {
+        if (Dialogs.confirm(parent, I18n.get("leaderboard.confirm.reset.title"), I18n.get("leaderboard.confirm.reset.msg"), I18n.get("leaderboard.confirm.reset.btn"))) {
             synchronized (DataManager.class) {
                 DataManager.getGifters().clear();
                 DataManager.save();
@@ -225,22 +226,22 @@ public class LeaderboardTab extends BorderPane {
     }
 
     private void addManualPoints() {
-        Optional<String> idResult = Dialogs.input(parent, "Cộng điểm thủ công", "Nhập TikTok ID (ví dụ: user123):", "TikTok ID:", "");
+        Optional<String> idResult = Dialogs.input(parent, I18n.get("leaderboard.manual.title"), I18n.get("leaderboard.manual.id.prompt"), I18n.get("leaderboard.manual.id.label"), "");
         if (idResult.isEmpty() || idResult.get().trim().isEmpty()) return;
         String uniqueId = idResult.get().trim();
 
-        Optional<String> nickResult = Dialogs.input(parent, "Cộng điểm thủ công", "Nhập Tên Hiển Thị (không bắt buộc):", "Tên:", uniqueId);
+        Optional<String> nickResult = Dialogs.input(parent, I18n.get("leaderboard.manual.title"), I18n.get("leaderboard.manual.nick.prompt"), I18n.get("leaderboard.manual.nick.label"), uniqueId);
         String nickname = nickResult.orElse("").trim();
         if (nickname.isEmpty()) nickname = uniqueId;
 
-        Optional<String> pointsResult = Dialogs.input(parent, "Cộng điểm thủ công", "Nhập số Kim cương cần cộng (hoặc trừ nếu nhập số âm):", "Kim cương:", "100");
+        Optional<String> pointsResult = Dialogs.input(parent, I18n.get("leaderboard.manual.title"), I18n.get("leaderboard.manual.points.prompt"), I18n.get("leaderboard.manual.points.label"), "100");
         if (pointsResult.isEmpty() || pointsResult.get().trim().isEmpty()) return;
 
         int points;
         try {
             points = Integer.parseInt(pointsResult.get().trim());
         } catch (NumberFormatException e) {
-            Dialogs.error(parent, "Lỗi", "Số kim cương không hợp lệ!");
+            Dialogs.error(parent, I18n.get("dialog.error"), I18n.get("leaderboard.manual.points.invalid"));
             return;
         }
 

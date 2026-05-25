@@ -11,6 +11,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.feather.Feather;
+import com.leaderboard.util.I18n;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
@@ -38,31 +39,31 @@ public class ChatTab extends BorderPane {
         VBox cardChat = DashboardLayout.createPageContainer();
 
         cardChat.getChildren().add(DashboardLayout.createPageHeader(
-                "LỊCH SỬ TRÒ CHUYỆN TRỰC TIẾP",
-                "Xem tin nhắn thời gian thực truyền trực tiếp từ cổng kết nối Live stream."
+                I18n.get("chat.title"),
+                I18n.get("chat.subtitle")
         ));
 
         txtSearch = DashboardLayout.newSearchField();
         cardChat.getChildren().add(DashboardLayout.createSearchBox(
-                txtSearch, "Tìm kiếm theo TikTok ID, Tên hiển thị hoặc Nội dung bình luận..."));
+                txtSearch, I18n.get("chat.prompt.search")));
 
         tblChatLog = DashboardLayout.createTable();
 
-        TableColumn<ChatRow, String> colTime = new TableColumn<>("Thời Gian");
+        TableColumn<ChatRow, String> colTime = new TableColumn<>(I18n.get("chat.col.time"));
         colTime.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().time()));
         colTime.setPrefWidth(90);
         colTime.setStyle("-fx-alignment: CENTER; -fx-text-fill: #71717a;");
 
-        TableColumn<ChatRow, String> colId = new TableColumn<>("TikTok ID");
+        TableColumn<ChatRow, String> colId = new TableColumn<>(I18n.get("chat.col.id"));
         colId.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().uniqueId()));
         colId.setPrefWidth(120);
         colId.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-fill: #818cf8;");
 
-        TableColumn<ChatRow, String> colNick = new TableColumn<>("Tên Hiển Thị");
+        TableColumn<ChatRow, String> colNick = new TableColumn<>(I18n.get("chat.col.nick"));
         colNick.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().nickname()));
         colNick.setPrefWidth(150);
 
-        TableColumn<ChatRow, String> colComment = new TableColumn<>("Nội Dung Bình Luận");
+        TableColumn<ChatRow, String> colComment = new TableColumn<>(I18n.get("chat.col.comment"));
         colComment.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().comment()));
         colComment.setPrefWidth(430);
 
@@ -84,7 +85,7 @@ public class ChatTab extends BorderPane {
 
         cardChat.getChildren().add(tblChatLog);
 
-        btnClearChat = DashboardLayout.newButton("Xoá Lịch Sử Chat");
+        btnClearChat = DashboardLayout.newButton(I18n.get("chat.btn.clear"));
         FontIcon trashIcon = new FontIcon(Feather.TRASH_2);
         trashIcon.setIconColor(Color.web("#f87171"));
         btnClearChat.setGraphic(trashIcon);
