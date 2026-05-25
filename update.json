@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "downloadUrl": "https://github.com/kitakeyos-dev/TikTokStreamSuite/releases/download/v1.0.0/TikTokStreamSuite_Setup.exe",
-  "changelog": "- Phiên bản đầu tiên của TikTokStreamSuite với đầy đủ tính năng.\n- Hệ thống đọc bình luận Tiếng Việt (TTS) thông minh bằng AI.\n- Bảng xếp hạng người xem ủng hộ thời gian thực phong cách Bento Grid.\n- Hệ thống kiểm tra cập nhật và cài đặt tự động.",
+  "changelog": "- Bản cập nhật thử nghiệm tính năng Auto-Update.\n- Tối ưu hóa hiệu năng và sửa lỗi hiển thị giao diện.",
   "forceUpdate": false
 }
