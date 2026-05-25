@@ -38,6 +38,7 @@ buildNumber.properties
 
 # IDEs and Editors
 .idea/
+.vscode/
 *.iml
 *.iws
 .classpath
