@@ -17,6 +17,12 @@ public class ConfigManager {
         private boolean overlayChatOnTop = true;
         private boolean overlayLikeOnTop = true;
         private boolean overlayTopLikeOnTop = true;
+        private boolean ttsEnabled = false;
+        private boolean ttsReadUsername = true;
+        private String ttsBlockedWords = "địt, cặc, lồn, buồi, đéo, đĩ, chó ngu, ngu lồn, cặc chó, ăn cứt, ăn lồn, óc chó, ngu si, vcl, vkl, dcm, đkm, đm, vú, chim, bướm, fuck, bitch";
+        private int ttsMaxQueue = 8;
+        private double ttsVolume = 1.0;
+        private String ttsAudioDeviceName = "Default";
 
         public String getStreamerUsername() { return streamerUsername; }
         public void setStreamerUsername(String v) { this.streamerUsername = v; }
@@ -41,6 +47,38 @@ public class ConfigManager {
 
         public boolean isOverlayTopLikeOnTop() { return overlayTopLikeOnTop; }
         public void setOverlayTopLikeOnTop(boolean v) { this.overlayTopLikeOnTop = v; }
+
+        public boolean isTtsEnabled() { return ttsEnabled; }
+        public void setTtsEnabled(boolean v) { this.ttsEnabled = v; }
+
+        public boolean isTtsReadUsername() { return ttsReadUsername; }
+        public void setTtsReadUsername(boolean v) { this.ttsReadUsername = v; }
+
+        public String getTtsBlockedWords() {
+            if (ttsBlockedWords == null) {
+                ttsBlockedWords = "địt, cặc, lồn, buồi, đéo, đĩ, chó ngu, ngu lồn, cặc chó, ăn cứt, ăn lồn, óc chó, ngu si, vcl, vkl, dcm, đkm, đm, vú, chim, bướm, fuck, bitch";
+            }
+            return ttsBlockedWords;
+        }
+        public void setTtsBlockedWords(String v) { this.ttsBlockedWords = v; }
+
+        public int getTtsMaxQueue() {
+            if (ttsMaxQueue <= 0) ttsMaxQueue = 8;
+            return ttsMaxQueue;
+        }
+        public void setTtsMaxQueue(int v) { this.ttsMaxQueue = v; }
+
+        public double getTtsVolume() {
+            if (ttsVolume < 0.0 || ttsVolume > 1.0) ttsVolume = 1.0;
+            return ttsVolume;
+        }
+        public void setTtsVolume(double v) { this.ttsVolume = v; }
+
+        public String getTtsAudioDeviceName() {
+            if (ttsAudioDeviceName == null) ttsAudioDeviceName = "Default";
+            return ttsAudioDeviceName;
+        }
+        public void setTtsAudioDeviceName(String v) { this.ttsAudioDeviceName = v; }
     }
 
     private static AppConfig currentConfig = new AppConfig();

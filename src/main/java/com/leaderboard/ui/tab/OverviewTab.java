@@ -173,7 +173,9 @@ public class OverviewTab extends BorderPane {
         );
 
         StackPane iconBox = new StackPane();
-        iconBox.setPrefSize(42, 38);
+        iconBox.setPrefSize(38, 38);
+        iconBox.setMinSize(38, 38);
+        iconBox.setMaxSize(38, 38);
         iconBox.setStyle(
             "-fx-background-color: #121214;" +
             "-fx-background-radius: 6px;" +

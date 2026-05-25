@@ -1,6 +1,7 @@
 package com.leaderboard.ui;
 
 import com.leaderboard.service.TikTokConnector;
+import com.leaderboard.service.TTSService;
 import com.leaderboard.ui.overlay.GiftLeaderboardOverlay;
 import com.leaderboard.ui.overlay.LikeGoalOverlay;
 import com.leaderboard.ui.overlay.LiveChatOverlay;
@@ -30,6 +31,7 @@ public class DashboardStage extends Stage {
     private TeamTab teamTab;
     private ChatTab chatTab;
     private LikesTab likesTab;
+    private TtsTab ttsTab;
 
     private GiftLeaderboardOverlay overlayStage;
     private LiveChatOverlay chatOverlayStage;
@@ -154,11 +156,12 @@ public class DashboardStage extends Stage {
         teamTab = new TeamTab(this);
         chatTab = new ChatTab(this);
         likesTab = new LikesTab(this);
+        ttsTab = new TtsTab(this);
 
         contentArea = new StackPane();
         contentArea.setPadding(new Insets(0, 0, 0, 0));
         contentArea.getChildren().addAll(
-                overviewTab, leaderboardTab, teamTab, chatTab, likesTab);
+                overviewTab, leaderboardTab, teamTab, chatTab, likesTab, ttsTab);
 
         VBox sidebar = buildSidebar();
         HBox dashboardBody = new HBox(0, sidebar, contentArea);
@@ -197,6 +200,8 @@ public class DashboardStage extends Stage {
                         "Theo dõi lượt tim và mục tiêu"),
                 createNavButton("Trò Chuyện", Feather.MESSAGE_CIRCLE, chatTab,
                         "Live chat và overlay tin nhắn"),
+                createNavButton("Đọc Giọng Nói", Feather.VOLUME_2, ttsTab,
+                        "Cấu hình Text-to-Speech đọc bình luận tự động"),
                 createNavButton("Thành Viên", Feather.USERS, teamTab,
                         "Danh sách thành viên và fan club"));
 
@@ -331,6 +336,20 @@ public class DashboardStage extends Stage {
                 chatTab.addChatRow(uniqueId, nickname, comment, avatarUrl);
                 if (chatOverlayStage != null) {
                     chatOverlayStage.addMessage(uniqueId, nickname, comment, avatarUrl);
+                }
+
+                // Text-to-Speech integration
+                if (ConfigManager.getConfig().isTtsEnabled()) {
+                    if (TTSService.isCommentAllowed(comment)) {
+                        String speakText;
+                        if (ConfigManager.getConfig().isTtsReadUsername()) {
+                            String name = (nickname != null && !nickname.trim().isEmpty()) ? nickname.trim() : uniqueId;
+                            speakText = name + " nói: " + comment;
+                        } else {
+                            speakText = comment;
+                        }
+                        TTSService.enqueueTTS(speakText);
+                    }
                 }
             });
         });
