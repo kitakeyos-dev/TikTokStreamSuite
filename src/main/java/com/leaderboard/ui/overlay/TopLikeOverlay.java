@@ -28,8 +28,6 @@ public class TopLikeOverlay extends Stage {
     private static final String HEART_SVG = "M 11 4 C 11 4 7 0 3 0 C 0 0 0 4 0 6 C 0 11 6 17 11 21 C 16 17 22 11 22 6 C 22 4 22 0 19 0 C 15 0 11 4 11 4 Z";
 
     private final VBox rowsContainer;
-    private double xOffset = 0;
-    private double yOffset = 0;
 
     // Throttle + snapshot for flicker-free updates
     private final PauseTransition updateThrottle = new PauseTransition(Duration.millis(600));
@@ -59,16 +57,6 @@ public class TopLikeOverlay extends Stage {
         shadow.setRadius(12);
         shadow.setOffsetY(3);
         root.setEffect(shadow);
-
-        // Make window draggable
-        root.setOnMousePressed(event -> {
-            xOffset = event.getSceneX();
-            yOffset = event.getSceneY();
-        });
-        root.setOnMouseDragged(event -> {
-            setX(event.getScreenX() - xOffset);
-            setY(event.getScreenY() - yOffset);
-        });
 
         // 1. Header Bar
         AnchorPane header = new AnchorPane();
@@ -130,6 +118,8 @@ public class TopLikeOverlay extends Stage {
         rowsContainer.setPadding(new Insets(10, 15, 10, 15));
         rowsContainer.setPrefWidth(360);
         AnchorPane.setTopAnchor(rowsContainer, 60.0);
+        AnchorPane.setLeftAnchor(rowsContainer, 0.0);
+        AnchorPane.setRightAnchor(rowsContainer, 0.0);
 
         root.getChildren().addAll(header, headerDivider, rowsContainer);
 
@@ -137,6 +127,9 @@ public class TopLikeOverlay extends Stage {
         Scene scene = new Scene(root);
         scene.setFill(Color.TRANSPARENT);
         setScene(scene);
+
+        // Allow free resizing and dragging
+        com.leaderboard.util.ResizeHelper.addResizeListener(this, 280, 250, Double.MAX_VALUE, Double.MAX_VALUE);
 
         updateLeaderboard();
     }

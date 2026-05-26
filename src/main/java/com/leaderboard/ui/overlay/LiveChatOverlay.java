@@ -24,8 +24,6 @@ import java.util.List;
 public class LiveChatOverlay extends Stage {
     private final VBox chatContainer;
     private final List<HBox> bubbleList = new ArrayList<>();
-    private double xOffset = 0;
-    private double yOffset = 0;
 
     public LiveChatOverlay() {
         setTitle("Trò Chuyện"); // Title needed for OBS Window Capture detection
@@ -50,16 +48,6 @@ public class LiveChatOverlay extends Stage {
         shadow.setRadius(12);
         shadow.setOffsetY(3);
         root.setEffect(shadow);
-
-        // Draggable window support
-        root.setOnMousePressed(event -> {
-            xOffset = event.getSceneX();
-            yOffset = event.getSceneY();
-        });
-        root.setOnMouseDragged(event -> {
-            setX(event.getScreenX() - xOffset);
-            setY(event.getScreenY() - yOffset);
-        });
 
         // 1. Header Bar
         AnchorPane header = new AnchorPane();
@@ -112,6 +100,9 @@ public class LiveChatOverlay extends Stage {
         Scene scene = new Scene(root);
         scene.setFill(Color.TRANSPARENT);
         setScene(scene);
+
+        // Allow free resizing and dragging
+        com.leaderboard.util.ResizeHelper.addResizeListener(this, 240, 250, Double.MAX_VALUE, Double.MAX_VALUE);
     }
 
     public void addMessage(String uniqueId, String nickname, String comment, String avatarUrl) {

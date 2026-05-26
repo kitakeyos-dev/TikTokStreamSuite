@@ -20,9 +20,6 @@ public class LikeGoalOverlay extends Stage {
     private int totalLikes = 0;
     private int targetLikes = 10000;
 
-    private double xOffset = 0;
-    private double yOffset = 0;
-
     private final Label lblTitle;
     private final Label lblStatus;
     private final ProgressBar progressBar;
@@ -55,16 +52,6 @@ public class LikeGoalOverlay extends Stage {
         shadow.setRadius(10);
         shadow.setOffsetY(3);
         root.setEffect(shadow);
-
-        // Draggable window support
-        root.setOnMousePressed(event -> {
-            xOffset = event.getSceneX();
-            yOffset = event.getSceneY();
-        });
-        root.setOnMouseDragged(event -> {
-            setX(event.getScreenX() - xOffset);
-            setY(event.getScreenY() - yOffset);
-        });
 
         // 1. Draw Heart Icon (Pulsing SVG Path) - Soft Crimson Rose (#f43f5e)
         heartPath = new SVGPath();
@@ -132,6 +119,9 @@ public class LikeGoalOverlay extends Stage {
         Scene scene = new Scene(root);
         scene.setFill(Color.TRANSPARENT);
         setScene(scene);
+
+        // Allow free resizing and dragging
+        com.leaderboard.util.ResizeHelper.addResizeListener(this, 200, 45, Double.MAX_VALUE, Double.MAX_VALUE);
 
         // Apply fallback custom CSS styling directly in case stylesheet not found
         progressBar.setProgress(0.0);
