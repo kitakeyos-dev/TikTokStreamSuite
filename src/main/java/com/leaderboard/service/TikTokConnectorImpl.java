@@ -11,6 +11,8 @@ import io.github.jwdeveloper.tiktok.data.models.badges.TextBadge;
 import io.github.jwdeveloper.tiktok.data.models.badges.StringBadge;
 import com.leaderboard.model.Gifter;
 import com.leaderboard.util.DataManager;
+import com.leaderboard.service.ServiceLocator;
+import com.leaderboard.service.action.IActionRulesEngine;
 import javafx.application.Platform;
 import javax.swing.SwingUtilities;
 import java.util.Collections;
@@ -117,7 +119,7 @@ public class TikTokConnectorImpl implements ITikTokConnector {
 
                             final String finalAvatarUrl = avatarUrl;
                             processUserForTeam(event.getUser());
-                            com.leaderboard.service.action.ActionRulesEngine.handleComment(userId, nickname, comment);
+                            ServiceLocator.get(IActionRulesEngine.class).handleComment(userId, nickname, comment);
                             SwingUtilities.invokeLater(() -> {
                                 synchronized (this) {
                                     if (chatListener != null) {
@@ -180,7 +182,7 @@ public class TikTokConnectorImpl implements ITikTokConnector {
                             final String finalAvatarUrl = avatarUrl;
                             final String finalNickname = nickname;
 
-                            com.leaderboard.service.action.ActionRulesEngine.handleGift(userId, nickname, event.getGift().getName(), diamonds);
+                            ServiceLocator.get(IActionRulesEngine.class).handleGift(userId, nickname, event.getGift().getName(), diamonds);
 
                             SwingUtilities.invokeLater(() -> {
                                 synchronized (DataManager.class) {
@@ -214,17 +216,17 @@ public class TikTokConnectorImpl implements ITikTokConnector {
                         })
                         .onFollow((client, event) -> {
                             processUserForTeam(event.getUser());
-                            com.leaderboard.service.action.ActionRulesEngine.handleFollow(event.getUser().getName(), event.getUser().getProfileName());
+                            ServiceLocator.get(IActionRulesEngine.class).handleFollow(event.getUser().getName(), event.getUser().getProfileName());
                             SwingUtilities.invokeLater(onDataChanged);
                         })
                         .onShare((client, event) -> {
                             processUserForTeam(event.getUser());
-                            com.leaderboard.service.action.ActionRulesEngine.handleShare(event.getUser().getName(), event.getUser().getProfileName());
+                            ServiceLocator.get(IActionRulesEngine.class).handleShare(event.getUser().getName(), event.getUser().getProfileName());
                             SwingUtilities.invokeLater(onDataChanged);
                         })
                         .onSubscribe((client, event) -> {
                             processUserForTeam(event.getUser());
-                            com.leaderboard.service.action.ActionRulesEngine.handleSubscribe(event.getUser().getName(), event.getUser().getProfileName());
+                            ServiceLocator.get(IActionRulesEngine.class).handleSubscribe(event.getUser().getName(), event.getUser().getProfileName());
                             SwingUtilities.invokeLater(onDataChanged);
                         })
                         .build();

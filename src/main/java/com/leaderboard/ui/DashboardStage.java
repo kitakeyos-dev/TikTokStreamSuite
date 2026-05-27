@@ -7,6 +7,8 @@ import com.leaderboard.service.ITTSService;
 import com.leaderboard.service.TTSServiceImpl;
 import com.leaderboard.service.ITikTokConnector;
 import com.leaderboard.service.TikTokConnectorImpl;
+import com.leaderboard.service.action.IActionRulesEngine;
+import com.leaderboard.service.action.ActionRulesEngineImpl;
 import com.leaderboard.ui.tab.*;
 import com.leaderboard.util.*;
 import javafx.geometry.Insets;
@@ -56,6 +58,7 @@ public class DashboardStage extends Stage {
         // Register Core Services to ServiceLocator
         ServiceLocator.register(ITTSService.class, new TTSServiceImpl());
         ServiceLocator.register(ITikTokConnector.class, new TikTokConnectorImpl());
+        ServiceLocator.register(IActionRulesEngine.class, new ActionRulesEngineImpl());
 
         // Initialize Mediator
         mediator = new StreamSessionMediator(this);
