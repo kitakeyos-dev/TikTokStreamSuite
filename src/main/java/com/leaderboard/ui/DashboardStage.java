@@ -1,20 +1,14 @@
 package com.leaderboard.ui;
 
 import com.leaderboard.service.TikTokConnector;
-import com.leaderboard.service.TTSService;
-import com.leaderboard.ui.overlay.GiftLeaderboardOverlay;
-import com.leaderboard.ui.overlay.LikeGoalOverlay;
-import com.leaderboard.ui.overlay.LiveChatOverlay;
-import com.leaderboard.ui.overlay.TopLikeOverlay;
+import com.leaderboard.service.StreamSessionMediator;
 import com.leaderboard.ui.tab.*;
 import com.leaderboard.util.*;
-import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.Separator;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -23,6 +17,11 @@ import javafx.stage.Stage;
 import org.kordamp.ikonli.feather.Feather;
 import org.kordamp.ikonli.javafx.FontIcon;
 
+/**
+ * Decoupled DashboardStage that focuses strictly on Main UI layout,
+ * sidebar navigation, and visual styling. It delegates connection logic
+ * and OBS overlay stage management to StreamSessionMediator.
+ */
 public class DashboardStage extends Stage {
     private OverviewTab overviewTab;
     private OverlaysTab overlaysTab;
@@ -33,17 +32,13 @@ public class DashboardStage extends Stage {
     private TtsTab ttsTab;
     private ActionsEventsTab actionsEventsTab;
 
-    private GiftLeaderboardOverlay overlayStage;
-    private LiveChatOverlay chatOverlayStage;
-    private LikeGoalOverlay likeOverlayStage;
-    private TopLikeOverlay topLikeOverlayStage;
+    // Coordinator Mediator
+    private final StreamSessionMediator mediator;
 
     private Label lblSubtitle;
     private Label lblPageTitle;
     private StackPane contentArea;
     private Button activeNavButton;
-    private int connectionAttemptId = 0;
-    private boolean connectionErrorShown = false;
 
     public DashboardStage() {
         setTitle("TikTok Live Stream Suite - " + I18n.get("nav.overview"));
@@ -53,7 +48,8 @@ public class DashboardStage extends Stage {
         // Load application window icon
         IconManager.applyAppIcon(this);
 
-        // Configs and data are pre-loaded asynchronously during the SplashScreen phase!
+        // Initialize Mediator
+        mediator = new StreamSessionMediator(this);
 
         // Main Layout
         BorderPane root = new BorderPane();
@@ -65,11 +61,11 @@ public class DashboardStage extends Stage {
         // 2. Build sidebar dashboard layout
         initComponents(root);
 
-        // 3. Setup TikTok Connect Event Listeners
-        setupTikTokListeners();
+        // 3. Setup TikTok Connect Event Listeners via Mediator
+        mediator.setupTikTokListeners();
 
         // 4. Update initial Overlay Stage button states
-        updateOverlayButtonStates();
+        mediator.updateOverlayButtonStates();
 
         Scene scene = new Scene(root);
         var dashboardCss = getClass().getResource("/css/dashboard.css");
@@ -80,16 +76,9 @@ public class DashboardStage extends Stage {
 
         // Window Closing hook
         setOnCloseRequest(e -> {
-            saveInputSettings();
+            mediator.saveInputSettings();
             TikTokConnector.disconnect();
-            if (overlayStage != null)
-                overlayStage.dispose();
-            if (chatOverlayStage != null)
-                chatOverlayStage.dispose();
-            if (likeOverlayStage != null)
-                likeOverlayStage.dispose();
-            if (topLikeOverlayStage != null)
-                topLikeOverlayStage.dispose();
+            mediator.disposeAllOverlays();
         });
     }
 
@@ -159,6 +148,9 @@ public class DashboardStage extends Stage {
         likesTab = new LikesTab(this);
         ttsTab = new TtsTab(this);
         actionsEventsTab = new ActionsEventsTab(this);
+
+        // Register Tabs within the mediator for event broadcasting
+        mediator.registerTabs(overviewTab, overlaysTab, leaderboardTab, teamTab, chatTab, likesTab, ttsTab, actionsEventsTab);
 
         contentArea = new StackPane();
         contentArea.setPadding(new Insets(0, 0, 0, 0));
@@ -322,225 +314,57 @@ public class DashboardStage extends Stage {
         }
     }
 
-    private void setupTikTokListeners() {
-        TikTokConnector.setRoomInfoListener((title, viewers, likes) -> {
-            Platform.runLater(() -> {
-                // 1. Update Subtitle in header bar
-                if (title != null && !title.trim().isEmpty()) {
-                    String username = ConfigManager.getConfig().getStreamerUsername();
-                    lblSubtitle.setText(I18n.get("header.session", username, title));
-                }
+    // --- Delegate Methods routing requests to StreamSessionMediator ---
 
-                // 2. Update diagnostics
-                overviewTab.getLblSyncDiag().setText(I18n.get("overview.diag.sync.viewers", viewers));
-                overviewTab.getLblSyncDiag()
-                        .setStyle("-fx-text-fill: #25f4ee; -fx-font-size: 11px; -fx-font-weight: bold;");
+    public StreamSessionMediator getMediator() {
+        return mediator;
+    }
 
-                // 3. Update total likes
-                likesTab.updateProgress(likes);
-
-                // 4. Update Like Goal Overlay Stage
-                if (likeOverlayStage != null) {
-                    likeOverlayStage.setLikes(likes);
-                }
-            });
-        });
-
-        TikTokConnector.setChatListener((uniqueId, nickname, comment, avatarUrl) -> {
-            Platform.runLater(() -> {
-                chatTab.addChatRow(uniqueId, nickname, comment, avatarUrl);
-                if (chatOverlayStage != null) {
-                    chatOverlayStage.addMessage(uniqueId, nickname, comment, avatarUrl);
-                }
-
-                // Text-to-Speech integration
-                if (ConfigManager.getConfig().isTtsEnabled()) {
-                    if (TTSService.isCommentAllowed(comment)) {
-                        String speakText;
-                        if (ConfigManager.getConfig().isTtsReadUsername()) {
-                            String name = (nickname != null && !nickname.trim().isEmpty()) ? nickname.trim() : uniqueId;
-                            speakText = name + " nói: " + comment;
-                        } else {
-                            speakText = comment;
-                        }
-                        TTSService.enqueueTTS(speakText);
-                    }
-                }
-            });
-        });
-
-        TikTokConnector.setLikeListener((uniqueId, nickname, likesSent, totalLikesVal, avatarUrl) -> {
-            Platform.runLater(() -> {
-                // Add row log
-                likesTab.addLikeRow(uniqueId, nickname, likesSent);
-
-                // Update Total Likes & Goal
-                likesTab.updateProgress(totalLikesVal);
-
-                if (likeOverlayStage != null) {
-                    likeOverlayStage.setLikes(totalLikesVal);
-                }
-
-                // Update data model
-                DataManager.addLike(uniqueId, nickname, avatarUrl, likesSent);
-
-                // Update Top Like Overlay Stage
-                if (topLikeOverlayStage != null) {
-                    topLikeOverlayStage.updateLeaderboard();
-                }
-            });
-        });
+    public Label getLblSubtitle() {
+        return lblSubtitle;
     }
 
     public void toggleConnection() {
-        if (TikTokConnector.isConnected()) {
-            overviewTab.setDisconnectingState();
-            TikTokConnector.disconnect();
-            overviewTab.updateDiagnostics(false, "--");
-            lblSubtitle.setText(I18n.get("header.subtitle"));
-        } else {
-            String username = overviewTab.getUsername();
-            if (username.isEmpty()) {
-                Dialogs.warning(this, "Cảnh báo", "Vui lòng nhập TikTok Username!");
-                return;
-            }
-            saveInputSettings();
-            overviewTab.setConnectingState();
-            final int attemptId = ++connectionAttemptId;
-            connectionErrorShown = false;
-
-            TikTokConnector.connect(
-                    username,
-                    overviewTab.getApiKey(),
-                    () -> Platform.runLater(() -> {
-                        if (attemptId != connectionAttemptId)
-                            return;
-                        overviewTab.setConnectionState(true);
-                        overviewTab.updateDiagnostics(true, "42ms");
-                    }),
-                    () -> Platform.runLater(() -> {
-                        if (attemptId != connectionAttemptId)
-                            return;
-                        overviewTab.setConnectionState(false);
-                        overviewTab.updateDiagnostics(false, "--");
-                        lblSubtitle.setText(I18n.get("header.subtitle"));
-                    }),
-                    errorMsg -> Platform.runLater(() -> {
-                        if (attemptId != connectionAttemptId || connectionErrorShown)
-                            return;
-                        connectionErrorShown = true;
-                        Dialogs.error(this, "Lỗi kết nối", "Kết nối thất bại: " + errorMsg);
-                        overviewTab.setConnectionState(false);
-                        overviewTab.updateDiagnostics(false, "--");
-                        lblSubtitle.setText(I18n.get("header.subtitle"));
-                    }),
-                    () -> Platform.runLater(() -> {
-                        leaderboardTab.refreshTableData();
-                        teamTab.refreshTableData();
-                        likesTab.refreshLikerTableData();
-                        if (overlayStage != null) {
-                            overlayStage.updateLeaderboard();
-                        }
-                    }));
-        }
+        mediator.toggleConnection();
     }
 
     public void toggleOverlayWindow() {
-        if (overlayStage == null) {
-            overlayStage = new GiftLeaderboardOverlay();
-            overlayStage.setAlwaysOnTop(overlaysTab.getChkLeaderboardOnTop().isSelected());
-            overlayStage.show();
-        } else {
-            overlayStage.dispose();
-            overlayStage = null;
-        }
-        updateOverlayButtonStates();
+        mediator.toggleOverlayWindow();
     }
 
     public void toggleChatOverlayWindow() {
-        if (chatOverlayStage == null) {
-            chatOverlayStage = new LiveChatOverlay();
-            chatOverlayStage.setAlwaysOnTop(overlaysTab.getChkChatOnTop().isSelected());
-            chatOverlayStage.show();
-        } else {
-            chatOverlayStage.dispose();
-            chatOverlayStage = null;
-        }
-        updateOverlayButtonStates();
+        mediator.toggleChatOverlayWindow();
     }
 
     public void toggleLikeOverlayWindow() {
-        if (likeOverlayStage == null) {
-            likeOverlayStage = new LikeGoalOverlay();
-            likeOverlayStage.setAlwaysOnTop(overlaysTab.getChkLikeOnTop().isSelected());
-            likeOverlayStage.show();
-        } else {
-            likeOverlayStage.dispose();
-            likeOverlayStage = null;
-        }
-        updateOverlayButtonStates();
+        mediator.toggleLikeOverlayWindow();
     }
 
     public void toggleTopLikeOverlayWindow() {
-        if (topLikeOverlayStage == null) {
-            topLikeOverlayStage = new TopLikeOverlay();
-            topLikeOverlayStage.setAlwaysOnTop(overlaysTab.getChkTopLikeOnTop().isSelected());
-            topLikeOverlayStage.show();
-        } else {
-            topLikeOverlayStage.dispose();
-            topLikeOverlayStage = null;
-        }
-        updateOverlayButtonStates();
+        mediator.toggleTopLikeOverlayWindow();
     }
 
     public void updateOverlayAlwaysOnTop() {
-        if (overlayStage != null)
-            overlayStage.setAlwaysOnTop(overlaysTab.getChkLeaderboardOnTop().isSelected());
-        if (chatOverlayStage != null)
-            chatOverlayStage.setAlwaysOnTop(overlaysTab.getChkChatOnTop().isSelected());
-        if (likeOverlayStage != null)
-            likeOverlayStage.setAlwaysOnTop(overlaysTab.getChkLikeOnTop().isSelected());
-        if (topLikeOverlayStage != null)
-            topLikeOverlayStage.setAlwaysOnTop(overlaysTab.getChkTopLikeOnTop().isSelected());
+        mediator.updateOverlayAlwaysOnTop();
     }
 
     public void updateOverlayButtonStates() {
-        boolean isLeaderboardOpen = !(overlayStage == null || !overlayStage.isShowing());
-        boolean isChatOpen = !(chatOverlayStage == null || !chatOverlayStage.isShowing());
-        boolean isLikeOpen = !(likeOverlayStage == null || !likeOverlayStage.isShowing());
-        boolean isTopLikeOpen = !(topLikeOverlayStage == null || !topLikeOverlayStage.isShowing());
-
-        overlaysTab.updateOverlayButtonStates(isLeaderboardOpen, isChatOpen, isLikeOpen, isTopLikeOpen);
+        mediator.updateOverlayButtonStates();
     }
 
     public void updateLeaderboardOverlay() {
-        if (overlayStage != null) {
-            overlayStage.updateLeaderboard();
-        }
+        mediator.updateLeaderboardOverlay();
     }
 
     public void updateTopLikeOverlay() {
-        if (topLikeOverlayStage != null) {
-            topLikeOverlayStage.updateLeaderboard();
-        }
+        mediator.updateTopLikeOverlay();
     }
 
     public void updateLikeTargetOverlay(int target) {
-        if (likeOverlayStage != null) {
-            likeOverlayStage.setTargetLikes(target);
-        }
+        mediator.updateLikeTargetOverlay(target);
     }
 
     public void resetLikesOverlay() {
-        if (likeOverlayStage != null) {
-            likeOverlayStage.setLikes(0);
-        }
-    }
-
-    private void saveInputSettings() {
-        ConfigManager.AppConfig config = ConfigManager.getConfig();
-        config.setStreamerUsername(overviewTab.getUsername());
-        config.setEulerstreamKey(overviewTab.getApiKey());
-        ConfigManager.save();
+        mediator.resetLikesOverlay();
     }
 }
