@@ -2,6 +2,9 @@ package com.leaderboard.ui;
 
 import com.leaderboard.service.TikTokConnector;
 import com.leaderboard.service.StreamSessionMediator;
+import com.leaderboard.service.ServiceLocator;
+import com.leaderboard.service.ITTSService;
+import com.leaderboard.service.TTSServiceImpl;
 import com.leaderboard.ui.tab.*;
 import com.leaderboard.util.*;
 import javafx.geometry.Insets;
@@ -47,6 +50,9 @@ public class DashboardStage extends Stage {
 
         // Load application window icon
         IconManager.applyAppIcon(this);
+
+        // Register Core Services to ServiceLocator
+        ServiceLocator.register(ITTSService.class, new TTSServiceImpl());
 
         // Initialize Mediator
         mediator = new StreamSessionMediator(this);
