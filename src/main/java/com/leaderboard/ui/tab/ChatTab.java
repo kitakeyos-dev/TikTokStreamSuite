@@ -3,9 +3,6 @@ package com.leaderboard.ui.tab;
 import com.leaderboard.ui.DashboardLayout;
 import com.leaderboard.ui.DashboardStage;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -15,40 +12,24 @@ import com.leaderboard.util.I18n;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
-public class ChatTab extends BorderPane {
-    private final DashboardStage parent;
-    private TableView<ChatRow> tblChatLog;
-    private final ObservableList<ChatRow> chatList = FXCollections.observableArrayList();
-    private FilteredList<ChatRow> filteredList;
-
-    private TextField txtSearch;
-    private Button btnClearChat;
-
+/**
+ * Cleaned up Live Chat Tab extending BaseDataTab.
+ * Focuses strictly on chat row formatting and clearing logic.
+ */
+public class ChatTab extends BaseDataTab<ChatTab.ChatRow> {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     public record ChatRow(String time, String uniqueId, String nickname, String comment, String avatarUrl) {
     }
 
     public ChatTab(DashboardStage parent) {
-        this.parent = parent;
-        DashboardLayout.stylePage(this);
-        initComponents();
+        super(parent);
+        setupTableColumns();
+        buildLayout("chat.title", "chat.subtitle", "chat.prompt.search");
     }
 
-    private void initComponents() {
-        VBox cardChat = DashboardLayout.createPageContainer();
-
-        cardChat.getChildren().add(DashboardLayout.createPageHeader(
-                I18n.get("chat.title"),
-                I18n.get("chat.subtitle")
-        ));
-
-        txtSearch = DashboardLayout.newSearchField();
-        cardChat.getChildren().add(DashboardLayout.createSearchBox(
-                txtSearch, I18n.get("chat.prompt.search")));
-
-        tblChatLog = DashboardLayout.createTable();
-
+    @Override
+    protected void setupTableColumns() {
         TableColumn<ChatRow, String> colTime = new TableColumn<>(I18n.get("chat.col.time"));
         colTime.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().time()));
         colTime.setPrefWidth(90);
@@ -67,42 +48,34 @@ public class ChatTab extends BorderPane {
         colComment.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().comment()));
         colComment.setPrefWidth(430);
 
-        tblChatLog.getColumns().addAll(colTime, colId, colNick, colComment);
+        tableView.getColumns().addAll(colTime, colId, colNick, colComment);
+    }
 
-        // Live Filtering Setup
-        filteredList = new FilteredList<>(chatList, p -> true);
-        tblChatLog.setItems(filteredList);
+    @Override
+    protected boolean matchesSearch(ChatRow row, String query) {
+        return row.uniqueId().toLowerCase().contains(query) ||
+               row.nickname().toLowerCase().contains(query) ||
+               row.comment().toLowerCase().contains(query);
+    }
 
-        txtSearch.textProperty().addListener((observable, oldValue, newValue) -> {
-            filteredList.setPredicate(row -> {
-                if (newValue == null || newValue.isEmpty()) return true;
-                String lower = newValue.toLowerCase().trim();
-                return row.uniqueId().toLowerCase().contains(lower) ||
-                       row.nickname().toLowerCase().contains(lower) ||
-                       row.comment().toLowerCase().contains(lower);
-            });
-        });
-
-        cardChat.getChildren().add(tblChatLog);
-
-        btnClearChat = DashboardLayout.newButton(I18n.get("chat.btn.clear"));
+    @Override
+    protected Pane buildFooterActions() {
+        Button btnClearChat = DashboardLayout.newButton(I18n.get("chat.btn.clear"));
         FontIcon trashIcon = new FontIcon(Feather.TRASH_2);
         trashIcon.setIconColor(Color.web("#f87171"));
         btnClearChat.setGraphic(trashIcon);
         DashboardLayout.applyDangerButton(btnClearChat);
-        btnClearChat.setOnAction(e -> chatList.clear());
+        btnClearChat.setOnAction(e -> masterList.clear());
 
-        cardChat.getChildren().add(DashboardLayout.createActionsRow(btnClearChat));
-
-        setCenter(cardChat);
+        return DashboardLayout.createActionsRow(btnClearChat);
     }
 
     public void addChatRow(String uniqueId, String nickname, String comment, String avatarUrl) {
         String time = LocalTime.now().format(TIME_FORMATTER);
         ChatRow row = new ChatRow(time, uniqueId, nickname, comment, avatarUrl);
-        chatList.add(0, row); // Insert at top like in Swing
-        if (chatList.size() > 100) {
-            chatList.remove(100, chatList.size());
+        masterList.add(0, row); // Insert at top like in Swing
+        if (masterList.size() > 100) {
+            masterList.remove(100, masterList.size());
         }
     }
 }

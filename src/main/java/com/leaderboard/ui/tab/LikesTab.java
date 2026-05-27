@@ -12,28 +12,24 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.feather.Feather;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class LikesTab extends BorderPane {
-    private final DashboardStage parent;
-    private TableView<Liker> tblLikers;
-    private final ObservableList<Liker> likerList = FXCollections.observableArrayList();
-    private FilteredList<Liker> filteredList;
-
-    private TextField txtSearch;
+/**
+ * Refactored LikesTab extending BaseDataTab.
+ * Seamlessly integrates the premium Bento Goal bar via the buildHeaderExtension hook.
+ */
+public class LikesTab extends BaseDataTab<Liker> {
     private TextField txtLikeTarget;
     private Label lblTotalLikes;
     private Label lblActiveLikersVal;
@@ -50,16 +46,9 @@ public class LikesTab extends BorderPane {
     private boolean pendingRefresh = false;
 
     public LikesTab(DashboardStage parent) {
-        this.parent = parent;
-        DashboardLayout.stylePage(this);
+        super(parent);
+        
         refreshThrottle.setOnFinished(e -> doRefreshLikerTableData());
-        initComponents();
-        updateProgress(0);
-        refreshLikerTableData();
-    }
-
-    private void initComponents() {
-        VBox cardMain = DashboardLayout.createPageContainer();
 
         lblTotalLikes = new Label("0");
         lblActiveLikersVal = new Label("0");
@@ -69,12 +58,14 @@ public class LikesTab extends BorderPane {
                 DashboardLayout.createMiniStatCard(I18n.get("likes.stat.likers"), lblActiveLikersVal, "#e4e4e7")
         );
 
-        cardMain.getChildren().add(DashboardLayout.createPageHeader(
-                I18n.get("likes.title"),
-                I18n.get("likes.subtitle"),
-                headerRight
-        ));
+        setupTableColumns();
+        buildLayout("likes.title", "likes.subtitle", "likes.prompt.search", headerRight);
+        updateProgress(0);
+        refreshLikerTableData();
+    }
 
+    @Override
+    protected Node buildHeaderExtension() {
         // Single-Row Premium Bento Bar (All elements aligned horizontally in 1 line)
         HBox goalBar = new HBox(15);
         goalBar.setAlignment(Pos.CENTER_LEFT);
@@ -136,16 +127,11 @@ public class LikesTab extends BorderPane {
                 progressBar, 
                 progressLabelsBox
         );
-        cardMain.getChildren().add(goalBar);
+        return goalBar;
+    }
 
-        // Search Box
-        txtSearch = DashboardLayout.newSearchField();
-        cardMain.getChildren().add(DashboardLayout.createSearchBox(
-                txtSearch, I18n.get("likes.prompt.search")));
-
-        // Table
-        tblLikers = DashboardLayout.createTable();
-
+    @Override
+    protected void setupTableColumns() {
         TableColumn<Liker, Integer> colRank = new TableColumn<>(I18n.get("likes.col.rank"));
         colRank.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getRank()).asObject());
         colRank.setPrefWidth(60);
@@ -164,23 +150,17 @@ public class LikesTab extends BorderPane {
         colLikesCount.setPrefWidth(160);
         colLikesCount.setStyle("-fx-alignment: CENTER; -fx-text-fill: #f43f5e; -fx-font-weight: bold;");
 
-        tblLikers.getColumns().addAll(colRank, colId, colNick, colLikesCount);
-        
-        filteredList = new FilteredList<>(likerList, p -> true);
-        tblLikers.setItems(filteredList);
+        tableView.getColumns().addAll(colRank, colId, colNick, colLikesCount);
+    }
 
-        txtSearch.textProperty().addListener((observable, oldValue, newValue) -> {
-            filteredList.setPredicate(l -> {
-                if (newValue == null || newValue.isEmpty()) return true;
-                String lower = newValue.toLowerCase().trim();
-                return l.getUniqueId().toLowerCase().contains(lower) || 
-                       l.getNickname().toLowerCase().contains(lower);
-            });
-        });
+    @Override
+    protected boolean matchesSearch(Liker l, String query) {
+        return l.getUniqueId().toLowerCase().contains(query) || 
+               l.getNickname().toLowerCase().contains(query);
+    }
 
-        cardMain.getChildren().add(tblLikers);
-
-        // Actions Row
+    @Override
+    protected Pane buildFooterActions() {
         btnDeleteSelected = DashboardLayout.newButton(I18n.get("likes.btn.delete"));
         FontIcon trashIcon = new FontIcon(Feather.TRASH_2);
         trashIcon.setIconColor(Color.web("#a1a1aa"));
@@ -202,10 +182,7 @@ public class LikesTab extends BorderPane {
         DashboardLayout.applyPrimaryButton(btnAddManual);
         btnAddManual.setOnAction(e -> addManualLikes());
 
-        cardMain.getChildren().add(DashboardLayout.createActionsRow(
-                btnDeleteSelected, btnResetAll, btnAddManual));
-
-        setCenter(cardMain);
+        return DashboardLayout.createActionsRow(btnDeleteSelected, btnResetAll, btnAddManual);
     }
 
     private void updateLikeTarget() {
@@ -245,16 +222,22 @@ public class LikesTab extends BorderPane {
         
         Platform.runLater(() -> {
             lblTotalLikes.setText(String.format("%,d", totalLikes));
-            progressBar.setProgress(Math.min(1.0, (double) totalLikes / Math.max(1, target)));
-            lblPercent.setText(String.format("%.1f%%", percent));
+            if (progressBar != null) {
+                progressBar.setProgress(Math.min(1.0, (double) totalLikes / Math.max(1, target)));
+            }
+            if (lblPercent != null) {
+                lblPercent.setText(String.format("%.1f%%", percent));
+            }
             
-            if (totalLikes >= target) {
-                lblRemaining.setText(I18n.get("likes.goal.done"));
-                lblRemaining.setStyle("-fx-text-fill: #818cf8; -fx-font-size: 11px; -fx-font-weight: bold;");
-            } else {
-                int remaining = Math.max(0, target - totalLikes);
-                lblRemaining.setText(I18n.get("likes.goal.remaining", remaining));
-                lblRemaining.setStyle("-fx-text-fill: #71717a; -fx-font-size: 11px;");
+            if (lblRemaining != null) {
+                if (totalLikes >= target) {
+                    lblRemaining.setText(I18n.get("likes.goal.done"));
+                    lblRemaining.setStyle("-fx-text-fill: #818cf8; -fx-font-size: 11px; -fx-font-weight: bold;");
+                } else {
+                    int remaining = Math.max(0, target - totalLikes);
+                    lblRemaining.setText(I18n.get("likes.goal.remaining", remaining));
+                    lblRemaining.setStyle("-fx-text-fill: #71717a; -fx-font-size: 11px;");
+                }
             }
         });
     }
@@ -277,7 +260,7 @@ public class LikesTab extends BorderPane {
 
         // --- Incremental update to prevent flicker ---
         java.util.Map<String, Liker> currentMap = new java.util.HashMap<>();
-        for (Liker l : likerList) {
+        for (Liker l : masterList) {
             currentMap.put(l.getUniqueId().toLowerCase(), l);
         }
 
@@ -293,16 +276,16 @@ public class LikesTab extends BorderPane {
                 existing.setAvatarUrl(fresh.getAvatarUrl());
                 currentMap.remove(key);
             } else {
-                likerList.add(fresh);
+                masterList.add(fresh);
             }
         }
 
         if (!currentMap.isEmpty()) {
-            likerList.removeIf(l -> currentMap.containsKey(l.getUniqueId().toLowerCase()));
+            masterList.removeIf(l -> currentMap.containsKey(l.getUniqueId().toLowerCase()));
         }
 
-        FXCollections.sort(likerList);
-        tblLikers.refresh();
+        FXCollections.sort(masterList);
+        tableView.refresh();
 
         if (lblActiveLikersVal != null) {
             lblActiveLikersVal.setText(String.format("%,d", source.size()));
@@ -310,7 +293,7 @@ public class LikesTab extends BorderPane {
     }
 
     private void deleteSelectedLiker() {
-        Liker selected = tblLikers.getSelectionModel().getSelectedItem();
+        Liker selected = tableView.getSelectionModel().getSelectedItem();
         if (selected == null) {
             Dialogs.warning(parent, I18n.get("dialog.warning"), I18n.get("likes.warn.select"));
             return;

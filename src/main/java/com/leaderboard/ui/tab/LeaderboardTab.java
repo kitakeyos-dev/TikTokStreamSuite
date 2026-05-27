@@ -9,8 +9,6 @@ import com.leaderboard.util.I18n;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -25,13 +23,11 @@ import java.util.Map;
 import javafx.animation.PauseTransition;
 import javafx.util.Duration;
 
-public class LeaderboardTab extends BorderPane {
-    private final DashboardStage parent;
-    private TableView<Gifter> tblGifters;
-    private final ObservableList<Gifter> gifterList = FXCollections.observableArrayList();
-    private FilteredList<Gifter> filteredList;
-
-    private TextField txtSearch;
+/**
+ * Refactored LeaderboardTab extending BaseDataTab.
+ * Clean, lightweight, and uses incremental list updates to prevent flicker.
+ */
+public class LeaderboardTab extends BaseDataTab<Gifter> {
     private Label lblTotalDiamondsVal;
     private Label lblActiveDonorsVal;
     
@@ -44,16 +40,10 @@ public class LeaderboardTab extends BorderPane {
     private boolean pendingRefresh = false;
 
     public LeaderboardTab(DashboardStage parent) {
-        this.parent = parent;
-        DashboardLayout.stylePage(this);
+        super(parent);
+        
         // Setup throttle: when it fires, do the actual refresh
         refreshThrottle.setOnFinished(e -> doRefreshTableData());
-        initComponents();
-        refreshTableData();
-    }
-
-    private void initComponents() {
-        VBox cardLeaderboard = DashboardLayout.createPageContainer();
 
         lblTotalDiamondsVal = new Label("0");
         lblActiveDonorsVal = new Label("0");
@@ -63,18 +53,13 @@ public class LeaderboardTab extends BorderPane {
                 DashboardLayout.createMiniStatCard(I18n.get("leaderboard.stat.donors"), lblActiveDonorsVal, "#e4e4e7")
         );
 
-        cardLeaderboard.getChildren().add(DashboardLayout.createPageHeader(
-                I18n.get("leaderboard.title"),
-                I18n.get("leaderboard.subtitle"),
-                headerRight
-        ));
+        setupTableColumns();
+        buildLayout("leaderboard.title", "leaderboard.subtitle", "leaderboard.prompt.search", headerRight);
+        refreshTableData();
+    }
 
-        txtSearch = DashboardLayout.newSearchField();
-        cardLeaderboard.getChildren().add(DashboardLayout.createSearchBox(
-                txtSearch, I18n.get("leaderboard.prompt.search")));
-
-        tblGifters = DashboardLayout.createTable();
-
+    @Override
+    protected void setupTableColumns() {
         TableColumn<Gifter, Integer> colRank = new TableColumn<>(I18n.get("leaderboard.col.rank"));
         colRank.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getRank()).asObject());
         colRank.setPrefWidth(60);
@@ -93,23 +78,17 @@ public class LeaderboardTab extends BorderPane {
         colPoints.setPrefWidth(140);
         colPoints.setStyle("-fx-alignment: CENTER; -fx-text-fill: #e4e4e7; -fx-font-weight: bold;");
 
-        tblGifters.getColumns().addAll(colRank, colId, colNick, colPoints);
+        tableView.getColumns().addAll(colRank, colId, colNick, colPoints);
+    }
 
-        // Live Filtering Setup
-        filteredList = new FilteredList<>(gifterList, p -> true);
-        tblGifters.setItems(filteredList);
+    @Override
+    protected boolean matchesSearch(Gifter g, String query) {
+        return g.getUniqueId().toLowerCase().contains(query) || 
+               g.getNickname().toLowerCase().contains(query);
+    }
 
-        txtSearch.textProperty().addListener((observable, oldValue, newValue) -> {
-            filteredList.setPredicate(g -> {
-                if (newValue == null || newValue.isEmpty()) return true;
-                String lower = newValue.toLowerCase().trim();
-                return g.getUniqueId().toLowerCase().contains(lower) || 
-                       g.getNickname().toLowerCase().contains(lower);
-            });
-        });
-
-        cardLeaderboard.getChildren().add(tblGifters);
-
+    @Override
+    protected Pane buildFooterActions() {
         btnDeleteSelected = DashboardLayout.newButton(I18n.get("leaderboard.btn.delete"));
         FontIcon trashIcon = new FontIcon(Feather.TRASH_2);
         trashIcon.setIconColor(Color.web("#a1a1aa"));
@@ -131,10 +110,7 @@ public class LeaderboardTab extends BorderPane {
         DashboardLayout.applyPrimaryButton(btnAddManual);
         btnAddManual.setOnAction(e -> addManualPoints());
 
-        cardLeaderboard.getChildren().add(DashboardLayout.createActionsRow(
-                btnDeleteSelected, btnResetAll, btnAddManual));
-
-        setCenter(cardLeaderboard);
+        return DashboardLayout.createActionsRow(btnDeleteSelected, btnResetAll, btnAddManual);
     }
 
     public void refreshTableData() {
@@ -153,7 +129,7 @@ public class LeaderboardTab extends BorderPane {
 
         // --- Incremental update: avoid clear() to prevent TableView flicker ---
         Map<String, Gifter> currentMap = new HashMap<>();
-        for (Gifter g : gifterList) {
+        for (Gifter g : masterList) {
             currentMap.put(g.getUniqueId().toLowerCase(), g);
         }
 
@@ -172,20 +148,20 @@ public class LeaderboardTab extends BorderPane {
                 existing.setAvatarUrl(fresh.getAvatarUrl());
                 currentMap.remove(key);
             } else {
-                gifterList.add(fresh);
+                masterList.add(fresh);
             }
         }
 
         // Pass 2: remove items no longer in source
         if (!currentMap.isEmpty()) {
-            gifterList.removeIf(g -> currentMap.containsKey(g.getUniqueId().toLowerCase()));
+            masterList.removeIf(g -> currentMap.containsKey(g.getUniqueId().toLowerCase()));
         }
 
         // Pass 3: re-sort to match points desc order
-        FXCollections.sort(gifterList);
+        FXCollections.sort(masterList);
 
         // Pass 4: force TableView redraw (plain fields, not JavaFX Properties)
-        tblGifters.refresh();
+        tableView.refresh();
 
         // Update statistics cards
         if (lblTotalDiamondsVal != null) {
@@ -197,7 +173,7 @@ public class LeaderboardTab extends BorderPane {
     }
 
     private void deleteSelectedGifter() {
-        Gifter selected = tblGifters.getSelectionModel().getSelectedItem();
+        Gifter selected = tableView.getSelectionModel().getSelectedItem();
         if (selected == null) {
             Dialogs.warning(parent, I18n.get("dialog.warning"), I18n.get("leaderboard.warn.select"));
             return;

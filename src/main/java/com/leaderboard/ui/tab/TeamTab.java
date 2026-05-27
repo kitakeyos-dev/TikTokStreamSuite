@@ -11,9 +11,8 @@ import com.leaderboard.util.I18n;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -30,13 +29,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class TeamTab extends BorderPane {
-    private final DashboardStage parent;
-    private TableView<TeamMember> tblMembers;
-    private final ObservableList<TeamMember> memberList = FXCollections.observableArrayList();
-    private FilteredList<TeamMember> filteredList;
-
-    private TextField txtSearch;
+/**
+ * Refactored TeamTab extending BaseDataTab.
+ * Seamlessly integrates combined category filtration and custom search wrapper.
+ */
+public class TeamTab extends BaseDataTab<TeamMember> {
     private ComboBox<String> cbFilter;
 
     private Label lblTotalMembersVal;
@@ -51,15 +48,8 @@ public class TeamTab extends BorderPane {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public TeamTab(DashboardStage parent) {
-        this.parent = parent;
-        DashboardLayout.stylePage(this);
-        initComponents();
-        refreshTableData();
-    }
-
-    private void initComponents() {
-        VBox cardMain = DashboardLayout.createPageContainer();
-
+        super(parent);
+        
         lblTotalMembersVal = new Label("0");
         lblTotalSubsVal = new Label("0");
         lblTotalFanClubVal = new Label("0");
@@ -70,18 +60,42 @@ public class TeamTab extends BorderPane {
                 DashboardLayout.createMiniStatCard(I18n.get("team.stat.fancollective"), lblTotalFanClubVal, "#a1a1aa")
         );
 
-        cardMain.getChildren().add(DashboardLayout.createPageHeader(
-                I18n.get("team.title"),
-                I18n.get("team.subtitle"),
-                headerRight
-        ));
+        setupTableColumns();
+        buildLayout("team.title", "team.subtitle", "team.prompt.search", headerRight);
 
+        // Combined filter listener to replace BaseDataTab's simple text predicate
+        Runnable applyFilter = () -> filteredList.setPredicate(m -> {
+            // Text Search filter
+            String text = txtSearch.getText().toLowerCase().trim();
+            boolean textMatches = text.isEmpty() ||
+                                  m.getUniqueId().toLowerCase().contains(text) ||
+                                  m.getNickname().toLowerCase().contains(text);
+
+            if (!textMatches) return false;
+
+            // Category filter
+            int filterIdx = cbFilter.getSelectionModel().getSelectedIndex();
+            if (filterIdx == 1) { // Only Subscribers
+                return m.isSubscriber();
+            } else if (filterIdx == 2) { // Only Fan Club
+                return m.getTeamName() != null;
+            }
+
+            return true;
+        });
+
+        txtSearch.textProperty().addListener((obs, oldVal, newVal) -> applyFilter.run());
+        cbFilter.getSelectionModel().selectedIndexProperty().addListener((obs, oldVal, newVal) -> applyFilter.run());
+
+        refreshTableData();
+    }
+
+    @Override
+    protected Node buildSearchBar(String searchPromptKey) {
         HBox filterBar = new HBox(15);
         filterBar.setAlignment(Pos.CENTER_LEFT);
 
-        txtSearch = DashboardLayout.newSearchField();
-        HBox searchBox = DashboardLayout.createSearchBox(
-                txtSearch, I18n.get("team.prompt.search"));
+        HBox searchBox = DashboardLayout.createSearchBox(txtSearch, I18n.get(searchPromptKey));
         HBox.setHgrow(searchBox, Priority.ALWAYS);
 
         cbFilter = new ComboBox<>(FXCollections.observableArrayList(
@@ -91,12 +105,13 @@ public class TeamTab extends BorderPane {
         DashboardLayout.styleComboBox(cbFilter);
 
         filterBar.getChildren().addAll(searchBox, cbFilter);
-        cardMain.getChildren().add(filterBar);
+        return filterBar;
+    }
 
-        tblMembers = DashboardLayout.createTable();
-
+    @Override
+    protected void setupTableColumns() {
         TableColumn<TeamMember, Integer> colStt = new TableColumn<>(I18n.get("team.col.stt"));
-        colStt.setCellValueFactory(cell -> new SimpleIntegerProperty(memberList.indexOf(cell.getValue()) + 1).asObject());
+        colStt.setCellValueFactory(cell -> new SimpleIntegerProperty(masterList.indexOf(cell.getValue()) + 1).asObject());
         colStt.setPrefWidth(50);
         colStt.setStyle("-fx-alignment: CENTER; -fx-text-fill: #71717a;");
 
@@ -145,38 +160,17 @@ public class TeamTab extends BorderPane {
         colLastActive.setPrefWidth(110);
         colLastActive.setStyle("-fx-alignment: CENTER; -fx-text-fill: #71717a;");
 
-        tblMembers.getColumns().addAll(colStt, colId, colNick, colRole, colTeamLvl, colGiftLvl, colLastActive);
+        tableView.getColumns().addAll(colStt, colId, colNick, colRole, colTeamLvl, colGiftLvl, colLastActive);
+    }
 
-        // Advanced Live Filtering Logic
-        filteredList = new FilteredList<>(memberList, p -> true);
-        tblMembers.setItems(filteredList);
+    @Override
+    protected boolean matchesSearch(TeamMember item, String query) {
+        // Handled completely by the custom combined filter Predicate
+        return true;
+    }
 
-        // Combined filter listener
-        Runnable applyFilter = () -> filteredList.setPredicate(m -> {
-            // Text Search filter
-            String text = txtSearch.getText().toLowerCase().trim();
-            boolean textMatches = text.isEmpty() ||
-                                  m.getUniqueId().toLowerCase().contains(text) ||
-                                  m.getNickname().toLowerCase().contains(text);
-
-            if (!textMatches) return false;
-
-            // Category filter
-            int filterIdx = cbFilter.getSelectionModel().getSelectedIndex();
-            if (filterIdx == 1) { // Only Subscribers
-                return m.isSubscriber();
-            } else if (filterIdx == 2) { // Only Fan Club
-                return m.getTeamName() != null;
-            }
-
-            return true;
-        });
-
-        txtSearch.textProperty().addListener((obs, oldVal, newVal) -> applyFilter.run());
-        cbFilter.getSelectionModel().selectedIndexProperty().addListener((obs, oldVal, newVal) -> applyFilter.run());
-
-        cardMain.getChildren().add(tblMembers);
-
+    @Override
+    protected Pane buildFooterActions() {
         btnDeleteSelected = DashboardLayout.newButton(I18n.get("team.btn.delete"));
         FontIcon trashIcon = new FontIcon(Feather.TRASH_2);
         trashIcon.setIconColor(Color.web("#a1a1aa"));
@@ -198,14 +192,11 @@ public class TeamTab extends BorderPane {
         DashboardLayout.applyPrimaryButton(btnExportJson);
         btnExportJson.setOnAction(e -> exportToJson());
 
-        cardMain.getChildren().add(DashboardLayout.createActionsRow(
-                btnDeleteSelected, btnResetAll, btnExportJson));
-
-        setCenter(cardMain);
+        return DashboardLayout.createActionsRow(btnDeleteSelected, btnResetAll, btnExportJson);
     }
 
     public void refreshTableData() {
-        memberList.clear();
+        masterList.clear();
         List<TeamMember> list;
         synchronized (DataManager.class) {
             list = new ArrayList<>(DataManager.getTeamMembers());
@@ -214,7 +205,7 @@ public class TeamTab extends BorderPane {
         int fanClubCount = 0;
 
         for (TeamMember m : list) {
-            memberList.add(m);
+            masterList.add(m);
             if (m.isSubscriber()) subsCount++;
             if (m.getTeamName() != null) fanClubCount++;
         }
@@ -231,7 +222,7 @@ public class TeamTab extends BorderPane {
     }
 
     private void deleteSelectedMember() {
-        TeamMember selected = tblMembers.getSelectionModel().getSelectedItem();
+        TeamMember selected = tableView.getSelectionModel().getSelectedItem();
         if (selected == null) {
             Dialogs.warning(parent, I18n.get("dialog.warning"), I18n.get("team.warn.select"));
             return;
@@ -258,8 +249,7 @@ public class TeamTab extends BorderPane {
     }
 
     private void exportToJson() {
-        ObservableList<TeamMember> items = tblMembers.getItems();
-        List<TeamMember> exportList = new ArrayList<>(items);
+        List<TeamMember> exportList = new ArrayList<>(tableView.getItems());
 
         if (exportList.isEmpty()) {
             Dialogs.info(parent, I18n.get("dialog.success"), I18n.get("team.export.empty"));
