@@ -1,6 +1,6 @@
 {
   "version": "1.0.4",
   "downloadUrl": "https://github.com/kitakeyos-dev/TikTokStreamSuite/releases/download/v1.0.4/TikTokStreamSuite_Setup.exe",
-  "changelog": "- Tích hợp cơ chế đa ngôn ngữ (i18n) hoàn chỉnh cho Tiếng Anh và Tiếng Việt.\n- Thêm hộp chọn ngôn ngữ ngay trong tab Tổng Quan.\n- Phân tách bộ lọc từ cấm riêng biệt cho Tiếng Việt và Tiếng Anh.\n- Integrated full i18n support with a language selector dropdown and isolated profanity lists.",
+  "changelog": "- Tái cấu trúc kiến trúc service layer: tách ServiceLocator, Facade và Implementation riêng biệt.\n- Thêm StreamSessionMediator để tách UI khỏi sự kiện TikTok Live.\n- Thêm Action Rules Engine: định nghĩa quy tắc trigger (quà, tim, follow, bình luận) và hành động tương ứng.\n- Tái cấu trúc các tab dữ liệu kế thừa từ BaseDataTab chung, giảm code lặp.\n- Dọn dẹp code thừa và xóa các class không còn sử dụng.",
   "forceUpdate": false
 }
