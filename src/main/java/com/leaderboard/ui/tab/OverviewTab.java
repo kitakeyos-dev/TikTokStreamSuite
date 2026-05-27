@@ -4,8 +4,8 @@ import com.leaderboard.service.UpdateService;
 import com.leaderboard.ui.DashboardLayout;
 import com.leaderboard.ui.DashboardStage;
 import com.leaderboard.ui.Dialogs;
-import com.leaderboard.ui.ToggleSwitch;
 import com.leaderboard.util.ConfigManager;
+import com.leaderboard.util.I18n;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -13,8 +13,11 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.feather.Feather;
-import com.leaderboard.util.I18n;
 
+/**
+ * Main overview dashboard tab. Focuses on TikTok connection configuration
+ * and live system diagnostics.
+ */
 public class OverviewTab extends BorderPane {
     private final DashboardStage parent;
 
@@ -22,16 +25,6 @@ public class OverviewTab extends BorderPane {
     private final PasswordField txtApiKey;
     private final Label lblStatusBadge;
     private final Button btnConnect;
-
-    private final ToggleSwitch swToggleOverlay;
-    private final ToggleSwitch swToggleChatOverlay;
-    private final ToggleSwitch swToggleLikeOverlay;
-    private final ToggleSwitch swToggleTopLikeOverlay;
-
-    private final CheckBox chkLeaderboardOnTop;
-    private final CheckBox chkChatOnTop;
-    private final CheckBox chkLikeOnTop;
-    private final CheckBox chkTopLikeOnTop;
 
     private final Label lblWebSocketDiag;
     private final Label lblLatencyDiag;
@@ -43,6 +36,7 @@ public class OverviewTab extends BorderPane {
 
         GridPane grid = DashboardLayout.createTwoColumnGrid();
 
+        // Left Column: Connection Configuration Card
         VBox cardConfig = DashboardLayout.createCard(I18n.get("overview.card.config"));
         VBox leftContent = DashboardLayout.createSectionContent();
 
@@ -62,7 +56,7 @@ public class OverviewTab extends BorderPane {
         keyIcon.setIconColor(Color.web("#71717a"));
         HBox keyFieldBox = DashboardLayout.wrapPasswordField(txtApiKey, I18n.get("overview.prompt.apikey"), keyIcon);
 
-        // Language
+        // Language settings
         Label lblLang = DashboardLayout.createFieldLabel(I18n.get("overview.language.label"));
         ComboBox<String> cbLanguage = new ComboBox<>();
         cbLanguage.getItems().addAll("Tiếng Việt", "English");
@@ -83,28 +77,34 @@ public class OverviewTab extends BorderPane {
             }
         });
 
-        // Status Row
+        // Connection Action Row
         lblStatusBadge = DashboardLayout.createStatusBadge(I18n.get("overview.status.offline"));
         btnConnect = DashboardLayout.newButton(I18n.get("overview.btn.connect"));
         DashboardLayout.applyPrimaryButton(btnConnect);
         btnConnect.setOnAction(e -> parent.toggleConnection());
         HBox statusRow = DashboardLayout.createStatusRow(lblStatusBadge, btnConnect);
 
-        // Divider
-        Separator sep = new Separator();
-        sep.setStyle("-fx-opacity: 0.08; -fx-padding: 5 0 5 0;");
+        leftContent.getChildren().addAll(lblUser, userFieldBox, lblKey, keyFieldBox, lblLang, cbLanguage, statusRow);
+        cardConfig.getChildren().add(leftContent);
+        grid.add(cardConfig, 0, 0);
+        DashboardLayout.fillGridCell(cardConfig);
 
-        // System Diagnostics Section
-        Label lblDiagTitle = DashboardLayout.createFieldLabel(I18n.get("overview.label.diag"));
+        // Right Column: System Diagnostics Card & Auto Updater
+        VBox cardDiag = DashboardLayout.createCard(I18n.get("overview.label.diag"));
+        VBox rightContent = DashboardLayout.createSectionContent();
 
-        VBox diagBox = new VBox(10);
-        diagBox.setPadding(new Insets(5, 10, 5, 10));
+        VBox diagBox = new VBox(14);
+        diagBox.setPadding(new Insets(10, 10, 15, 10));
 
-        lblWebSocketDiag = createDiagRow(diagBox, "WebSocket", I18n.get("overview.status.offline"), "#71717a");
+        lblWebSocketDiag = createDiagRow(diagBox, "WebSocket Connection", I18n.get("overview.status.offline"), "#71717a");
         lblLatencyDiag = createDiagRow(diagBox, I18n.get("overview.diag.latency"), "--", "#f4f4f5");
         lblSyncDiag = createDiagRow(diagBox, I18n.get("overview.diag.sync"), I18n.get("overview.diag.sync.inactive"), "#71717a");
         createDiagRow(diagBox, I18n.get("overview.diag.version"), "v" + UpdateService.CURRENT_VERSION, "#818cf8");
 
+        Separator sep = new Separator();
+        sep.setStyle("-fx-opacity: 0.08; -fx-padding: 5 0 5 0;");
+
+        // Action Check Update
         Button btnCheckUpdate = DashboardLayout.newButton(I18n.get("overview.btn.checkupdate"));
         FontIcon refreshIcon = new FontIcon(Feather.REFRESH_CW);
         refreshIcon.setIconColor(Color.web("#818cf8"));
@@ -113,59 +113,10 @@ public class OverviewTab extends BorderPane {
         btnCheckUpdate.setMaxWidth(Double.MAX_VALUE);
         btnCheckUpdate.setOnAction(e -> UpdateService.checkForUpdates(parent.getScene().getWindow(), false));
 
-        leftContent.getChildren().addAll(lblUser, userFieldBox, lblKey, keyFieldBox, statusRow, sep, lblDiagTitle, diagBox, lblLang, cbLanguage, btnCheckUpdate);
-        cardConfig.getChildren().add(leftContent);
-        grid.add(cardConfig, 0, 0);
-        DashboardLayout.fillGridCell(cardConfig);
-
-        // Column 2: Quick OBS Overlays controls (Bento)
-        VBox cardWidgets = DashboardLayout.createCard(I18n.get("overview.card.widgets"));
-        VBox widgetsBox = new VBox(12);
-        widgetsBox.setPadding(new Insets(10, 5, 10, 5));
-
-        swToggleOverlay = DashboardLayout.newToggleSwitch();
-        swToggleOverlay.setOnToggle(parent::toggleOverlayWindow);
-        chkLeaderboardOnTop = createOnTopCheckbox(ConfigManager.getConfig().isOverlayLeaderboardOnTop());
-        chkLeaderboardOnTop.setOnAction(e -> {
-            ConfigManager.getConfig().setOverlayLeaderboardOnTop(chkLeaderboardOnTop.isSelected());
-            ConfigManager.save();
-            parent.updateOverlayAlwaysOnTop();
-        });
-        widgetsBox.getChildren().add(createWidgetBento(I18n.get("overview.widget.leaderboard.title"), I18n.get("overview.widget.leaderboard.desc"), "#818cf8", Feather.BAR_CHART_2, swToggleOverlay, chkLeaderboardOnTop));
-
-        swToggleChatOverlay = DashboardLayout.newToggleSwitch();
-        swToggleChatOverlay.setOnToggle(parent::toggleChatOverlayWindow);
-        chkChatOnTop = createOnTopCheckbox(ConfigManager.getConfig().isOverlayChatOnTop());
-        chkChatOnTop.setOnAction(e -> {
-            ConfigManager.getConfig().setOverlayChatOnTop(chkChatOnTop.isSelected());
-            ConfigManager.save();
-            parent.updateOverlayAlwaysOnTop();
-        });
-        widgetsBox.getChildren().add(createWidgetBento(I18n.get("overview.widget.chat.title"), I18n.get("overview.widget.chat.desc"), "#818cf8", Feather.MESSAGE_SQUARE, swToggleChatOverlay, chkChatOnTop));
-
-        swToggleLikeOverlay = DashboardLayout.newToggleSwitch();
-        swToggleLikeOverlay.setOnToggle(parent::toggleLikeOverlayWindow);
-        chkLikeOnTop = createOnTopCheckbox(ConfigManager.getConfig().isOverlayLikeOnTop());
-        chkLikeOnTop.setOnAction(e -> {
-            ConfigManager.getConfig().setOverlayLikeOnTop(chkLikeOnTop.isSelected());
-            ConfigManager.save();
-            parent.updateOverlayAlwaysOnTop();
-        });
-        widgetsBox.getChildren().add(createWidgetBento(I18n.get("overview.widget.likes.title"), I18n.get("overview.widget.likes.desc"), "#818cf8", Feather.HEART, swToggleLikeOverlay, chkLikeOnTop));
-
-        swToggleTopLikeOverlay = DashboardLayout.newToggleSwitch();
-        swToggleTopLikeOverlay.setOnToggle(parent::toggleTopLikeOverlayWindow);
-        chkTopLikeOnTop = createOnTopCheckbox(ConfigManager.getConfig().isOverlayTopLikeOnTop());
-        chkTopLikeOnTop.setOnAction(e -> {
-            ConfigManager.getConfig().setOverlayTopLikeOnTop(chkTopLikeOnTop.isSelected());
-            ConfigManager.save();
-            parent.updateOverlayAlwaysOnTop();
-        });
-        widgetsBox.getChildren().add(createWidgetBento(I18n.get("overview.widget.toplike.title"), I18n.get("overview.widget.toplike.desc"), "#818cf8", Feather.AWARD, swToggleTopLikeOverlay, chkTopLikeOnTop));
-
-        cardWidgets.getChildren().add(widgetsBox);
-        grid.add(cardWidgets, 1, 0);
-        DashboardLayout.fillGridCell(cardWidgets);
+        rightContent.getChildren().addAll(diagBox, sep, btnCheckUpdate);
+        cardDiag.getChildren().add(rightContent);
+        grid.add(cardDiag, 1, 0);
+        DashboardLayout.fillGridCell(cardDiag);
 
         setCenter(grid);
         updateDiagnostics(false, "--");
@@ -187,61 +138,6 @@ public class OverviewTab extends BorderPane {
         parentContainer.getChildren().add(row);
 
         return lblValue;
-    }
-
-    private CheckBox createOnTopCheckbox(boolean initialState) {
-        CheckBox chk = new CheckBox(I18n.get("overview.widget.ontop"));
-        chk.setSelected(initialState);
-        chk.setStyle("-fx-text-fill: #71717a; -fx-font-size: 10px;");
-        return chk;
-    }
-
-    private HBox createWidgetBento(String title, String desc, String iconColorHex, Feather icon, ToggleSwitch sw, CheckBox onTopChk) {
-        HBox row = new HBox(12);
-        row.setPadding(new Insets(5, 5, 8, 5));
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.setStyle(
-            "-fx-border-color: rgba(255, 255, 255, 0.05);" +
-            "-fx-border-width: 0 0 1px 0;"
-        );
-
-        StackPane iconBox = new StackPane();
-        iconBox.setPrefSize(38, 38);
-        iconBox.setMinSize(38, 38);
-        iconBox.setMaxSize(38, 38);
-        iconBox.setStyle(
-            "-fx-background-color: #121214;" +
-            "-fx-background-radius: 6px;" +
-            "-fx-border-color: rgba(255,255,255,0.06);" +
-            "-fx-border-radius: 6px;" +
-            "-fx-border-width: 1px;"
-        );
-
-        Region leftBar = new Region();
-        leftBar.setPrefWidth(3);
-        leftBar.setMaxHeight(Double.MAX_VALUE);
-        leftBar.setStyle("-fx-background-color: " + iconColorHex + "66; -fx-background-radius: 3px 0 0 3px;");
-        StackPane.setAlignment(leftBar, Pos.CENTER_LEFT);
-
-        FontIcon fontIcon = new FontIcon(icon);
-        fontIcon.setIconSize(16);
-        fontIcon.setIconColor(Color.web(iconColorHex, 0.8));
-
-        iconBox.getChildren().addAll(leftBar, fontIcon);
-
-        VBox textGroup = new VBox(2);
-        HBox.setHgrow(textGroup, Priority.ALWAYS);
-
-        Label lblTitle = new Label(title);
-        lblTitle.setStyle("-fx-text-fill: #e4e4e7; -fx-font-weight: bold; -fx-font-size: 11px;");
-
-        Label lblDesc = new Label(desc);
-        lblDesc.setStyle("-fx-text-fill: #71717a; -fx-font-size: 9.5px;");
-
-        textGroup.getChildren().addAll(lblTitle, lblDesc, onTopChk);
-
-        row.getChildren().addAll(iconBox, textGroup, sw);
-        return row;
     }
 
     public void updateDiagnostics(boolean isConnected, String latency) {
@@ -354,18 +250,7 @@ public class OverviewTab extends BorderPane {
         txtApiKey.setDisable(true);
     }
 
-    public void updateOverlayButtonStates(boolean isLeaderboardOpen, boolean isChatOpen, boolean isLikeOpen, boolean isTopLikeOpen) {
-        swToggleOverlay.setSelected(isLeaderboardOpen);
-        swToggleChatOverlay.setSelected(isChatOpen);
-        swToggleLikeOverlay.setSelected(isLikeOpen);
-        swToggleTopLikeOverlay.setSelected(isTopLikeOpen);
-    }
-
     public String getUsername() { return txtUsername.getText().trim(); }
     public String getApiKey() { return txtApiKey.getText().trim(); }
-    public CheckBox getChkLeaderboardOnTop() { return chkLeaderboardOnTop; }
-    public CheckBox getChkChatOnTop() { return chkChatOnTop; }
-    public CheckBox getChkLikeOnTop() { return chkLikeOnTop; }
-    public CheckBox getChkTopLikeOnTop() { return chkTopLikeOnTop; }
     public Label getLblSyncDiag() { return lblSyncDiag; }
 }

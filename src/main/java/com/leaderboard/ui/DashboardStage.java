@@ -25,6 +25,7 @@ import org.kordamp.ikonli.javafx.FontIcon;
 
 public class DashboardStage extends Stage {
     private OverviewTab overviewTab;
+    private OverlaysTab overlaysTab;
     private LeaderboardTab leaderboardTab;
     private TeamTab teamTab;
     private ChatTab chatTab;
@@ -150,6 +151,7 @@ public class DashboardStage extends Stage {
 
     private void initComponents(BorderPane root) {
         overviewTab = new OverviewTab(this);
+        overlaysTab = new OverlaysTab(this);
         leaderboardTab = new LeaderboardTab(this);
         teamTab = new TeamTab(this);
         chatTab = new ChatTab(this);
@@ -159,7 +161,7 @@ public class DashboardStage extends Stage {
         contentArea = new StackPane();
         contentArea.setPadding(new Insets(0, 0, 0, 0));
         contentArea.getChildren().addAll(
-                overviewTab, leaderboardTab, teamTab, chatTab, likesTab, ttsTab);
+                overviewTab, overlaysTab, leaderboardTab, teamTab, chatTab, likesTab, ttsTab);
 
         VBox sidebar = buildSidebar();
         HBox dashboardBody = new HBox(0, sidebar, contentArea);
@@ -171,43 +173,54 @@ public class DashboardStage extends Stage {
     }
 
     private VBox buildSidebar() {
-        VBox sidebar = new VBox(6);
+        VBox sidebar = new VBox(4);
         sidebar.setPrefWidth(230);
         sidebar.setMinWidth(230);
         sidebar.setMaxWidth(230);
-        sidebar.setPadding(new Insets(16, 10, 16, 16));
+        sidebar.setPadding(new Insets(12, 10, 12, 16));
         sidebar.setStyle(
                 "-fx-background-color: #0c0c0e;" +
                         "-fx-border-color: #27272a;" +
                         "-fx-border-width: 0 1 0 0;");
 
-        Label lblMenu = new Label(I18n.get("nav.title"));
-        lblMenu.setStyle("-fx-text-fill: #52525b; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 0 0 4 8;");
-
-        Separator menuSep = new Separator();
-        menuSep.setStyle("-fx-opacity: 0.15; -fx-padding: 0 0 8 0;");
-
         sidebar.getChildren().addAll(
-                lblMenu,
-                menuSep,
+                createCategoryHeader(I18n.get("nav.cat.setup")),
                 createNavButton(I18n.get("nav.overview"), Feather.HOME, overviewTab,
                         I18n.get("nav.overview.desc")),
-                createNavButton(I18n.get("nav.leaderboard"), Feather.BAR_CHART_2, leaderboardTab,
-                        I18n.get("nav.leaderboard.desc")),
-                createNavButton(I18n.get("nav.likes"), Feather.HEART, likesTab,
-                        I18n.get("nav.likes.desc")),
+
+                createCategoryHeader(I18n.get("nav.cat.interaction")),
                 createNavButton(I18n.get("nav.chat"), Feather.MESSAGE_CIRCLE, chatTab,
                         I18n.get("nav.chat.desc")),
                 createNavButton(I18n.get("nav.tts"), Feather.VOLUME_2, ttsTab,
                         I18n.get("nav.tts.desc")),
+
+                createCategoryHeader(I18n.get("nav.cat.analytics")),
+                createNavButton(I18n.get("nav.leaderboard"), Feather.BAR_CHART_2, leaderboardTab,
+                        I18n.get("nav.leaderboard.desc")),
+                createNavButton(I18n.get("nav.likes"), Feather.HEART, likesTab,
+                        I18n.get("nav.likes.desc")),
                 createNavButton(I18n.get("nav.members"), Feather.USERS, teamTab,
-                        I18n.get("nav.members.desc")));
+                        I18n.get("nav.members.desc")),
+
+                createCategoryHeader(I18n.get("nav.cat.overlays")),
+                createNavButton(I18n.get("nav.overlays"), Feather.MONITOR, overlaysTab,
+                        I18n.get("nav.overlays.desc"))
+        );
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
         sidebar.getChildren().add(spacer);
 
         return sidebar;
+    }
+
+    private VBox createCategoryHeader(String title) {
+        VBox box = new VBox();
+        box.setPadding(new Insets(10, 0, 4, 8));
+        Label lbl = new Label(title);
+        lbl.setStyle("-fx-text-fill: #52525b; -fx-font-size: 9.5px; -fx-font-weight: bold; -fx-letter-spacing: 0.5px;");
+        box.getChildren().add(lbl);
+        return box;
     }
 
     private Button createNavButton(String title, Feather icon, Pane view, String subtitle) {
@@ -431,7 +444,7 @@ public class DashboardStage extends Stage {
     public void toggleOverlayWindow() {
         if (overlayStage == null) {
             overlayStage = new GiftLeaderboardOverlay();
-            overlayStage.setAlwaysOnTop(overviewTab.getChkLeaderboardOnTop().isSelected());
+            overlayStage.setAlwaysOnTop(overlaysTab.getChkLeaderboardOnTop().isSelected());
             overlayStage.show();
         } else {
             overlayStage.dispose();
@@ -443,7 +456,7 @@ public class DashboardStage extends Stage {
     public void toggleChatOverlayWindow() {
         if (chatOverlayStage == null) {
             chatOverlayStage = new LiveChatOverlay();
-            chatOverlayStage.setAlwaysOnTop(overviewTab.getChkChatOnTop().isSelected());
+            chatOverlayStage.setAlwaysOnTop(overlaysTab.getChkChatOnTop().isSelected());
             chatOverlayStage.show();
         } else {
             chatOverlayStage.dispose();
@@ -455,7 +468,7 @@ public class DashboardStage extends Stage {
     public void toggleLikeOverlayWindow() {
         if (likeOverlayStage == null) {
             likeOverlayStage = new LikeGoalOverlay();
-            likeOverlayStage.setAlwaysOnTop(overviewTab.getChkLikeOnTop().isSelected());
+            likeOverlayStage.setAlwaysOnTop(overlaysTab.getChkLikeOnTop().isSelected());
             likeOverlayStage.show();
         } else {
             likeOverlayStage.dispose();
@@ -467,7 +480,7 @@ public class DashboardStage extends Stage {
     public void toggleTopLikeOverlayWindow() {
         if (topLikeOverlayStage == null) {
             topLikeOverlayStage = new TopLikeOverlay();
-            topLikeOverlayStage.setAlwaysOnTop(overviewTab.getChkTopLikeOnTop().isSelected());
+            topLikeOverlayStage.setAlwaysOnTop(overlaysTab.getChkTopLikeOnTop().isSelected());
             topLikeOverlayStage.show();
         } else {
             topLikeOverlayStage.dispose();
@@ -478,13 +491,13 @@ public class DashboardStage extends Stage {
 
     public void updateOverlayAlwaysOnTop() {
         if (overlayStage != null)
-            overlayStage.setAlwaysOnTop(overviewTab.getChkLeaderboardOnTop().isSelected());
+            overlayStage.setAlwaysOnTop(overlaysTab.getChkLeaderboardOnTop().isSelected());
         if (chatOverlayStage != null)
-            chatOverlayStage.setAlwaysOnTop(overviewTab.getChkChatOnTop().isSelected());
+            chatOverlayStage.setAlwaysOnTop(overlaysTab.getChkChatOnTop().isSelected());
         if (likeOverlayStage != null)
-            likeOverlayStage.setAlwaysOnTop(overviewTab.getChkLikeOnTop().isSelected());
+            likeOverlayStage.setAlwaysOnTop(overlaysTab.getChkLikeOnTop().isSelected());
         if (topLikeOverlayStage != null)
-            topLikeOverlayStage.setAlwaysOnTop(overviewTab.getChkTopLikeOnTop().isSelected());
+            topLikeOverlayStage.setAlwaysOnTop(overlaysTab.getChkTopLikeOnTop().isSelected());
     }
 
     public void updateOverlayButtonStates() {
@@ -493,7 +506,7 @@ public class DashboardStage extends Stage {
         boolean isLikeOpen = !(likeOverlayStage == null || !likeOverlayStage.isShowing());
         boolean isTopLikeOpen = !(topLikeOverlayStage == null || !topLikeOverlayStage.isShowing());
 
-        overviewTab.updateOverlayButtonStates(isLeaderboardOpen, isChatOpen, isLikeOpen, isTopLikeOpen);
+        overlaysTab.updateOverlayButtonStates(isLeaderboardOpen, isChatOpen, isLikeOpen, isTopLikeOpen);
     }
 
     public void updateLeaderboardOverlay() {
