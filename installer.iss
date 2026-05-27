@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "TikTokStreamSuite"
-#define MyAppVersion "1.0.3"
+#define MyAppVersion "1.0.4"
 #define MyAppPublisher "Hoàng Hữu Dũng (kitakeyos)"
 #define MyAppURL "https://github.com/kitakeyos-dev/TikTokStreamSuite"
 #define MyAppExeName "TikTokStreamSuite.exe"
