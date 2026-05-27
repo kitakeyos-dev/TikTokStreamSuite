@@ -303,33 +303,19 @@ public class ActionsEventsTab extends BorderPane {
     }
 
     // Helper wrappers to show beautiful localized text in ComboBoxes
-    private static class TriggerTypeWrapper {
-        final TriggerType type;
-        final String displayName;
-
-        TriggerTypeWrapper(TriggerType type, String displayName) {
-            this.type = type;
-            this.displayName = displayName;
-        }
+        private record TriggerTypeWrapper(TriggerType type, String displayName) {
 
         @Override
-        public String toString() {
-            return displayName;
+            public String toString() {
+                return displayName;
+            }
         }
-    }
 
-    private static class ActionTypeWrapper {
-        final ActionType type;
-        final String displayName;
-
-        ActionTypeWrapper(ActionType type, String displayName) {
-            this.type = type;
-            this.displayName = displayName;
-        }
+    private record ActionTypeWrapper(ActionType type, String displayName) {
 
         @Override
-        public String toString() {
-            return displayName;
+            public String toString() {
+                return displayName;
+            }
         }
-    }
 }

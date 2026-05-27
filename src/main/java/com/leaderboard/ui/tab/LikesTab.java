@@ -31,8 +31,8 @@ import java.util.List;
  */
 public class LikesTab extends BaseDataTab<Liker> {
     private TextField txtLikeTarget;
-    private Label lblTotalLikes;
-    private Label lblActiveLikersVal;
+    private final Label lblTotalLikes;
+    private final Label lblActiveLikersVal;
     private Label lblPercent;
     private Label lblRemaining;
     private ProgressBar progressBar;

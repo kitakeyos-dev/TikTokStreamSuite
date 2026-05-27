@@ -28,8 +28,8 @@ import javafx.util.Duration;
  * Clean, lightweight, and uses incremental list updates to prevent flicker.
  */
 public class LeaderboardTab extends BaseDataTab<Gifter> {
-    private Label lblTotalDiamondsVal;
-    private Label lblActiveDonorsVal;
+    private final Label lblTotalDiamondsVal;
+    private final Label lblActiveDonorsVal;
     
     private Button btnDeleteSelected;
     private Button btnResetAll;

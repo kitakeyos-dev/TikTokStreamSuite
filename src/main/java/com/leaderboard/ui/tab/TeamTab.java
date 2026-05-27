@@ -36,9 +36,9 @@ import java.util.List;
 public class TeamTab extends BaseDataTab<TeamMember> {
     private ComboBox<String> cbFilter;
 
-    private Label lblTotalMembersVal;
-    private Label lblTotalSubsVal;
-    private Label lblTotalFanClubVal;
+    private final Label lblTotalMembersVal;
+    private final Label lblTotalSubsVal;
+    private final Label lblTotalFanClubVal;
 
     private Button btnDeleteSelected;
     private Button btnResetAll;
