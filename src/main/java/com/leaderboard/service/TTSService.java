@@ -133,6 +133,31 @@ public class TTSService {
     }
 
     /**
+     * Enqueues an alert TTS string to be read aloud (ignores global comment TTS disabled check).
+     * Used for custom Actions & Events alerts.
+     */
+    public static void enqueueAlertTTS(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return;
+        }
+
+        String cleanText = text.replaceAll("<[^>]*>", "").replaceAll("\\s+", " ").trim();
+        if (cleanText.isEmpty()) {
+            return;
+        }
+
+        synchronized (ttsQueue) {
+            int limit = ConfigManager.getConfig().getTtsMaxQueue();
+            while (ttsQueue.size() >= limit) {
+                ttsQueue.poll();
+            }
+            ttsQueue.add(cleanText);
+        }
+
+        triggerQueueProcessor();
+    }
+
+    /**
      * Immediately stops current playback and clears the remaining TTS queue.
      */
     public static synchronized void stopAndClear() {
@@ -316,6 +341,97 @@ public class TTSService {
         isPlaying = false;
         playbackThread = null;
         triggerQueueProcessor();
+    }
+
+    /**
+     * Decodes and plays a local MP3 file asynchronously through the user's selected audio mixer.
+     * Used for sound alerts in Actions & Events.
+     */
+    public static void playLocalMP3(String filePath, double volume) {
+        if (filePath == null || filePath.trim().isEmpty()) {
+            return;
+        }
+        
+        File file = new File(filePath);
+        if (!file.exists() || !file.isFile()) {
+            System.err.println("Sound alert file not found: " + filePath);
+            return;
+        }
+
+        new Thread(() -> {
+            SourceDataLine line = null;
+            try (FileInputStream fis = new FileInputStream(file);
+                 BufferedInputStream bis = new BufferedInputStream(fis)) {
+                 
+                Bitstream bitstream = new Bitstream(bis);
+                Decoder decoder = new Decoder();
+                Header header;
+                
+                while ((header = bitstream.readFrame()) != null) {
+                    SampleBuffer output = (SampleBuffer) decoder.decodeFrame(header, bitstream);
+                    short[] pcm = output.getBuffer();
+                    int len = output.getBufferLength();
+                    
+                    if (line == null) {
+                        AudioFormat format = new AudioFormat(
+                                output.getSampleFrequency(),
+                                16,
+                                output.getChannelCount(),
+                                true,
+                                false
+                        );
+                        
+                        DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
+                        Mixer.Info mixerInfo = getSelectedMixerInfo();
+                        
+                        if (mixerInfo != null) {
+                            try {
+                                Mixer mixer = AudioSystem.getMixer(mixerInfo);
+                                line = (SourceDataLine) mixer.getLine(info);
+                            } catch (Exception ex) {
+                                line = AudioSystem.getSourceDataLine(format);
+                            }
+                        } else {
+                            line = AudioSystem.getSourceDataLine(format);
+                        }
+                        
+                        line.open(format);
+                        line.start();
+                        
+                        // Set Volume
+                        if (line.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+                            FloatControl gainControl = (FloatControl) line.getControl(FloatControl.Type.MASTER_GAIN);
+                            float dB = (float) (Math.log(volume == 0.0 ? 0.0001 : volume) / Math.log(10.0) * 20.0);
+                            gainControl.setValue(Math.max(gainControl.getMinimum(), Math.min(gainControl.getMaximum(), dB)));
+                        }
+                    }
+                    
+                    byte[] bytes = new byte[len * 2];
+                    for (int i = 0; i < len; i++) {
+                        short val = pcm[i];
+                        bytes[i * 2] = (byte) (val & 0xff);
+                        bytes[i * 2 + 1] = (byte) ((val >> 8) & 0xff);
+                    }
+                    
+                    line.write(bytes, 0, bytes.length);
+                    bitstream.closeFrame();
+                }
+                
+                if (line != null) {
+                    line.drain();
+                }
+            } catch (Exception e) {
+                System.err.println("Error playing local MP3 sound alert: " + e.getMessage());
+            } finally {
+                if (line != null) {
+                    try {
+                        line.close();
+                    } catch (Exception ex) {
+                        // Ignore
+                    }
+                }
+            }
+        }).start();
     }
 
     /**

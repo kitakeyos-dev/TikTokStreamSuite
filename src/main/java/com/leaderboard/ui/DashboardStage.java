@@ -31,6 +31,7 @@ public class DashboardStage extends Stage {
     private ChatTab chatTab;
     private LikesTab likesTab;
     private TtsTab ttsTab;
+    private ActionsEventsTab actionsEventsTab;
 
     private GiftLeaderboardOverlay overlayStage;
     private LiveChatOverlay chatOverlayStage;
@@ -157,11 +158,12 @@ public class DashboardStage extends Stage {
         chatTab = new ChatTab(this);
         likesTab = new LikesTab(this);
         ttsTab = new TtsTab(this);
+        actionsEventsTab = new ActionsEventsTab(this);
 
         contentArea = new StackPane();
         contentArea.setPadding(new Insets(0, 0, 0, 0));
         contentArea.getChildren().addAll(
-                overviewTab, overlaysTab, leaderboardTab, teamTab, chatTab, likesTab, ttsTab);
+                overviewTab, overlaysTab, leaderboardTab, teamTab, chatTab, likesTab, ttsTab, actionsEventsTab);
 
         VBox sidebar = buildSidebar();
         HBox dashboardBody = new HBox(0, sidebar, contentArea);
@@ -193,6 +195,8 @@ public class DashboardStage extends Stage {
                         I18n.get("nav.chat.desc")),
                 createNavButton(I18n.get("nav.tts"), Feather.VOLUME_2, ttsTab,
                         I18n.get("nav.tts.desc")),
+                createNavButton(I18n.get("nav.actionsEvents"), Feather.SLIDERS, actionsEventsTab,
+                        I18n.get("nav.actionsEvents.desc")),
 
                 createCategoryHeader(I18n.get("nav.cat.analytics")),
                 createNavButton(I18n.get("nav.leaderboard"), Feather.BAR_CHART_2, leaderboardTab,

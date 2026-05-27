@@ -115,6 +115,7 @@ public class TikTokConnector {
 
                             final String finalAvatarUrl = avatarUrl;
                             processUserForTeam(event.getUser());
+                            com.leaderboard.service.action.ActionRulesEngine.handleComment(userId, nickname, comment);
                             SwingUtilities.invokeLater(() -> {
                                 synchronized (TikTokConnector.class) {
                                     if (chatListener != null) {
@@ -179,6 +180,8 @@ public class TikTokConnector {
                             final String finalAvatarUrl = avatarUrl;
                             final String finalNickname = nickname;
 
+                            com.leaderboard.service.action.ActionRulesEngine.handleGift(userId, nickname, event.getGift().getName(), diamonds);
+
                             SwingUtilities.invokeLater(() -> {
                                 synchronized (DataManager.class) {
                                     List<Gifter> list = DataManager.getGifters();
@@ -215,14 +218,17 @@ public class TikTokConnector {
                         })
                         .onFollow((client, event) -> {
                             processUserForTeam(event.getUser());
+                            com.leaderboard.service.action.ActionRulesEngine.handleFollow(event.getUser().getName(), event.getUser().getProfileName());
                             SwingUtilities.invokeLater(onDataChanged);
                         })
                         .onShare((client, event) -> {
                             processUserForTeam(event.getUser());
+                            com.leaderboard.service.action.ActionRulesEngine.handleShare(event.getUser().getName(), event.getUser().getProfileName());
                             SwingUtilities.invokeLater(onDataChanged);
                         })
                         .onSubscribe((client, event) -> {
                             processUserForTeam(event.getUser());
+                            com.leaderboard.service.action.ActionRulesEngine.handleSubscribe(event.getUser().getName(), event.getUser().getProfileName());
                             SwingUtilities.invokeLater(onDataChanged);
                         })
                         .build();
