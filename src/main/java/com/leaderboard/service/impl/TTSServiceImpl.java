@@ -1,5 +1,6 @@
-package com.leaderboard.service;
+package com.leaderboard.service.impl;
 
+import com.leaderboard.service.ITTSService;
 import com.leaderboard.util.ConfigManager;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;

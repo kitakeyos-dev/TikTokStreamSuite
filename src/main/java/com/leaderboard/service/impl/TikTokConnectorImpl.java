@@ -1,5 +1,7 @@
-package com.leaderboard.service;
+package com.leaderboard.service.impl;
 
+import com.leaderboard.service.ITikTokConnector;
+import com.leaderboard.service.TikTokConnector;
 import com.leaderboard.ui.Dialogs;
 import io.github.jwdeveloper.tiktok.TikTokLive;
 import io.github.jwdeveloper.tiktok.live.LiveClient;
@@ -12,7 +14,7 @@ import io.github.jwdeveloper.tiktok.data.models.badges.StringBadge;
 import com.leaderboard.model.Gifter;
 import com.leaderboard.util.DataManager;
 import com.leaderboard.service.ServiceLocator;
-import com.leaderboard.service.action.IActionRulesEngine;
+import com.leaderboard.service.IActionRulesEngine;
 import javafx.application.Platform;
 import javax.swing.SwingUtilities;
 import java.util.Collections;

@@ -3,7 +3,7 @@ package com.leaderboard.ui.tab;
 import com.leaderboard.model.action.ActionType;
 import com.leaderboard.model.action.StreamRule;
 import com.leaderboard.model.action.TriggerType;
-import com.leaderboard.service.action.ActionRulesEngine;
+import com.leaderboard.service.ActionRulesEngine;
 import com.leaderboard.ui.DashboardLayout;
 import com.leaderboard.ui.DashboardStage;
 import com.leaderboard.ui.Dialogs;

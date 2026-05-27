@@ -1,4 +1,4 @@
-package com.leaderboard.service.action;
+package com.leaderboard.service;
 
 import com.leaderboard.model.action.StreamRule;
 import com.leaderboard.service.ServiceLocator;
