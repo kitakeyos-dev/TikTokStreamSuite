@@ -1,5 +1,8 @@
 package com.leaderboard.ui.overlay;
 
+import com.leaderboard.ui.component.AvatarView;
+import com.leaderboard.ui.component.EmojiTextFlow;
+import com.leaderboard.ui.component.NameGroupView;
 import com.leaderboard.util.IconManager;
 import javafx.animation.FadeTransition;
 import javafx.animation.TranslateTransition;
@@ -105,7 +108,7 @@ public class LiveChatOverlay extends Stage {
         com.leaderboard.util.ResizeHelper.addResizeListener(this, 240, 250, Double.MAX_VALUE, Double.MAX_VALUE);
     }
 
-    public void addMessage(String uniqueId, String nickname, String comment, String avatarUrl) {
+    public void addMessage(String uniqueId, String nickname, String comment, String avatarUrl, java.util.List<String> badgeUrls) {
         Platform.runLater(() -> {
             // Build the modern chat bubble HBox
             HBox bubble = new HBox(10);
@@ -122,43 +125,21 @@ public class LiveChatOverlay extends Stage {
             bubble.setMaxHeight(52);
 
             // Circular Avatar Container
-            StackPane avatarContainer = new StackPane();
-            avatarContainer.setPrefSize(32, 32);
-            avatarContainer.setMinSize(32, 32);
-
-            Circle clipCircle = new Circle(16, 16, 16);
-
-            ImageView avatarView = new ImageView();
-            avatarView.setFitWidth(32);
-            avatarView.setFitHeight(32);
-            avatarView.setClip(clipCircle);
-
-            if (avatarUrl != null && !avatarUrl.isEmpty()) {
-                Image img = new Image(avatarUrl, 32, 32, true, true, true);
-                avatarView.setImage(img);
-            } else {
-                avatarView.setImage(IconManager.getAppIcon());
-            }
-
-            // Outer indigo glowing border
-            Circle borderCircle = new Circle(16, 16, 16);
-            borderCircle.setFill(Color.TRANSPARENT);
-            borderCircle.setStroke(Color.web("#818cf8", 0.4)); // Soft indigo border
-            borderCircle.setStrokeWidth(1.2);
-
-            avatarContainer.getChildren().addAll(avatarView, borderCircle);
+            AvatarView avatarContainer = new AvatarView(avatarUrl, 32, Color.web("#818cf8", 0.4), 1.2);
 
             // Message text grouping
             VBox textContainer = new VBox(2);
             HBox.setHgrow(textContainer, Priority.ALWAYS);
             textContainer.setAlignment(Pos.CENTER_LEFT);
 
-            // Use the EmojiParser to create beautiful rich TextFlows
-            javafx.scene.text.TextFlow nameFlow = com.leaderboard.util.EmojiParser.createEmojiTextFlow(
-                    nickname, 11.5, Color.web("#818cf8"),
-                    javafx.scene.text.Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 11.5));
-            javafx.scene.text.TextFlow commentFlow = com.leaderboard.util.EmojiParser.createEmojiTextFlow(
-                    comment, 11, Color.web("#e4e4e7"), javafx.scene.text.Font.font("Segoe UI", 11));
+            // Use custom components for nickname and chat comments
+            NameGroupView nameFlow = new NameGroupView(nickname, 11.5, Color.web("#818cf8"), true);
+            if (badgeUrls != null) {
+                for (String badgeUrl : badgeUrls) {
+                    nameFlow.addBadge(badgeUrl, 13); // Cache & render badge next to nickname
+                }
+            }
+            EmojiTextFlow commentFlow = new EmojiTextFlow(comment, 11, Color.web("#e4e4e7"), false);
 
             textContainer.getChildren().addAll(nameFlow, commentFlow);
             bubble.getChildren().addAll(avatarContainer, textContainer);

@@ -56,8 +56,7 @@ buildNumber.properties
 config.json
 data.json
 dist/
-emojis/
-avatars/
+cache/
 temp/
 
 # JavaFX jmods (large binary files - auto-downloaded by build-exe.bat)

@@ -12,8 +12,10 @@ import com.leaderboard.util.ConfigManager;
 import com.leaderboard.util.DataManager;
 import com.leaderboard.util.I18n;
 import com.leaderboard.ui.Dialogs;
+import com.leaderboard.model.TikTokUser;
 import javafx.application.Platform;
 import javafx.scene.control.Label;
+import java.util.List;
 
 /**
  * StreamSessionMediator coordinates communication between TikTok events,
@@ -59,81 +61,141 @@ public class StreamSessionMediator {
 
     public void setupTikTokListeners() {
         TikTokConnector.setRoomInfoListener((title, viewers, likes) -> {
-            Platform.runLater(() -> {
-                // 1. Update Subtitle in header bar
-                if (title != null && !title.trim().isEmpty()) {
-                    String username = ConfigManager.getConfig().getStreamerUsername();
-                    Label lblSubtitle = dashboard.getLblSubtitle();
-                    if (lblSubtitle != null) {
-                        lblSubtitle.setText(I18n.get("header.session", username, title));
+            // 1. Update Subtitle in header bar
+            if (title != null && !title.trim().isEmpty()) {
+                String username = ConfigManager.getConfig().getStreamerUsername();
+                Label lblSubtitle = dashboard.getLblSubtitle();
+                if (lblSubtitle != null) {
+                    lblSubtitle.setText(I18n.get("header.session", username, title));
+                }
+            }
+
+            // 2. Update diagnostics in OverviewTab
+            if (overviewTab != null && overviewTab.getLblSyncDiag() != null) {
+                overviewTab.getLblSyncDiag().setText(I18n.get("overview.diag.sync.viewers", viewers));
+                overviewTab.getLblSyncDiag()
+                        .setStyle("-fx-text-fill: #25f4ee; -fx-font-size: 11px; -fx-font-weight: bold;");
+            }
+
+            // 3. Update total likes progress
+            if (likesTab != null) {
+                likesTab.updateProgress(likes);
+            }
+
+            // 4. Update Like Goal Overlay Stage
+            if (likeOverlayStage != null) {
+                likeOverlayStage.setLikes(likes);
+            }
+        });
+
+        TikTokConnector.setChatListener((user, comment) -> {
+            String uniqueId = user.getUniqueId();
+            String nickname = user.getNickname();
+            String avatarUrl = user.getAvatarUrl();
+            List<String> badgeUrls = user.getBadgeUrls();
+
+            // Update team database
+            processTeamMemberUpdate(user);
+
+            // Handle actions engine rule triggers
+            ServiceLocator.get(IActionRulesEngine.class).handleComment(uniqueId, nickname, comment);
+
+            if (chatTab != null) {
+                chatTab.addChatRow(uniqueId, nickname, comment, avatarUrl);
+            }
+            if (chatOverlayStage != null) {
+                chatOverlayStage.addMessage(uniqueId, nickname, comment, avatarUrl, badgeUrls);
+            }
+
+            // Text-to-Speech integration
+            if (ConfigManager.getConfig().isTtsEnabled()) {
+                if (TTSService.isCommentAllowed(comment)) {
+                    String speakText;
+                    if (ConfigManager.getConfig().isTtsReadUsername()) {
+                        String name = (nickname != null && !nickname.trim().isEmpty()) ? nickname.trim() : uniqueId;
+                        speakText = name + " nói: " + comment;
+                    } else {
+                        speakText = comment;
                     }
+                    TTSService.enqueueTTS(speakText);
                 }
-
-                // 2. Update diagnostics in OverviewTab
-                if (overviewTab != null && overviewTab.getLblSyncDiag() != null) {
-                    overviewTab.getLblSyncDiag().setText(I18n.get("overview.diag.sync.viewers", viewers));
-                    overviewTab.getLblSyncDiag()
-                            .setStyle("-fx-text-fill: #25f4ee; -fx-font-size: 11px; -fx-font-weight: bold;");
-                }
-
-                // 3. Update total likes progress
-                if (likesTab != null) {
-                    likesTab.updateProgress(likes);
-                }
-
-                // 4. Update Like Goal Overlay Stage
-                if (likeOverlayStage != null) {
-                    likeOverlayStage.setLikes(likes);
-                }
-            });
+            }
         });
 
-        TikTokConnector.setChatListener((uniqueId, nickname, comment, avatarUrl) -> {
-            Platform.runLater(() -> {
-                if (chatTab != null) {
-                    chatTab.addChatRow(uniqueId, nickname, comment, avatarUrl);
-                }
-                if (chatOverlayStage != null) {
-                    chatOverlayStage.addMessage(uniqueId, nickname, comment, avatarUrl);
-                }
+        TikTokConnector.setLikeListener((user, likesSent, totalLikesVal) -> {
+            String uniqueId = user.getUniqueId();
+            String nickname = user.getNickname();
+            String avatarUrl = user.getAvatarUrl();
+            List<String> badgeUrls = user.getBadgeUrls();
 
-                // Text-to-Speech integration
-                if (ConfigManager.getConfig().isTtsEnabled()) {
-                    if (TTSService.isCommentAllowed(comment)) {
-                        String speakText;
-                        if (ConfigManager.getConfig().isTtsReadUsername()) {
-                            String name = (nickname != null && !nickname.trim().isEmpty()) ? nickname.trim() : uniqueId;
-                            speakText = name + " nói: " + comment;
-                        } else {
-                            speakText = comment;
-                        }
-                        TTSService.enqueueTTS(speakText);
-                    }
-                }
-            });
+            // Update team database
+            processTeamMemberUpdate(user);
+
+            // Add row log
+            if (likesTab != null) {
+                likesTab.addLikeRow(uniqueId, nickname, likesSent);
+                likesTab.updateProgress(totalLikesVal);
+            }
+
+            if (likeOverlayStage != null) {
+                likeOverlayStage.setLikes(totalLikesVal);
+            }
+
+            // Update data model
+            DataManager.addLike(uniqueId, nickname, avatarUrl, likesSent, badgeUrls);
+
+            // Update Top Like Overlay Stage
+            if (topLikeOverlayStage != null) {
+                topLikeOverlayStage.updateLeaderboard();
+            }
         });
 
-        TikTokConnector.setLikeListener((uniqueId, nickname, likesSent, totalLikesVal, avatarUrl) -> {
-            Platform.runLater(() -> {
-                // Add row log
-                if (likesTab != null) {
-                    likesTab.addLikeRow(uniqueId, nickname, likesSent);
-                    likesTab.updateProgress(totalLikesVal);
-                }
+        TikTokConnector.setGiftListener((user, giftName, diamonds) -> {
+            String uniqueId = user.getUniqueId();
+            String nickname = user.getNickname();
+            String avatarUrl = user.getAvatarUrl();
+            List<String> badgeUrls = user.getBadgeUrls();
 
-                if (likeOverlayStage != null) {
-                    likeOverlayStage.setLikes(totalLikesVal);
-                }
+            // Update team database
+            processTeamMemberUpdate(user);
 
-                // Update data model
-                DataManager.addLike(uniqueId, nickname, avatarUrl, likesSent);
+            // Handle actions rules engine
+            ServiceLocator.get(IActionRulesEngine.class).handleGift(uniqueId, nickname, giftName, diamonds);
 
-                // Update Top Like Overlay Stage
-                if (topLikeOverlayStage != null) {
-                    topLikeOverlayStage.updateLeaderboard();
-                }
-            });
+            // Save and update gifter rank
+            DataManager.addOrUpdateGifter(uniqueId, nickname, avatarUrl, diamonds, badgeUrls);
         });
+
+        TikTokConnector.setSocialListener((eventType, user) -> {
+            String uniqueId = user.getUniqueId();
+            String nickname = user.getNickname();
+
+            // Update team database
+            processTeamMemberUpdate(user);
+
+            // Handle rules engine event triggers
+            IActionRulesEngine rulesEngine = ServiceLocator.get(IActionRulesEngine.class);
+            switch (eventType) {
+                case "FOLLOW" -> rulesEngine.handleFollow(uniqueId, nickname);
+                case "SHARE" -> rulesEngine.handleShare(uniqueId, nickname);
+                case "SUBSCRIBE" -> rulesEngine.handleSubscribe(uniqueId, nickname);
+            }
+        });
+    }
+
+    private void processTeamMemberUpdate(TikTokUser user) {
+        if (user == null) return;
+        if (user.getTeamName() != null || user.isSubscriber() || user.getGiftGiverLevel() > 0) {
+            DataManager.addOrUpdateTeamMember(
+                user.getUniqueId(),
+                user.getNickname(),
+                user.getAvatarUrl(),
+                user.getTeamName(),
+                user.getTeamLevel(),
+                user.getGiftGiverLevel(),
+                user.isSubscriber()
+            );
+        }
     }
 
     public void toggleConnection() {

@@ -47,14 +47,15 @@ public class EmojiParser {
                 String hex = Integer.toHexString(codePoint).toLowerCase();
                 String urlStr = "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/" + hex + ".png";
                 
-                // Asynchronously load the Twemoji image natively with background thread & memory caching enabled!
-                Image img = new Image(urlStr, fontSize + 4, fontSize + 4, true, true, true);
-                ImageView iv = new ImageView(img);
+                ImageView iv = new ImageView();
                 iv.setFitWidth(fontSize + 4);
                 iv.setFitHeight(fontSize + 4);
                 
                 // Align the emoji image slightly vertically to match the text flow perfectly
                 iv.setTranslateY(3); 
+
+                // Load and cache using unified ImageCacheManager
+                com.leaderboard.util.ImageCacheManager.loadImage(urlStr, fontSize + 4, fontSize + 4, iv::setImage, null);
 
                 flow.getChildren().add(iv);
             } else {

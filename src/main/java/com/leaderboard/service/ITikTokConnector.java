@@ -8,7 +8,9 @@ import java.util.function.Consumer;
 public interface ITikTokConnector {
     void setChatListener(TikTokConnector.ChatListener listener);
     void setLikeListener(TikTokConnector.LikeListener listener);
+    void setGiftListener(TikTokConnector.GiftListener listener);
     void setRoomInfoListener(TikTokConnector.RoomInfoListener listener);
+    void setSocialListener(TikTokConnector.SocialListener listener);
 
     boolean isConnected();
     boolean isConnecting();

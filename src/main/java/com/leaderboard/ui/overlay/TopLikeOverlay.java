@@ -1,6 +1,8 @@
 package com.leaderboard.ui.overlay;
 
 import com.leaderboard.model.Liker;
+import com.leaderboard.ui.component.AvatarView;
+import com.leaderboard.ui.component.NameGroupView;
 import com.leaderboard.util.DataManager;
 import com.leaderboard.util.IconManager;
 import javafx.animation.PauseTransition;
@@ -243,37 +245,19 @@ public class TopLikeOverlay extends Stage {
             badgeStack.getChildren().addAll(badgeBg, lblBadgeRank);
 
             // 2. Circular Image Avatar
-            StackPane avatarStack = new StackPane();
-            avatarStack.setPrefSize(avatarSize, avatarSize);
-            avatarStack.setMinSize(avatarSize, avatarSize);
-
-            Circle clipCircle = new Circle(avatarSize / 2, avatarSize / 2, avatarSize / 2);
-            ImageView avatarImg = new ImageView();
-            avatarImg.setFitWidth(avatarSize);
-            avatarImg.setFitHeight(avatarSize);
-            avatarImg.setClip(clipCircle);
-
-            if (l.getAvatarUrl() != null && !l.getAvatarUrl().isEmpty()) {
-                Image img = new Image(l.getAvatarUrl(), avatarSize, avatarSize, true, true, true);
-                avatarImg.setImage(img);
-            } else {
-                avatarImg.setImage(IconManager.getAppIcon());
-            }
-
-            Circle avatarBorder = new Circle(avatarSize / 2, avatarSize / 2, avatarSize / 2);
-            avatarBorder.setFill(Color.TRANSPARENT);
-            avatarBorder.setStroke(Color.web("#ffffff", 0.12));
-            avatarBorder.setStrokeWidth(1.2);
-            avatarStack.getChildren().addAll(avatarImg, avatarBorder);
+            AvatarView avatarStack = new AvatarView(l.getAvatarUrl(), avatarSize, Color.web("#ffffff", 0.12), 1.2);
 
             // 3. Name Group
             VBox nameGroup = new VBox(1);
             HBox.setHgrow(nameGroup, Priority.ALWAYS);
             nameGroup.setAlignment(Pos.CENTER_LEFT);
 
-            javafx.scene.text.TextFlow nickFlow = com.leaderboard.util.EmojiParser.createEmojiTextFlow(
-                l.getNickname(), 12, Color.web("#e4e4e7"), javafx.scene.text.Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 12)
-            );
+            NameGroupView nickFlow = new NameGroupView(l.getNickname(), 12, Color.web("#e4e4e7"), true);
+            if (l.getBadgeUrls() != null) {
+                for (String badgeUrl : l.getBadgeUrls()) {
+                    nickFlow.addBadge(badgeUrl, 14);
+                }
+            }
 
             Label lblUser = new Label(l.getNickname().equals(l.getUniqueId()) ? "" : "@" + l.getUniqueId());
             lblUser.setStyle(
@@ -332,9 +316,12 @@ public class TopLikeOverlay extends Stage {
             HBox.setHgrow(nameGroup, Priority.ALWAYS);
             nameGroup.setAlignment(Pos.CENTER_LEFT);
 
-            javafx.scene.text.TextFlow nickFlow = com.leaderboard.util.EmojiParser.createEmojiTextFlow(
-                l.getNickname(), 11, Color.web("#e4e4e7"), javafx.scene.text.Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 11)
-            );
+            NameGroupView nickFlow = new NameGroupView(l.getNickname(), 11, Color.web("#e4e4e7"), true);
+            if (l.getBadgeUrls() != null) {
+                for (String badgeUrl : l.getBadgeUrls()) {
+                    nickFlow.addBadge(badgeUrl, 13);
+                }
+            }
             
             Label lblUser = new Label(l.getNickname().equals(l.getUniqueId()) ? "" : "@" + l.getUniqueId());
             lblUser.setStyle(

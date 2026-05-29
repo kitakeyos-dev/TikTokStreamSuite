@@ -1,43 +1,16 @@
 package com.leaderboard.model;
 
-import java.util.Objects;
-
-public class Liker implements Comparable<Liker> {
-    private String uniqueId; // Unique TikTok identifier
-    private String nickname; // Nickname displayed
-    private String avatarUrl; // Avatar URL
+/**
+ * Model representing a Liker who has sent likes during the stream.
+ * Inherits common identity fields from BaseUser.
+ */
+public class Liker extends BaseUser implements Comparable<Liker> {
     private int likes; // Accumulated likes
     private transient int rank; // Cached transient rank for display
 
     public Liker(String uniqueId, String nickname, String avatarUrl, int likes) {
-        this.uniqueId = uniqueId;
-        this.nickname = nickname;
-        this.avatarUrl = avatarUrl;
+        super(uniqueId, nickname, avatarUrl);
         this.likes = likes;
-    }
-
-    public String getUniqueId() {
-        return uniqueId;
-    }
-
-    public void setUniqueId(String uniqueId) {
-        this.uniqueId = uniqueId;
-    }
-
-    public String getNickname() {
-        return nickname != null && !nickname.trim().isEmpty() ? nickname : uniqueId;
-    }
-
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
-    }
-
-    public String getAvatarUrl() {
-        return avatarUrl;
-    }
-
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
     }
 
     public int getLikes() {
@@ -68,18 +41,5 @@ public class Liker implements Comparable<Liker> {
             return diff;
         }
         return this.getNickname().compareToIgnoreCase(o.getNickname());
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Liker liker = (Liker) o;
-        return Objects.equals(uniqueId, liker.uniqueId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(uniqueId);
     }
 }

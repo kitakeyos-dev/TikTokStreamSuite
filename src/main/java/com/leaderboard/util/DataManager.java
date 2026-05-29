@@ -187,7 +187,7 @@ public class DataManager {
         }
     }
 
-    public static synchronized void addLike(String uniqueId, String nickname, String avatarUrl, int amount) {
+    public static synchronized void addLike(String uniqueId, String nickname, String avatarUrl, int amount, java.util.List<String> badgeUrls) {
         List<Liker> list = getLikers();
         java.util.Optional<Liker> existing = list.stream()
                 .filter(l -> l.getUniqueId().equalsIgnoreCase(uniqueId))
@@ -202,11 +202,48 @@ public class DataManager {
             if (nickname != null && !nickname.trim().isEmpty()) {
                 liker.setNickname(nickname);
             }
+            if (badgeUrls != null) {
+                liker.setBadgeUrls(badgeUrls);
+            }
         } else {
-            list.add(new Liker(uniqueId, nickname != null ? nickname : uniqueId, avatarUrl, amount));
+            Liker liker = new Liker(uniqueId, nickname != null ? nickname : uniqueId, avatarUrl, amount);
+            if (badgeUrls != null) {
+                liker.setBadgeUrls(badgeUrls);
+            }
+            list.add(liker);
         }
 
         // Sort descending by likes
+        Collections.sort(list);
+        
+        // Save changes immediately
+        save();
+    }
+
+    public static synchronized void addOrUpdateGifter(String uniqueId, String nickname, String avatarUrl, int pointsToAdd, java.util.List<String> badgeUrls) {
+        List<Gifter> list = getGifters();
+        java.util.Optional<Gifter> existing = list.stream()
+                .filter(g -> g.getUniqueId().equalsIgnoreCase(uniqueId))
+                .findFirst();
+
+        if (existing.isPresent()) {
+            Gifter gifter = existing.get();
+            gifter.addPoints(pointsToAdd);
+            if (avatarUrl != null) {
+                gifter.setAvatarUrl(avatarUrl);
+            }
+            if (nickname != null && !nickname.trim().isEmpty()) {
+                gifter.setNickname(nickname);
+            }
+            gifter.setBadgeUrls(badgeUrls);
+        } else {
+            Gifter gifter = new Gifter(uniqueId, nickname != null ? nickname : uniqueId,
+                    avatarUrl, pointsToAdd);
+            gifter.setBadgeUrls(badgeUrls);
+            list.add(gifter);
+        }
+
+        // Sort descending by points
         Collections.sort(list);
         
         // Save changes immediately
