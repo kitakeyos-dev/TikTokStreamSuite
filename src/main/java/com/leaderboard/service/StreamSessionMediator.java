@@ -94,8 +94,8 @@ public class StreamSessionMediator {
             String avatarUrl = user.getAvatarUrl();
             List<String> badgeUrls = user.getBadgeUrls();
 
-            // Update team database
-            processTeamMemberUpdate(user);
+            // Update master database
+            DataManager.updateSocial(user);
 
             // Handle actions engine rule triggers
             ServiceLocator.get(IActionRulesEngine.class).handleComment(uniqueId, nickname, comment);
@@ -125,11 +125,6 @@ public class StreamSessionMediator {
         TikTokConnector.setLikeListener((user, likesSent, totalLikesVal) -> {
             String uniqueId = user.getUniqueId();
             String nickname = user.getNickname();
-            String avatarUrl = user.getAvatarUrl();
-            List<String> badgeUrls = user.getBadgeUrls();
-
-            // Update team database
-            processTeamMemberUpdate(user);
 
             // Add row log
             if (likesTab != null) {
@@ -141,8 +136,8 @@ public class StreamSessionMediator {
                 likeOverlayStage.setLikes(totalLikesVal);
             }
 
-            // Update data model
-            DataManager.addLike(uniqueId, nickname, avatarUrl, likesSent, badgeUrls);
+            // Update master database
+            DataManager.addLike(user, likesSent);
 
             // Update Top Like Overlay Stage
             if (topLikeOverlayStage != null) {
@@ -153,25 +148,20 @@ public class StreamSessionMediator {
         TikTokConnector.setGiftListener((user, giftName, diamonds) -> {
             String uniqueId = user.getUniqueId();
             String nickname = user.getNickname();
-            String avatarUrl = user.getAvatarUrl();
-            List<String> badgeUrls = user.getBadgeUrls();
-
-            // Update team database
-            processTeamMemberUpdate(user);
 
             // Handle actions rules engine
             ServiceLocator.get(IActionRulesEngine.class).handleGift(uniqueId, nickname, giftName, diamonds);
 
-            // Save and update gifter rank
-            DataManager.addOrUpdateGifter(uniqueId, nickname, avatarUrl, diamonds, badgeUrls);
+            // Update master database
+            DataManager.addGift(user, diamonds);
         });
 
         TikTokConnector.setSocialListener((eventType, user) -> {
             String uniqueId = user.getUniqueId();
             String nickname = user.getNickname();
 
-            // Update team database
-            processTeamMemberUpdate(user);
+            // Update master database
+            DataManager.updateSocial(user);
 
             // Handle rules engine event triggers
             IActionRulesEngine rulesEngine = ServiceLocator.get(IActionRulesEngine.class);
@@ -183,20 +173,6 @@ public class StreamSessionMediator {
         });
     }
 
-    private void processTeamMemberUpdate(TikTokUser user) {
-        if (user == null) return;
-        if (user.getTeamName() != null || user.isSubscriber() || user.getGiftGiverLevel() > 0) {
-            DataManager.addOrUpdateTeamMember(
-                user.getUniqueId(),
-                user.getNickname(),
-                user.getAvatarUrl(),
-                user.getTeamName(),
-                user.getTeamLevel(),
-                user.getGiftGiverLevel(),
-                user.isSubscriber()
-            );
-        }
-    }
 
     public void toggleConnection() {
         if (TikTokConnector.isConnected()) {

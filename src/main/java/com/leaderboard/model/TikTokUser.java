@@ -8,66 +8,176 @@ import io.github.jwdeveloper.tiktok.data.models.badges.StringBadge;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Clean POJO representing a TikTok user's data parsed from SDK models.
- * Completely isolates domain state from socket connection classes.
+ * Unified Domain Entity representing a TikTok user's complete identity,
+ * metrics (gift points, likes), and social status.
+ * Single source of truth for the entire application.
  */
 public class TikTokUser {
-    private final String uniqueId;
-    private final String nickname;
-    private final String avatarUrl;
-    private final String teamName;
-    private final int teamLevel;
-    private final int giftGiverLevel;
-    private final boolean isSubscriber;
-    private final List<String> badgeUrls;
+    private String uniqueId;
+    private String nickname;
+    private String avatarUrl;
+    private String teamName;
+    private int teamLevel;
+    private int giftGiverLevel;
+    private boolean isSubscriber;
+    private List<String> badgeUrls = new ArrayList<>();
+
+    // Cumulative stats & interaction state
+    private int giftPoints;
+    private int likesSent;
+    private long lastActive;
+
+    // Transient rank display state (not saved in database JSON)
+    private transient int rank;
+
+    // Empty constructor for GSON deserialization
+    public TikTokUser() {}
+
+    public TikTokUser(String uniqueId, String nickname, String avatarUrl) {
+        this.uniqueId = uniqueId;
+        this.nickname = nickname != null && !nickname.trim().isEmpty() ? nickname : uniqueId;
+        this.avatarUrl = avatarUrl;
+        this.lastActive = System.currentTimeMillis();
+    }
 
     public TikTokUser(String uniqueId, String nickname, String avatarUrl,
                       String teamName, int teamLevel, int giftGiverLevel,
                       boolean isSubscriber, List<String> badgeUrls) {
         this.uniqueId = uniqueId;
-        this.nickname = nickname;
+        this.nickname = nickname != null && !nickname.trim().isEmpty() ? nickname : uniqueId;
         this.avatarUrl = avatarUrl;
         this.teamName = teamName;
         this.teamLevel = teamLevel;
         this.giftGiverLevel = giftGiverLevel;
         this.isSubscriber = isSubscriber;
         this.badgeUrls = badgeUrls != null ? badgeUrls : new ArrayList<>();
+        this.lastActive = System.currentTimeMillis();
     }
 
     public String getUniqueId() {
         return uniqueId;
     }
 
+    public void setUniqueId(String uniqueId) {
+        this.uniqueId = uniqueId;
+    }
+
     public String getNickname() {
-        return nickname;
+        return nickname != null && !nickname.trim().isEmpty() ? nickname : uniqueId;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
     }
 
     public String getAvatarUrl() {
         return avatarUrl;
     }
 
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
     public String getTeamName() {
         return teamName;
+    }
+
+    public void setTeamName(String teamName) {
+        this.teamName = teamName;
     }
 
     public int getTeamLevel() {
         return teamLevel;
     }
 
+    public void setTeamLevel(int teamLevel) {
+        this.teamLevel = teamLevel;
+    }
+
     public int getGiftGiverLevel() {
         return giftGiverLevel;
+    }
+
+    public void setGiftGiverLevel(int giftGiverLevel) {
+        this.giftGiverLevel = giftGiverLevel;
     }
 
     public boolean isSubscriber() {
         return isSubscriber;
     }
 
+    public void setSubscriber(boolean subscriber) {
+        isSubscriber = subscriber;
+    }
+
     public List<String> getBadgeUrls() {
+        if (badgeUrls == null) {
+            badgeUrls = new ArrayList<>();
+        }
         return badgeUrls;
+    }
+
+    public void setBadgeUrls(List<String> badgeUrls) {
+        this.badgeUrls = badgeUrls;
+    }
+
+    public int getGiftPoints() {
+        return giftPoints;
+    }
+
+    public void setGiftPoints(int giftPoints) {
+        this.giftPoints = giftPoints;
+    }
+
+    public void addGiftPoints(int points) {
+        this.giftPoints += points;
+    }
+
+    public int getLikesSent() {
+        return likesSent;
+    }
+
+    public void setLikesSent(int likes) {
+        this.likesSent = likes;
+    }
+
+    public void addLikesSent(int likes) {
+        this.likesSent += likes;
+    }
+
+    public long getLastActive() {
+        return lastActive;
+    }
+
+    public void setLastActive(long lastActive) {
+        this.lastActive = lastActive;
+    }
+
+    public int getRank() {
+        return rank;
+    }
+
+    public void setRank(int rank) {
+        this.rank = rank;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TikTokUser user = (TikTokUser) o;
+        return Objects.equals(uniqueId != null ? uniqueId.toLowerCase() : null,
+                              user.uniqueId != null ? user.uniqueId.toLowerCase() : null);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(uniqueId != null ? uniqueId.toLowerCase() : null);
     }
 
     /**
@@ -94,7 +204,6 @@ public class TikTokUser {
 
         if (user.getBadges() != null) {
             for (Badge badge : user.getBadges()) {
-                // Extract remote badge URLs
                 if (badge instanceof CombineBadge cb) {
                     if (cb.getPicture() != null) {
                         String link = cb.getPicture().getLink();
@@ -103,7 +212,6 @@ public class TikTokUser {
                         }
                     }
 
-                    // Extract subscriber badge or fans badge details
                     String picLink = (cb.getPicture() != null) ? cb.getPicture().getLink() : "";
                     if (picLink != null && picLink.contains("fans_badge_icon")) {
                         if (teamName == null) {

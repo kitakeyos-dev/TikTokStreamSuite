@@ -2,16 +2,24 @@ package com.leaderboard.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.leaderboard.model.Gifter;
-import com.leaderboard.model.Liker;
-import com.leaderboard.model.TeamMember;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.leaderboard.model.TikTokUser;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
+/**
+ * DataManager acts as our central persistent storage coordinator.
+ * Maintains a single unified list of TikTokUser entities (Single Source of Truth)
+ * and serializes it cleanly to data.json. Includes seamless legacy schema migration.
+ */
 public class DataManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
@@ -20,41 +28,17 @@ public class DataManager {
     }
 
     public static class AppData {
-        private List<Gifter> gifters = new ArrayList<>();
-        private List<Liker> likers = new ArrayList<>();
-        private List<TeamMember> teamMembers = new ArrayList<>();
+        private List<TikTokUser> users = new ArrayList<>();
 
-        public List<Gifter> getGifters() {
-            if (gifters == null) {
-                gifters = new ArrayList<>();
+        public List<TikTokUser> getUsers() {
+            if (users == null) {
+                users = new ArrayList<>();
             }
-            return gifters;
+            return users;
         }
 
-        public List<TeamMember> getTeamMembers() {
-            if (teamMembers == null) {
-                teamMembers = new ArrayList<>();
-            }
-            return teamMembers;
-        }
-
-        public void setTeamMembers(List<TeamMember> teamMembers) {
-            this.teamMembers = teamMembers;
-        }
-
-        public void setGifters(List<Gifter> gifters) {
-            this.gifters = gifters;
-        }
-
-        public List<Liker> getLikers() {
-            if (likers == null) {
-                likers = new ArrayList<>();
-            }
-            return likers;
-        }
-
-        public void setLikers(List<Liker> likers) {
-            this.likers = likers;
+        public void setUsers(List<TikTokUser> users) {
+            this.users = users;
         }
     }
 
@@ -64,117 +48,203 @@ public class DataManager {
         load();
     }
 
-    public static synchronized List<Gifter> getGifters() {
-        return currentData.getGifters();
+    public static synchronized List<TikTokUser> getUsers() {
+        return currentData.getUsers();
     }
 
-    public static synchronized List<Liker> getLikers() {
-        return currentData.getLikers();
+    // --- Query Projections (Virtual Lists) ---
+
+    /**
+     * Projection returning all gifters sorted by points descending.
+     */
+    public static synchronized List<TikTokUser> getGifters() {
+        return getUsers().stream()
+                .filter(u -> u.getGiftPoints() > 0)
+                .sorted((u1, u2) -> {
+                    int diff = Integer.compare(u2.getGiftPoints(), u1.getGiftPoints());
+                    if (diff != 0) return diff;
+                    return u1.getNickname().compareToIgnoreCase(u2.getNickname());
+                })
+                .collect(Collectors.toList());
     }
 
-    public static synchronized List<TeamMember> getTeamMembers() {
-        return currentData.getTeamMembers();
+    /**
+     * Projection returning all likers sorted by likes count descending.
+     */
+    public static synchronized List<TikTokUser> getLikers() {
+        return getUsers().stream()
+                .filter(u -> u.getLikesSent() > 0)
+                .sorted((u1, u2) -> {
+                    int diff = Integer.compare(u2.getLikesSent(), u1.getLikesSent());
+                    if (diff != 0) return diff;
+                    return u1.getNickname().compareToIgnoreCase(u2.getNickname());
+                })
+                .collect(Collectors.toList());
     }
 
-    public static synchronized void addOrUpdateTeamMember(String uniqueId, String nickname, String avatarUrl,
-                                                          String teamName, int teamLevel, int giftGiverLevel,
-                                                          boolean isSubscriber) {
-        List<TeamMember> list = getTeamMembers();
-        java.util.Optional<TeamMember> existing = list.stream()
-                .filter(m -> m.getUniqueId().equalsIgnoreCase(uniqueId))
+    /**
+     * Projection returning all active team members/subscribers sorted by last active time descending.
+     */
+    public static synchronized List<TikTokUser> getTeamMembers() {
+        return getUsers().stream()
+                .filter(u -> u.getTeamName() != null || u.isSubscriber() || u.getGiftGiverLevel() > 0)
+                .sorted((u1, u2) -> Long.compare(u2.getLastActive(), u1.getLastActive()))
+                .collect(Collectors.toList());
+    }
+
+    // --- Event Processing APIs ---
+
+    public static synchronized void addLike(TikTokUser incoming, int amount) {
+        TikTokUser user = findOrCreateUser(incoming);
+        user.addLikesSent(amount);
+        user.setLastActive(System.currentTimeMillis());
+        save();
+    }
+
+    public static synchronized void addGift(TikTokUser incoming, int diamonds) {
+        TikTokUser user = findOrCreateUser(incoming);
+        user.addGiftPoints(diamonds);
+        user.setLastActive(System.currentTimeMillis());
+        save();
+    }
+
+    public static synchronized void updateSocial(TikTokUser incoming) {
+        TikTokUser user = findOrCreateUser(incoming);
+        user.setLastActive(System.currentTimeMillis());
+        save();
+    }
+
+    /**
+     * Looks up a user by uniqueId (case-insensitive) and merges identity details.
+     * Inserts new users if not present.
+     */
+    public static synchronized TikTokUser findOrCreateUser(TikTokUser incoming) {
+        if (incoming == null) return null;
+        List<TikTokUser> list = getUsers();
+        Optional<TikTokUser> existing = list.stream()
+                .filter(u -> u.getUniqueId().equalsIgnoreCase(incoming.getUniqueId()))
                 .findFirst();
 
         if (existing.isPresent()) {
-            TeamMember m = existing.get();
-            if (nickname != null && !nickname.trim().isEmpty()) {
-                m.setNickname(nickname);
+            TikTokUser user = existing.get();
+            // Merge updated profile properties from the event
+            if (incoming.getNickname() != null && !incoming.getNickname().trim().isEmpty()) {
+                user.setNickname(incoming.getNickname());
             }
-            if (avatarUrl != null) {
-                m.setAvatarUrl(avatarUrl);
+            if (incoming.getAvatarUrl() != null) {
+                user.setAvatarUrl(incoming.getAvatarUrl());
             }
-            if (teamName != null) {
-                m.setTeamName(teamName);
+            if (incoming.getBadgeUrls() != null && !incoming.getBadgeUrls().isEmpty()) {
+                user.setBadgeUrls(incoming.getBadgeUrls());
             }
-            if (teamLevel > m.getTeamLevel()) {
-                m.setTeamLevel(teamLevel);
+            if (incoming.getTeamName() != null) {
+                user.setTeamName(incoming.getTeamName());
             }
-            if (giftGiverLevel > 0) {
-                m.setGiftGiverLevel(giftGiverLevel);
+            if (incoming.getTeamLevel() > user.getTeamLevel()) {
+                user.setTeamLevel(incoming.getTeamLevel());
             }
-            if (isSubscriber) {
-                m.setSubscriber(true);
+            if (incoming.getGiftGiverLevel() > user.getGiftGiverLevel()) {
+                user.setGiftGiverLevel(incoming.getGiftGiverLevel());
             }
-            m.updateActive();
+            if (incoming.isSubscriber()) {
+                user.setSubscriber(true);
+            }
+            return user;
         } else {
-            list.add(new TeamMember(uniqueId, nickname != null ? nickname : uniqueId, avatarUrl,
-                    teamName, teamLevel, giftGiverLevel, isSubscriber, System.currentTimeMillis()));
+            list.add(incoming);
+            return incoming;
         }
-
-        // Sort descending
-        Collections.sort(list);
-
-        // Save changes immediately
-        save();
     }
+
+    // --- Loading & Saving ---
 
     public static synchronized void load() {
         File dataFile = getDataFile();
         if (!dataFile.exists()) {
             currentData = new AppData();
-            // Check if we can migrate from config.json first!
-            boolean migrated = tryMigrateFromConfig();
-            if (!migrated) {
-                seedMockData();
-            }
+            seedMockData();
             save();
             return;
         }
 
         try (Reader reader = new InputStreamReader(new FileInputStream(dataFile), StandardCharsets.UTF_8)) {
-            AppData loaded = GSON.fromJson(reader, AppData.class);
-            if (loaded != null) {
-                currentData = loaded;
-                if (currentData.gifters == null) {
-                    currentData.gifters = new ArrayList<>();
-                }
-                if (currentData.likers == null) {
-                    currentData.likers = new ArrayList<>();
-                }
-                if (currentData.teamMembers == null) {
-                    currentData.teamMembers = new ArrayList<>();
-                }
-                
-                // Auto-migrate standard rules (e.g. invalid username swap etc.)
-                boolean migrated = false;
-                for (Gifter g : currentData.gifters) {
-                    if (g.getUniqueId() != null && !g.getUniqueId().matches("^[a-zA-Z0-9_.-]+$")) {
-                        String tempId = g.getUniqueId();
-                        g.setUniqueId(g.getNickname());
-                        g.setNickname(tempId);
-                        migrated = true;
+            JsonObject rootObj = GSON.fromJson(reader, JsonObject.class);
+            if (rootObj != null) {
+                if (rootObj.has("users")) {
+                    currentData = GSON.fromJson(rootObj, AppData.class);
+                } else {
+                    // Legacy migration: merge flat Gifter, Liker, and TeamMember objects into a unified list
+                    currentData = new AppData();
+                    
+                    // Migrate gifters
+                    if (rootObj.has("gifters")) {
+                        JsonArray arr = rootObj.getAsJsonArray("gifters");
+                        for (JsonElement el : arr) {
+                            JsonObject g = el.getAsJsonObject();
+                            String uid = g.get("uniqueId").getAsString();
+                            TikTokUser u = findOrCreateUserInMemory(uid);
+                            u.setNickname(g.has("nickname") ? g.get("nickname").getAsString() : uid);
+                            u.setAvatarUrl(g.has("avatarUrl") && !g.get("avatarUrl").isJsonNull() ? g.get("avatarUrl").getAsString() : null);
+                            u.setGiftPoints(g.has("points") ? g.get("points").getAsInt() : 0);
+                            if (g.has("badgeUrls")) {
+                                List<String> bList = new ArrayList<>();
+                                for (JsonElement b : g.getAsJsonArray("badgeUrls")) {
+                                    bList.add(b.getAsString());
+                                }
+                                u.setBadgeUrls(bList);
+                            }
+                        }
                     }
-                }
-                
-                // Self-healing: if a member has a teamLevel but teamName is null/empty, it's actually giftGiverLevel
-                for (TeamMember m : currentData.teamMembers) {
-                    if ((m.getTeamName() == null || m.getTeamName().trim().isEmpty()) && m.getTeamLevel() > 0) {
-                        m.setGiftGiverLevel(m.getTeamLevel());
-                        m.setTeamLevel(0);
-                        m.setTeamName(null);
-                        migrated = true;
+                    
+                    // Migrate likers
+                    if (rootObj.has("likers")) {
+                        JsonArray arr = rootObj.getAsJsonArray("likers");
+                        for (JsonElement el : arr) {
+                            JsonObject l = el.getAsJsonObject();
+                            String uid = l.get("uniqueId").getAsString();
+                            TikTokUser u = findOrCreateUserInMemory(uid);
+                            u.setNickname(l.has("nickname") ? l.get("nickname").getAsString() : uid);
+                            u.setAvatarUrl(l.has("avatarUrl") && !l.get("avatarUrl").isJsonNull() ? l.get("avatarUrl").getAsString() : null);
+                            u.setLikesSent(l.has("likes") ? l.get("likes").getAsInt() : 0);
+                        }
                     }
+                    
+                    // Migrate team members
+                    if (rootObj.has("teamMembers")) {
+                        JsonArray arr = rootObj.getAsJsonArray("teamMembers");
+                        for (JsonElement el : arr) {
+                            JsonObject m = el.getAsJsonObject();
+                            String uid = m.get("uniqueId").getAsString();
+                            TikTokUser u = findOrCreateUserInMemory(uid);
+                            u.setNickname(m.has("nickname") ? m.get("nickname").getAsString() : uid);
+                            u.setAvatarUrl(m.has("avatarUrl") && !m.get("avatarUrl").isJsonNull() ? m.get("avatarUrl").getAsString() : null);
+                            u.setTeamName(m.has("teamName") && !m.get("teamName").isJsonNull() ? m.get("teamName").getAsString() : null);
+                            u.setTeamLevel(m.has("teamLevel") ? m.get("teamLevel").getAsInt() : 0);
+                            u.setGiftGiverLevel(m.has("giftGiverLevel") ? m.get("giftGiverLevel").getAsInt() : 0);
+                            u.setSubscriber(m.has("isSubscriber") && m.get("isSubscriber").getAsBoolean());
+                            u.setLastActive(m.has("lastActive") ? m.get("lastActive").getAsLong() : System.currentTimeMillis());
+                        }
+                    }
+                    
+                    save(); // Write newly migrated schema back to disk
                 }
-                
-                if (migrated) {
-                    save();
-                }
-                Collections.sort(currentData.gifters);
-                Collections.sort(currentData.likers);
-                Collections.sort(currentData.teamMembers);
             }
         } catch (Exception e) {
             System.err.println("Error reading data.json: " + e.getMessage());
             currentData = new AppData();
+        }
+    }
+
+    private static TikTokUser findOrCreateUserInMemory(String uniqueId) {
+        Optional<TikTokUser> existing = currentData.getUsers().stream()
+                .filter(u -> u.getUniqueId().equalsIgnoreCase(uniqueId))
+                .findFirst();
+        if (existing.isPresent()) {
+            return existing.get();
+        } else {
+            TikTokUser u = new TikTokUser(uniqueId, uniqueId, null);
+            currentData.getUsers().add(u);
+            return u;
         }
     }
 
@@ -187,126 +257,45 @@ public class DataManager {
         }
     }
 
-    public static synchronized void addLike(String uniqueId, String nickname, String avatarUrl, int amount, java.util.List<String> badgeUrls) {
-        List<Liker> list = getLikers();
-        java.util.Optional<Liker> existing = list.stream()
-                .filter(l -> l.getUniqueId().equalsIgnoreCase(uniqueId))
-                .findFirst();
-
-        if (existing.isPresent()) {
-            Liker liker = existing.get();
-            liker.addLikes(amount);
-            if (avatarUrl != null) {
-                liker.setAvatarUrl(avatarUrl);
-            }
-            if (nickname != null && !nickname.trim().isEmpty()) {
-                liker.setNickname(nickname);
-            }
-            if (badgeUrls != null) {
-                liker.setBadgeUrls(badgeUrls);
-            }
-        } else {
-            Liker liker = new Liker(uniqueId, nickname != null ? nickname : uniqueId, avatarUrl, amount);
-            if (badgeUrls != null) {
-                liker.setBadgeUrls(badgeUrls);
-            }
-            list.add(liker);
-        }
-
-        // Sort descending by likes
-        Collections.sort(list);
-        
-        // Save changes immediately
-        save();
-    }
-
-    public static synchronized void addOrUpdateGifter(String uniqueId, String nickname, String avatarUrl, int pointsToAdd, java.util.List<String> badgeUrls) {
-        List<Gifter> list = getGifters();
-        java.util.Optional<Gifter> existing = list.stream()
-                .filter(g -> g.getUniqueId().equalsIgnoreCase(uniqueId))
-                .findFirst();
-
-        if (existing.isPresent()) {
-            Gifter gifter = existing.get();
-            gifter.addPoints(pointsToAdd);
-            if (avatarUrl != null) {
-                gifter.setAvatarUrl(avatarUrl);
-            }
-            if (nickname != null && !nickname.trim().isEmpty()) {
-                gifter.setNickname(nickname);
-            }
-            gifter.setBadgeUrls(badgeUrls);
-        } else {
-            Gifter gifter = new Gifter(uniqueId, nickname != null ? nickname : uniqueId,
-                    avatarUrl, pointsToAdd);
-            gifter.setBadgeUrls(badgeUrls);
-            list.add(gifter);
-        }
-
-        // Sort descending by points
-        Collections.sort(list);
-        
-        // Save changes immediately
-        save();
-    }
-
-    private static boolean tryMigrateFromConfig() {
-        File configFile = ConfigManager.getStorageFile("config.json");
-        if (!configFile.exists()) {
-            return false;
-        }
-
-        try {
-            com.google.gson.JsonObject jsonObject = null;
-            try (Reader reader = new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8)) {
-                jsonObject = GSON.fromJson(reader, com.google.gson.JsonObject.class);
-            }
-
-            if (jsonObject != null && jsonObject.has("gifters")) {
-                com.google.gson.JsonArray giftersArray = jsonObject.getAsJsonArray("gifters");
-                if (giftersArray != null && giftersArray.size() > 0) {
-                    java.lang.reflect.Type listType = new com.google.gson.reflect.TypeToken<List<Gifter>>(){}.getType();
-                    List<Gifter> migratedGifters = GSON.fromJson(giftersArray, listType);
-                    if (migratedGifters != null) {
-                        currentData.gifters = migratedGifters;
-                        Collections.sort(currentData.gifters);
-                        
-                        // Delete "gifters" from JsonObject and save config.json back
-                        jsonObject.remove("gifters");
-                        try (Writer writer = new OutputStreamWriter(new FileOutputStream(configFile), StandardCharsets.UTF_8)) {
-                            GSON.toJson(jsonObject, writer);
-                        }
-                        System.out.println("Successfully migrated gifters from config.json to data.json!");
-                        return true;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Failed to migrate data: " + e.getMessage());
-        }
-        return false;
-    }
-
     private static void seedMockData() {
-        currentData.gifters.add(new Gifter("minhtuan", "Minh Tuấn", 
-            "https://lh3.googleusercontent.com/aida-public/AB6AXuASGsiqxha-Kg_fYNkmESMQuRMMRyeLWddXDrC19jQHsGcK8YbJybz4eAuDOzemzDt8k8QMtqYqFs0x8BKRutKkZmFAaxPm7NFpQC7EJHgvgeQuX3KUCSGVVb5fjP4p_7qQEQnODu6Ys1Xkw-3Sxz_4QCiH6VQYTgZwdNDXAatl3cHMNzIn9W0GC-mst7A10ip8msy16zGujR2O9zblYTQzpkd-NdT_mmj0_WctWlSyMIj1r8Jx6HRWAu2TEVUHMLCvfTeCZqOt6J4P", 
-            120500));
-        currentData.gifters.add(new Gifter("thuyvan", "Thúy Vân", 
-            "https://lh3.googleusercontent.com/aida-public/AB6AXuASGsiqxha-Kg_fYNkmESMQuRMMRyeLWddXDrC19jQHsGcK8YbJybz4eAuDOzemzDt8k8QMtqYqFs0x8BKRutKkZmFAaxPm7NFpQC7EJHgvgeQuX3KUCSGVVb5fjP4p_7qQEQnODu6Ys1Xkw-3Sxz_4QCiH6VQYTgZwdNDXAatl3cHMNzIn9W0GC-mst7A10ip8msy16zGujR2O9zblYTQzpkd-NdT_mmj0_WctWlSyMIj1r8Jx6HRWAu2TEVUHMLCvfTeCZqOt6J4P", 
-            98200));
-        currentData.gifters.add(new Gifter("hoanglong", "Hoàng Long", 
-            "https://lh3.googleusercontent.com/aida-public/AB6AXuASGsiqxha-Kg_fYNkmESMQuRMMRyeLWddXDrC19jQHsGcK8YbJybz4eAuDOzemzDt8k8QMtqYqFs0x8BKRutKkZmFAaxPm7NFpQC7EJHgvgeQuX3KUCSGVVb5fjP4p_7qQEQnODu6Ys1Xkw-3Sxz_4QCiH6VQYTgZwdNDXAatl3cHMNzIn9W0GC-mst7A10ip8msy16zGujR2O9zblYTQzpkd-NdT_mmj0_WctWlSyMIj1r8Jx6HRWAu2TEVUHMLCvfTeCZqOt6J4P", 
-            75000));
-        Collections.sort(currentData.gifters);
+        TikTokUser user1 = new TikTokUser("minhtuan", "Minh Tuấn", 
+            "https://lh3.googleusercontent.com/aida-public/AB6AXuASGsiqxha-Kg_fYNkmESMQuRMMRyeLWddXDrC19jQHsGcK8YbJybz4eAuDOzemzDt8k8QMtqYqFs0x8BKRutKkZmFAaxPm7NFpQC7EJHgvgeQuX3KUCSGVVb5fjP4p_7qQEQnODu6Ys1Xkw-3Sxz_4QCiH6VQYTgZwdNDXAatl3cHMNzIn9W0GC-mst7A10ip8msy16zGujR2O9zblYTQzpkd-NdT_mmj0_WctWlSyMIj1r8Jx6HRWAu2TEVUHMLCvfTeCZqOt6J4P");
+        user1.setGiftPoints(120500);
 
-        currentData.likers.add(new Liker("nguyenvan_a", "Nguyễn Văn A", null, 1500));
-        currentData.likers.add(new Liker("hoangthi_b", "Hoàng Thị B", null, 980));
-        currentData.likers.add(new Liker("tranvan_c", "Trần Văn C", null, 420));
-        Collections.sort(currentData.likers);
+        TikTokUser user2 = new TikTokUser("thuyvan", "Thúy Vân", 
+            "https://lh3.googleusercontent.com/aida-public/AB6AXuASGsiqxha-Kg_fYNkmESMQuRMMRyeLWddXDrC19jQHsGcK8YbJybz4eAuDOzemzDt8k8QMtqYqFs0x8BKRutKkZmFAaxPm7NFpQC7EJHgvgeQuX3KUCSGVVb5fjP4p_7qQEQnODu6Ys1Xkw-3Sxz_4QCiH6VQYTgZwdNDXAatl3cHMNzIn9W0GC-mst7A10ip8msy16zGujR2O9zblYTQzpkd-NdT_mmj0_WctWlSyMIj1r8Jx6HRWAu2TEVUHMLCvfTeCZqOt6J4P");
+        user2.setGiftPoints(98200);
 
-        currentData.teamMembers.add(new TeamMember("hoanganh", "Hoàng Anh 👑", null, "Gia đình", 15, 28, true, System.currentTimeMillis() - 50000));
-        currentData.teamMembers.add(new TeamMember("linhchi", "Linh Chi 🌸", null, "Gia đình", 8, 12, false, System.currentTimeMillis() - 120000));
-        currentData.teamMembers.add(new TeamMember("quanghuy", "Quang Huy", null, null, 0, 35, true, System.currentTimeMillis() - 300000));
-        Collections.sort(currentData.teamMembers);
+        TikTokUser user3 = new TikTokUser("hoanglong", "Hoàng Long", 
+            "https://lh3.googleusercontent.com/aida-public/AB6AXuASGsiqxha-Kg_fYNkmESMQuRMMRyeLWddXDrC19jQHsGcK8YbJybz4eAuDOzemzDt8k8QMtqYqFs0x8BKRutKkZmFAaxPm7NFpQC7EJHgvgeQuX3KUCSGVVb5fjP4p_7qQEQnODu6Ys1Xkw-3Sxz_4QCiH6VQYTgZwdNDXAatl3cHMNzIn9W0GC-mst7A10ip8msy16zGujR2O9zblYTQzpkd-NdT_mmj0_WctWlSyMIj1r8Jx6HRWAu2TEVUHMLCvfTeCZqOt6J4P");
+        user3.setGiftPoints(75000);
+
+        TikTokUser user4 = new TikTokUser("nguyenvan_a", "Nguyễn Văn A", null);
+        user4.setLikesSent(1500);
+
+        TikTokUser user5 = new TikTokUser("hoangthi_b", "Hoàng Thị B", null);
+        user5.setLikesSent(980);
+
+        TikTokUser user6 = new TikTokUser("tranvan_c", "Trần Văn C", null);
+        user6.setLikesSent(420);
+
+        TikTokUser user7 = new TikTokUser("hoanganh", "Hoàng Anh 👑", null, "Gia đình", 15, 28, true, new ArrayList<>());
+        user7.setLastActive(System.currentTimeMillis() - 50000);
+
+        TikTokUser user8 = new TikTokUser("linhchi", "Linh Chi 🌸", null, "Gia đình", 8, 12, false, new ArrayList<>());
+        user8.setLastActive(System.currentTimeMillis() - 120000);
+
+        TikTokUser user9 = new TikTokUser("quanghuy", "Quang Huy", null, null, 0, 35, true, new ArrayList<>());
+        user9.setLastActive(System.currentTimeMillis() - 300000);
+
+        currentData.users.add(user1);
+        currentData.users.add(user2);
+        currentData.users.add(user3);
+        currentData.users.add(user4);
+        currentData.users.add(user5);
+        currentData.users.add(user6);
+        currentData.users.add(user7);
+        currentData.users.add(user8);
+        currentData.users.add(user9);
     }
 }

@@ -79,7 +79,6 @@ public class TikTokConnectorImpl implements ITikTokConnector {
                         .configure(settings -> {
                             if (apiKey != null && !apiKey.trim().isEmpty()) {
                                 settings.setApiKey(apiKey.trim());
-                                settings.setUseEulerstreamWebsocket(true);
                             }
                             settings.setClientLanguage("vi_VN");
                         })

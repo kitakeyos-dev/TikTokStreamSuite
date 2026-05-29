@@ -2,7 +2,7 @@ package com.leaderboard.ui.tab;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.leaderboard.model.TeamMember;
+import com.leaderboard.model.TikTokUser;
 import com.leaderboard.ui.DashboardLayout;
 import com.leaderboard.ui.DashboardStage;
 import com.leaderboard.ui.Dialogs;
@@ -30,10 +30,10 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * Refactored TeamTab extending BaseDataTab.
- * Seamlessly integrates combined category filtration and custom search wrapper.
+ * TeamTab displaying fan club members and subscribers.
+ * Extends BaseDataTab utilizing the unified TikTokUser domain entity.
  */
-public class TeamTab extends BaseDataTab<TeamMember> {
+public class TeamTab extends BaseDataTab<TikTokUser> {
     private ComboBox<String> cbFilter;
 
     private final Label lblTotalMembersVal;
@@ -63,9 +63,8 @@ public class TeamTab extends BaseDataTab<TeamMember> {
         setupTableColumns();
         buildLayout("team.title", "team.subtitle", "team.prompt.search", headerRight);
 
-        // Combined filter listener to replace BaseDataTab's simple text predicate
+        // Combined filter listener
         Runnable applyFilter = () -> filteredList.setPredicate(m -> {
-            // Text Search filter
             String text = txtSearch.getText().toLowerCase().trim();
             boolean textMatches = text.isEmpty() ||
                                   m.getUniqueId().toLowerCase().contains(text) ||
@@ -73,7 +72,6 @@ public class TeamTab extends BaseDataTab<TeamMember> {
 
             if (!textMatches) return false;
 
-            // Category filter
             int filterIdx = cbFilter.getSelectionModel().getSelectedIndex();
             if (filterIdx == 1) { // Only Subscribers
                 return m.isSubscriber();
@@ -110,22 +108,22 @@ public class TeamTab extends BaseDataTab<TeamMember> {
 
     @Override
     protected void setupTableColumns() {
-        TableColumn<TeamMember, Integer> colStt = new TableColumn<>(I18n.get("team.col.stt"));
+        TableColumn<TikTokUser, Integer> colStt = new TableColumn<>(I18n.get("team.col.stt"));
         colStt.setCellValueFactory(cell -> new SimpleIntegerProperty(masterList.indexOf(cell.getValue()) + 1).asObject());
         colStt.setPrefWidth(50);
         colStt.setStyle("-fx-alignment: CENTER; -fx-text-fill: #71717a;");
 
-        TableColumn<TeamMember, String> colId = new TableColumn<>(I18n.get("team.col.id"));
+        TableColumn<TikTokUser, String> colId = new TableColumn<>(I18n.get("team.col.id"));
         colId.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getUniqueId()));
         colId.setPrefWidth(120);
 
-        TableColumn<TeamMember, String> colNick = new TableColumn<>(I18n.get("team.col.nick"));
+        TableColumn<TikTokUser, String> colNick = new TableColumn<>(I18n.get("team.col.nick"));
         colNick.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getNickname()));
         colNick.setPrefWidth(160);
 
-        TableColumn<TeamMember, String> colRole = new TableColumn<>(I18n.get("team.col.role"));
+        TableColumn<TikTokUser, String> colRole = new TableColumn<>(I18n.get("team.col.role"));
         colRole.setCellValueFactory(cell -> {
-            TeamMember m = cell.getValue();
+            TikTokUser m = cell.getValue();
             String role = I18n.get("team.role.user");
             if (m.isSubscriber() && m.getTeamName() != null) {
                 role = I18n.get("team.role.subfan");
@@ -139,21 +137,21 @@ public class TeamTab extends BaseDataTab<TeamMember> {
         colRole.setPrefWidth(140);
         colRole.setStyle("-fx-alignment: CENTER; -fx-text-fill: #818cf8; -fx-font-weight: bold;");
 
-        TableColumn<TeamMember, String> colTeamLvl = new TableColumn<>(I18n.get("team.col.teamlvl"));
+        TableColumn<TikTokUser, String> colTeamLvl = new TableColumn<>(I18n.get("team.col.teamlvl"));
         colTeamLvl.setCellValueFactory(cell -> new SimpleStringProperty(
             cell.getValue().getTeamLevel() > 0 ? I18n.get("team.level.prefix", cell.getValue().getTeamLevel()) : "--"
         ));
         colTeamLvl.setPrefWidth(80);
         colTeamLvl.setStyle("-fx-alignment: CENTER; -fx-text-fill: #a1a1aa; -fx-font-weight: bold;");
 
-        TableColumn<TeamMember, String> colGiftLvl = new TableColumn<>(I18n.get("team.col.giftlvl"));
+        TableColumn<TikTokUser, String> colGiftLvl = new TableColumn<>(I18n.get("team.col.giftlvl"));
         colGiftLvl.setCellValueFactory(cell -> new SimpleStringProperty(
             cell.getValue().getGiftGiverLevel() > 0 ? I18n.get("team.level.prefix", cell.getValue().getGiftGiverLevel()) : "--"
         ));
         colGiftLvl.setPrefWidth(90);
         colGiftLvl.setStyle("-fx-alignment: CENTER; -fx-text-fill: #e4e4e7; -fx-font-weight: bold;");
 
-        TableColumn<TeamMember, String> colLastActive = new TableColumn<>(I18n.get("team.col.lastactive"));
+        TableColumn<TikTokUser, String> colLastActive = new TableColumn<>(I18n.get("team.col.lastactive"));
         colLastActive.setCellValueFactory(cell -> new SimpleStringProperty(
             TIME_FORMAT.format(new Date(cell.getValue().getLastActive()))
         ));
@@ -164,8 +162,7 @@ public class TeamTab extends BaseDataTab<TeamMember> {
     }
 
     @Override
-    protected boolean matchesSearch(TeamMember item, String query) {
-        // Handled completely by the custom combined filter Predicate
+    protected boolean matchesSearch(TikTokUser item, String query) {
         return true;
     }
 
@@ -197,14 +194,14 @@ public class TeamTab extends BaseDataTab<TeamMember> {
 
     public void refreshTableData() {
         masterList.clear();
-        List<TeamMember> list;
+        List<TikTokUser> list;
         synchronized (DataManager.class) {
             list = new ArrayList<>(DataManager.getTeamMembers());
         }
         int subsCount = 0;
         int fanClubCount = 0;
 
-        for (TeamMember m : list) {
+        for (TikTokUser m : list) {
             masterList.add(m);
             if (m.isSubscriber()) subsCount++;
             if (m.getTeamName() != null) fanClubCount++;
@@ -222,7 +219,7 @@ public class TeamTab extends BaseDataTab<TeamMember> {
     }
 
     private void deleteSelectedMember() {
-        TeamMember selected = tableView.getSelectionModel().getSelectedItem();
+        TikTokUser selected = tableView.getSelectionModel().getSelectedItem();
         if (selected == null) {
             Dialogs.warning(parent, I18n.get("dialog.warning"), I18n.get("team.warn.select"));
             return;
@@ -230,9 +227,14 @@ public class TeamTab extends BaseDataTab<TeamMember> {
 
         if (Dialogs.confirm(parent, I18n.get("dialog.confirm"), I18n.get("team.confirm.delete.msg", selected.getUniqueId()), I18n.get("team.confirm.delete.btn"))) {
             synchronized (DataManager.class) {
-                List<TeamMember> list = DataManager.getTeamMembers();
-                list.removeIf(m -> m.getUniqueId().equalsIgnoreCase(selected.getUniqueId()));
-                DataManager.save();
+                TikTokUser user = DataManager.findOrCreateUser(selected);
+                if (user != null) {
+                    user.setTeamName(null);
+                    user.setTeamLevel(0);
+                    user.setSubscriber(false);
+                    DataManager.getUsers().removeIf(u -> u.getGiftPoints() <= 0 && u.getLikesSent() <= 0 && u.getTeamName() == null && !u.isSubscriber());
+                    DataManager.save();
+                }
             }
             refreshTableData();
         }
@@ -241,7 +243,12 @@ public class TeamTab extends BaseDataTab<TeamMember> {
     private void resetAllMembers() {
         if (Dialogs.confirm(parent, I18n.get("team.confirm.reset.title"), I18n.get("team.confirm.reset.msg"), I18n.get("team.confirm.reset.btn"))) {
             synchronized (DataManager.class) {
-                DataManager.getTeamMembers().clear();
+                for (TikTokUser u : DataManager.getUsers()) {
+                    u.setTeamName(null);
+                    u.setTeamLevel(0);
+                    u.setSubscriber(false);
+                }
+                DataManager.getUsers().removeIf(u -> u.getGiftPoints() <= 0 && u.getLikesSent() <= 0 && u.getTeamName() == null && !u.isSubscriber());
                 DataManager.save();
             }
             refreshTableData();
@@ -249,7 +256,7 @@ public class TeamTab extends BaseDataTab<TeamMember> {
     }
 
     private void exportToJson() {
-        List<TeamMember> exportList = new ArrayList<>(tableView.getItems());
+        List<TikTokUser> exportList = new ArrayList<>(tableView.getItems());
 
         if (exportList.isEmpty()) {
             Dialogs.info(parent, I18n.get("dialog.success"), I18n.get("team.export.empty"));
