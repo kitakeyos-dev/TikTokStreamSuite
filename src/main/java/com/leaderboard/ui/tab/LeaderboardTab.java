@@ -1,6 +1,6 @@
 package com.leaderboard.ui.tab;
 
-import com.leaderboard.model.Gifter;
+import com.leaderboard.model.TikTokUser;
 import com.leaderboard.ui.DashboardLayout;
 import com.leaderboard.ui.DashboardStage;
 import com.leaderboard.ui.Dialogs;
@@ -15,7 +15,6 @@ import javafx.scene.paint.Color;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.feather.Feather;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.HashMap;
@@ -24,10 +23,10 @@ import javafx.animation.PauseTransition;
 import javafx.util.Duration;
 
 /**
- * Refactored LeaderboardTab extending BaseDataTab.
- * Clean, lightweight, and uses incremental list updates to prevent flicker.
+ * LeaderboardTab displaying top gifters.
+ * Extends BaseDataTab utilizing the unified TikTokUser domain entity.
  */
-public class LeaderboardTab extends BaseDataTab<Gifter> {
+public class LeaderboardTab extends BaseDataTab<TikTokUser> {
     private final Label lblTotalDiamondsVal;
     private final Label lblActiveDonorsVal;
     
@@ -35,14 +34,13 @@ public class LeaderboardTab extends BaseDataTab<Gifter> {
     private Button btnResetAll;
     private Button btnAddManual;
 
-    // Throttle: limit refreshes to once per 500ms to avoid flicker from rapid events
+    // Throttle: limit refreshes to once per 500ms to avoid flicker
     private final PauseTransition refreshThrottle = new PauseTransition(Duration.millis(500));
     private boolean pendingRefresh = false;
 
     public LeaderboardTab(DashboardStage parent) {
         super(parent);
         
-        // Setup throttle: when it fires, do the actual refresh
         refreshThrottle.setOnFinished(e -> doRefreshTableData());
 
         lblTotalDiamondsVal = new Label("0");
@@ -60,21 +58,21 @@ public class LeaderboardTab extends BaseDataTab<Gifter> {
 
     @Override
     protected void setupTableColumns() {
-        TableColumn<Gifter, Integer> colRank = new TableColumn<>(I18n.get("leaderboard.col.rank"));
+        TableColumn<TikTokUser, Integer> colRank = new TableColumn<>(I18n.get("leaderboard.col.rank"));
         colRank.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getRank()).asObject());
         colRank.setPrefWidth(60);
         colRank.setStyle("-fx-alignment: CENTER; -fx-text-fill: #818cf8; -fx-font-weight: bold;");
 
-        TableColumn<Gifter, String> colId = new TableColumn<>(I18n.get("leaderboard.col.id"));
+        TableColumn<TikTokUser, String> colId = new TableColumn<>(I18n.get("leaderboard.col.id"));
         colId.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getUniqueId()));
         colId.setPrefWidth(140);
 
-        TableColumn<Gifter, String> colNick = new TableColumn<>(I18n.get("leaderboard.col.nick"));
+        TableColumn<TikTokUser, String> colNick = new TableColumn<>(I18n.get("leaderboard.col.nick"));
         colNick.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getNickname()));
         colNick.setPrefWidth(200);
 
-        TableColumn<Gifter, Integer> colPoints = new TableColumn<>(I18n.get("leaderboard.col.points"));
-        colPoints.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getPoints()).asObject());
+        TableColumn<TikTokUser, Integer> colPoints = new TableColumn<>(I18n.get("leaderboard.col.points"));
+        colPoints.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getGiftPoints()).asObject());
         colPoints.setPrefWidth(140);
         colPoints.setStyle("-fx-alignment: CENTER; -fx-text-fill: #e4e4e7; -fx-font-weight: bold;");
 
@@ -82,7 +80,7 @@ public class LeaderboardTab extends BaseDataTab<Gifter> {
     }
 
     @Override
-    protected boolean matchesSearch(Gifter g, String query) {
+    protected boolean matchesSearch(TikTokUser g, String query) {
         return g.getUniqueId().toLowerCase().contains(query) || 
                g.getNickname().toLowerCase().contains(query);
     }
@@ -114,56 +112,55 @@ public class LeaderboardTab extends BaseDataTab<Gifter> {
     }
 
     public void refreshTableData() {
-        // Throttle rapid calls — restart the 500ms timer each time
         pendingRefresh = true;
         refreshThrottle.playFromStart();
     }
 
     private void doRefreshTableData() {
         pendingRefresh = false;
-        List<Gifter> source;
+        List<TikTokUser> source;
         synchronized (DataManager.class) {
             source = new ArrayList<>(DataManager.getGifters());
         }
         int totalDiamonds = 0;
 
-        // --- Incremental update: avoid clear() to prevent TableView flicker ---
-        Map<String, Gifter> currentMap = new HashMap<>();
-        for (Gifter g : masterList) {
+        // Incremental update to prevent TableView flicker
+        Map<String, TikTokUser> currentMap = new HashMap<>();
+        for (TikTokUser g : masterList) {
             currentMap.put(g.getUniqueId().toLowerCase(), g);
         }
 
-        // Pass 1: update existing or add new items
         int rank = 1;
-        for (Gifter fresh : source) {
+        for (TikTokUser fresh : source) {
             fresh.setRank(rank++);
-            totalDiamonds += fresh.getPoints();
+            totalDiamonds += fresh.getGiftPoints();
             String key = fresh.getUniqueId().toLowerCase();
-            Gifter existing = currentMap.get(key);
+            TikTokUser existing = currentMap.get(key);
             if (existing != null) {
-                // Update in-place
                 existing.setRank(fresh.getRank());
-                existing.setPoints(fresh.getPoints());
+                existing.setGiftPoints(fresh.getGiftPoints());
                 existing.setNickname(fresh.getNickname());
                 existing.setAvatarUrl(fresh.getAvatarUrl());
+                existing.setBadgeUrls(fresh.getBadgeUrls());
                 currentMap.remove(key);
             } else {
                 masterList.add(fresh);
             }
         }
 
-        // Pass 2: remove items no longer in source
         if (!currentMap.isEmpty()) {
             masterList.removeIf(g -> currentMap.containsKey(g.getUniqueId().toLowerCase()));
         }
 
-        // Pass 3: re-sort to match points desc order
-        FXCollections.sort(masterList);
+        // Re-sort descending by gift points
+        masterList.sort((u1, u2) -> {
+            int diff = Integer.compare(u2.getGiftPoints(), u1.getGiftPoints());
+            if (diff != 0) return diff;
+            return u1.getNickname().compareToIgnoreCase(u2.getNickname());
+        });
 
-        // Pass 4: force TableView redraw (plain fields, not JavaFX Properties)
         tableView.refresh();
 
-        // Update statistics cards
         if (lblTotalDiamondsVal != null) {
             lblTotalDiamondsVal.setText(String.format("%,d", totalDiamonds));
         }
@@ -173,7 +170,7 @@ public class LeaderboardTab extends BaseDataTab<Gifter> {
     }
 
     private void deleteSelectedGifter() {
-        Gifter selected = tableView.getSelectionModel().getSelectedItem();
+        TikTokUser selected = tableView.getSelectionModel().getSelectedItem();
         if (selected == null) {
             Dialogs.warning(parent, I18n.get("dialog.warning"), I18n.get("leaderboard.warn.select"));
             return;
@@ -181,9 +178,14 @@ public class LeaderboardTab extends BaseDataTab<Gifter> {
 
         if (Dialogs.confirm(parent, I18n.get("leaderboard.confirm.delete.title"), I18n.get("leaderboard.confirm.delete.msg", selected.getUniqueId()), I18n.get("leaderboard.confirm.delete.btn"))) {
             synchronized (DataManager.class) {
-                List<Gifter> list = DataManager.getGifters();
-                list.removeIf(g -> g.getUniqueId().equalsIgnoreCase(selected.getUniqueId()));
-                DataManager.save();
+                // To keep database clean, if they delete it, we reset giftPoints to 0.
+                // If the user has no other stats left, we can fully delete them.
+                TikTokUser user = DataManager.findOrCreateUser(selected);
+                if (user != null) {
+                    user.setGiftPoints(0);
+                    DataManager.getUsers().removeIf(u -> u.getGiftPoints() <= 0 && u.getLikesSent() <= 0 && u.getTeamName() == null && !u.isSubscriber());
+                    DataManager.save();
+                }
             }
             refreshTableData();
             parent.updateLeaderboardOverlay();
@@ -193,7 +195,10 @@ public class LeaderboardTab extends BaseDataTab<Gifter> {
     private void resetLeaderboard() {
         if (Dialogs.confirm(parent, I18n.get("leaderboard.confirm.reset.title"), I18n.get("leaderboard.confirm.reset.msg"), I18n.get("leaderboard.confirm.reset.btn"))) {
             synchronized (DataManager.class) {
-                DataManager.getGifters().clear();
+                for (TikTokUser u : DataManager.getUsers()) {
+                    u.setGiftPoints(0);
+                }
+                DataManager.getUsers().removeIf(u -> u.getGiftPoints() <= 0 && u.getLikesSent() <= 0 && u.getTeamName() == null && !u.isSubscriber());
                 DataManager.save();
             }
             refreshTableData();
@@ -226,19 +231,9 @@ public class LeaderboardTab extends BaseDataTab<Gifter> {
         final int finalPoints = points;
 
         synchronized (DataManager.class) {
-            List<Gifter> list = DataManager.getGifters();
-            Optional<Gifter> existing = list.stream()
-                    .filter(g -> g.getUniqueId().equalsIgnoreCase(finalUniqueId))
-                    .findFirst();
-
-            if (existing.isPresent()) {
-                existing.get().addPoints(finalPoints);
-                existing.get().setNickname(finalNickname);
-            } else {
-                list.add(new Gifter(finalUniqueId, finalNickname, null, Math.max(0, finalPoints)));
-            }
-
-            Collections.sort(list);
+            TikTokUser incoming = new TikTokUser(finalUniqueId, finalNickname, null);
+            TikTokUser user = DataManager.findOrCreateUser(incoming);
+            user.addGiftPoints(finalPoints);
             DataManager.save();
         }
 

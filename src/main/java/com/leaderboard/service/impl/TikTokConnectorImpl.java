@@ -6,25 +6,14 @@ import com.leaderboard.ui.Dialogs;
 import io.github.jwdeveloper.tiktok.TikTokLive;
 import io.github.jwdeveloper.tiktok.live.LiveClient;
 import io.github.jwdeveloper.tiktok.live.LiveRoomInfo;
-import io.github.jwdeveloper.tiktok.data.models.users.User;
-import io.github.jwdeveloper.tiktok.data.models.badges.Badge;
-import io.github.jwdeveloper.tiktok.data.models.badges.CombineBadge;
-import io.github.jwdeveloper.tiktok.data.models.badges.TextBadge;
-import io.github.jwdeveloper.tiktok.data.models.badges.StringBadge;
-import com.leaderboard.model.Gifter;
-import com.leaderboard.util.DataManager;
-import com.leaderboard.service.ServiceLocator;
-import com.leaderboard.service.IActionRulesEngine;
+import com.leaderboard.model.TikTokUser;
 import javafx.application.Platform;
-import javax.swing.SwingUtilities;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
- * Object instance implementation of ITikTokConnector.
- * Manages active live sockets without static state locking.
+ * Decoupled implementation of ITikTokConnector.
+ * Manages active live socket connections without static state locking or business logic leaks.
+ * Dispatches events consistently on the JavaFX Application Thread.
  */
 public class TikTokConnectorImpl implements ITikTokConnector {
     private LiveClient liveClient;
@@ -33,7 +22,9 @@ public class TikTokConnectorImpl implements ITikTokConnector {
 
     private TikTokConnector.ChatListener chatListener;
     private TikTokConnector.LikeListener likeListener;
+    private TikTokConnector.GiftListener giftListener;
     private TikTokConnector.RoomInfoListener roomInfoListener;
+    private TikTokConnector.SocialListener socialListener;
 
     @Override
     public synchronized void setChatListener(TikTokConnector.ChatListener listener) {
@@ -46,8 +37,18 @@ public class TikTokConnectorImpl implements ITikTokConnector {
     }
 
     @Override
+    public synchronized void setGiftListener(TikTokConnector.GiftListener listener) {
+        giftListener = listener;
+    }
+
+    @Override
     public synchronized void setRoomInfoListener(TikTokConnector.RoomInfoListener listener) {
         roomInfoListener = listener;
+    }
+
+    @Override
+    public synchronized void setSocialListener(TikTokConnector.SocialListener listener) {
+        socialListener = listener;
     }
 
     @Override
@@ -86,68 +87,51 @@ public class TikTokConnectorImpl implements ITikTokConnector {
                                 isConnecting = false;
                                 isConnected = true;
                             }
-                            SwingUtilities.invokeLater(onConnected);
+                            Platform.runLater(onConnected);
                         })
                         .onDisconnected((client, event) -> {
                             synchronized (this) {
                                 isConnecting = false;
                                 isConnected = false;
                             }
-                            SwingUtilities.invokeLater(onDisconnected);
+                            Platform.runLater(onDisconnected);
                         })
                         .onLiveEnded((client, event) -> {
                             Platform.runLater(() -> {
                                 Dialogs.info(null, "Livestream Kết thúc",
                                     "Buổi phát sóng trực tiếp trên TikTok đã kết thúc!");
+                                disconnect();
                             });
-                            disconnect();
                         })
                         .onError((client, event) -> {
                             synchronized (this) {
                                 isConnecting = false;
                             }
                             String errorMsg = event.getException().getMessage();
-                            SwingUtilities.invokeLater(
-                                    () -> onError.accept(errorMsg != null ? errorMsg : "Connection failed."));
+                            Platform.runLater(() -> onError.accept(errorMsg != null ? errorMsg : "Connection failed."));
                         })
                         .onComment((client, event) -> {
-                            String userId = event.getUser().getName();
-                            String nickname = event.getUser().getProfileName();
+                            TikTokUser user = TikTokUser.fromSDK(event.getUser());
                             String comment = event.getText();
-                            String avatarUrl = null;
-                            if (event.getUser().getPicture() != null) {
-                                avatarUrl = event.getUser().getPicture().getLink();
-                            }
 
-                            final String finalAvatarUrl = avatarUrl;
-                            processUserForTeam(event.getUser());
-                            ServiceLocator.get(IActionRulesEngine.class).handleComment(userId, nickname, comment);
-                            SwingUtilities.invokeLater(() -> {
+                            Platform.runLater(() -> {
                                 synchronized (this) {
                                     if (chatListener != null) {
-                                        chatListener.onNewComment(userId, nickname, comment, finalAvatarUrl);
+                                        chatListener.onNewComment(user, comment);
                                     }
                                 }
                                 onDataChanged.run();
                             });
                         })
                         .onLike((client, event) -> {
-                            String userId = event.getUser().getName();
-                            String nickname = event.getUser().getProfileName();
+                            TikTokUser user = TikTokUser.fromSDK(event.getUser());
                             int likesSent = event.getLikes();
                             int totalLikes = event.getTotalLikes();
 
-                            String avatarUrl = null;
-                            if (event.getUser().getPicture() != null) {
-                                avatarUrl = event.getUser().getPicture().getLink();
-                            }
-
-                            processUserForTeam(event.getUser());
-                            final String finalAvatarUrl = avatarUrl;
-                            SwingUtilities.invokeLater(() -> {
+                            Platform.runLater(() -> {
                                 synchronized (this) {
                                     if (likeListener != null) {
-                                        likeListener.onNewLike(userId, nickname, likesSent, totalLikes, finalAvatarUrl);
+                                        likeListener.onNewLike(user, likesSent, totalLikes);
                                     }
                                 }
                                 onDataChanged.run();
@@ -158,7 +142,8 @@ public class TikTokConnectorImpl implements ITikTokConnector {
                             String title = roomInfo.getTitle();
                             int viewers = roomInfo.getViewersCount();
                             int likes = roomInfo.getLikesCount();
-                            SwingUtilities.invokeLater(() -> {
+
+                            Platform.runLater(() -> {
                                 synchronized (this) {
                                     if (roomInfoListener != null) {
                                         roomInfoListener.onRoomInfoUpdate(title, viewers, likes);
@@ -167,69 +152,66 @@ public class TikTokConnectorImpl implements ITikTokConnector {
                             });
                         })
                         .onGift((client, event) -> {
-                            processUserForTeam(event.getUser());
-                            String userId = event.getUser().getName();
-                            String nickname = event.getUser().getProfileName();
-                            String avatarUrl = null;
-                            if (event.getUser().getPicture() != null) {
-                                avatarUrl = event.getUser().getPicture().getLink();
-                            }
-
+                            TikTokUser user = TikTokUser.fromSDK(event.getUser());
+                            String giftName = event.getGift().getName();
                             int diamonds = event.getGift().getDiamondCost() * event.getCombo();
                             if (diamonds <= 0) {
                                 diamonds = 1;
                             }
 
-                            final int pointsToAdd = diamonds;
-                            final String finalAvatarUrl = avatarUrl;
-                            final String finalNickname = nickname;
-
-                            ServiceLocator.get(IActionRulesEngine.class).handleGift(userId, nickname, event.getGift().getName(), diamonds);
-
-                            SwingUtilities.invokeLater(() -> {
-                                synchronized (DataManager.class) {
-                                    List<Gifter> list = DataManager.getGifters();
-                                    Optional<Gifter> existing = list.stream()
-                                            .filter(g -> g.getUniqueId().equalsIgnoreCase(userId))
-                                            .findFirst();
-
-                                    if (existing.isPresent()) {
-                                        existing.get().addPoints(pointsToAdd);
-                                        if (finalAvatarUrl != null) {
-                                            existing.get().setAvatarUrl(finalAvatarUrl);
-                                        }
-                                        if (finalNickname != null && !finalNickname.trim().isEmpty()) {
-                                            existing.get().setNickname(finalNickname);
-                                        }
-                                    } else {
-                                        list.add(new Gifter(userId, finalNickname != null ? finalNickname : userId,
-                                                finalAvatarUrl, pointsToAdd));
+                            final int finalDiamonds = diamonds;
+                            Platform.runLater(() -> {
+                                synchronized (this) {
+                                    if (giftListener != null) {
+                                        giftListener.onNewGift(user, giftName, finalDiamonds);
                                     }
-
-                                    Collections.sort(list);
-                                    DataManager.save();
                                 }
                                 onDataChanged.run();
                             });
                         })
                         .onJoin((client, event) -> {
-                            processUserForTeam(event.getUser());
-                            SwingUtilities.invokeLater(onDataChanged);
+                            TikTokUser user = TikTokUser.fromSDK(event.getUser());
+                            Platform.runLater(() -> {
+                                synchronized (this) {
+                                    if (socialListener != null) {
+                                        socialListener.onSocialEvent("JOIN", user);
+                                    }
+                                }
+                                onDataChanged.run();
+                            });
                         })
                         .onFollow((client, event) -> {
-                            processUserForTeam(event.getUser());
-                            ServiceLocator.get(IActionRulesEngine.class).handleFollow(event.getUser().getName(), event.getUser().getProfileName());
-                            SwingUtilities.invokeLater(onDataChanged);
+                            TikTokUser user = TikTokUser.fromSDK(event.getUser());
+                            Platform.runLater(() -> {
+                                synchronized (this) {
+                                    if (socialListener != null) {
+                                        socialListener.onSocialEvent("FOLLOW", user);
+                                    }
+                                }
+                                onDataChanged.run();
+                            });
                         })
                         .onShare((client, event) -> {
-                            processUserForTeam(event.getUser());
-                            ServiceLocator.get(IActionRulesEngine.class).handleShare(event.getUser().getName(), event.getUser().getProfileName());
-                            SwingUtilities.invokeLater(onDataChanged);
+                            TikTokUser user = TikTokUser.fromSDK(event.getUser());
+                            Platform.runLater(() -> {
+                                synchronized (this) {
+                                    if (socialListener != null) {
+                                        socialListener.onSocialEvent("SHARE", user);
+                                    }
+                                }
+                                onDataChanged.run();
+                            });
                         })
                         .onSubscribe((client, event) -> {
-                            processUserForTeam(event.getUser());
-                            ServiceLocator.get(IActionRulesEngine.class).handleSubscribe(event.getUser().getName(), event.getUser().getProfileName());
-                            SwingUtilities.invokeLater(onDataChanged);
+                            TikTokUser user = TikTokUser.fromSDK(event.getUser());
+                            Platform.runLater(() -> {
+                                synchronized (this) {
+                                    if (socialListener != null) {
+                                        socialListener.onSocialEvent("SUBSCRIBE", user);
+                                    }
+                                }
+                                onDataChanged.run();
+                            });
                         })
                         .build();
 
@@ -239,7 +221,7 @@ public class TikTokConnectorImpl implements ITikTokConnector {
                     isConnecting = false;
                     isConnected = false;
                 }
-                SwingUtilities.invokeLater(() -> onError.accept(e.getMessage()));
+                Platform.runLater(() -> onError.accept(e.getMessage()));
             }
         }).start();
     }
@@ -260,62 +242,6 @@ public class TikTokConnectorImpl implements ITikTokConnector {
                     }
                 }
             }).start();
-        }
-    }
-
-    private void processUserForTeam(User user) {
-        if (user == null) return;
-        
-        boolean isSubscriber = user.isSubscriber();
-        String teamName = null;
-        int teamLevel = 0;
-        int giftGiverLevel = 0;
-
-        if (user.getBadges() != null) {
-            for (Badge badge : user.getBadges()) {
-                if (badge instanceof CombineBadge cb) {
-                    String picLink = (cb.getPicture() != null) ? cb.getPicture().getLink() : "";
-                    if (picLink != null && picLink.contains("fans_badge_icon")) {
-                        if (teamName == null) {
-                            if (cb.getSubText() != null && !cb.getSubText().trim().isEmpty()) {
-                                teamName = cb.getSubText().trim();
-                            } else if (cb.getText() != null && !cb.getText().trim().isEmpty()) {
-                                teamName = cb.getText().trim();
-                            }
-                        }
-                        
-                        if (teamLevel == 0) {
-                            java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("fans_badge_icon_lv(\\d+)").matcher(picLink);
-                            if (matcher.find()) {
-                                teamLevel = Integer.parseInt(matcher.group(1));
-                            }
-                        }
-                    } else {
-                        if (cb.getSubText() != null && cb.getSubText().matches("\\d+")) {
-                            giftGiverLevel = Math.max(giftGiverLevel, Integer.parseInt(cb.getSubText()));
-                        } else if (cb.getText() != null && cb.getText().matches("\\d+")) {
-                            giftGiverLevel = Math.max(giftGiverLevel, Integer.parseInt(cb.getText()));
-                        }
-                    }
-                } else if (badge instanceof TextBadge tb) {
-                    if (tb.getText() != null && tb.getText().matches("\\d+")) {
-                        giftGiverLevel = Math.max(giftGiverLevel, Integer.parseInt(tb.getText()));
-                    }
-                } else if (badge instanceof StringBadge sb) {
-                    if (sb.getText() != null && sb.getText().matches("\\d+")) {
-                        giftGiverLevel = Math.max(giftGiverLevel, Integer.parseInt(sb.getText()));
-                    }
-                }
-            }
-        }
-
-        if (teamName != null || isSubscriber || giftGiverLevel > 0) {
-            String avatarUrl = null;
-            if (user.getPicture() != null) {
-                avatarUrl = user.getPicture().getLink();
-            }
-            DataManager.addOrUpdateTeamMember(user.getName(), user.getProfileName(), 
-                avatarUrl, teamName, teamLevel, giftGiverLevel, isSubscriber);
         }
     }
 }

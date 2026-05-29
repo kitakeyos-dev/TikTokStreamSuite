@@ -1,19 +1,22 @@
 package com.leaderboard.ui.overlay;
 
+import com.leaderboard.ui.component.AvatarView;
+import com.leaderboard.ui.component.EmojiTextFlow;
+import com.leaderboard.ui.component.NameGroupView;
 import com.leaderboard.util.IconManager;
 import javafx.animation.FadeTransition;
+import javafx.animation.PauseTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
@@ -87,14 +90,40 @@ public class LiveChatOverlay extends Stage {
         header.getChildren().addAll(lblTitle, lblLiveBadge);
 
         // 2. Chat messages VBox container
-        chatContainer = new VBox(6); // 6px gap like in Swing
+        chatContainer = new VBox(6); // 6px gap
         chatContainer.setPadding(new Insets(10));
-        chatContainer.setPrefWidth(320);
-        AnchorPane.setTopAnchor(chatContainer, 55.0);
-        AnchorPane.setLeftAnchor(chatContainer, 10.0);
-        AnchorPane.setRightAnchor(chatContainer, 10.0);
 
-        root.getChildren().addAll(header, chatContainer);
+        ScrollPane scrollPane = new ScrollPane(chatContainer);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setStyle(
+                "-fx-background: transparent;" +
+                "-fx-background-color: transparent;" +
+                "-fx-border-color: transparent;"
+        );
+        scrollPane.skinProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                javafx.scene.Node viewport = scrollPane.lookup(".viewport");
+                if (viewport != null) {
+                    viewport.setStyle("-fx-background-color: transparent;");
+                }
+            }
+        });
+
+        // Auto-scroll to bottom on new messages
+        chatContainer.heightProperty().addListener((obs, oldVal, newVal) -> {
+            scrollPane.setVvalue(1.0);
+        });
+
+        AnchorPane.setTopAnchor(scrollPane, 55.0);
+        AnchorPane.setLeftAnchor(scrollPane, 10.0);
+        AnchorPane.setRightAnchor(scrollPane, 10.0);
+        AnchorPane.setBottomAnchor(scrollPane, 15.0);
+
+        setupScrollbarFadeEffect(scrollPane);
+
+        root.getChildren().addAll(header, scrollPane);
 
         // Configure Scene
         Scene scene = new Scene(root);
@@ -105,7 +134,7 @@ public class LiveChatOverlay extends Stage {
         com.leaderboard.util.ResizeHelper.addResizeListener(this, 240, 250, Double.MAX_VALUE, Double.MAX_VALUE);
     }
 
-    public void addMessage(String uniqueId, String nickname, String comment, String avatarUrl) {
+    public void addMessage(String uniqueId, String nickname, String comment, String avatarUrl, java.util.List<String> badgeUrls) {
         Platform.runLater(() -> {
             // Build the modern chat bubble HBox
             HBox bubble = new HBox(10);
@@ -122,43 +151,21 @@ public class LiveChatOverlay extends Stage {
             bubble.setMaxHeight(52);
 
             // Circular Avatar Container
-            StackPane avatarContainer = new StackPane();
-            avatarContainer.setPrefSize(32, 32);
-            avatarContainer.setMinSize(32, 32);
-
-            Circle clipCircle = new Circle(16, 16, 16);
-
-            ImageView avatarView = new ImageView();
-            avatarView.setFitWidth(32);
-            avatarView.setFitHeight(32);
-            avatarView.setClip(clipCircle);
-
-            if (avatarUrl != null && !avatarUrl.isEmpty()) {
-                Image img = new Image(avatarUrl, 32, 32, true, true, true);
-                avatarView.setImage(img);
-            } else {
-                avatarView.setImage(IconManager.getAppIcon());
-            }
-
-            // Outer indigo glowing border
-            Circle borderCircle = new Circle(16, 16, 16);
-            borderCircle.setFill(Color.TRANSPARENT);
-            borderCircle.setStroke(Color.web("#818cf8", 0.4)); // Soft indigo border
-            borderCircle.setStrokeWidth(1.2);
-
-            avatarContainer.getChildren().addAll(avatarView, borderCircle);
+            AvatarView avatarContainer = new AvatarView(avatarUrl, 32, Color.web("#818cf8", 0.4), 1.2);
 
             // Message text grouping
             VBox textContainer = new VBox(2);
             HBox.setHgrow(textContainer, Priority.ALWAYS);
             textContainer.setAlignment(Pos.CENTER_LEFT);
 
-            // Use the EmojiParser to create beautiful rich TextFlows
-            javafx.scene.text.TextFlow nameFlow = com.leaderboard.util.EmojiParser.createEmojiTextFlow(
-                    nickname, 11.5, Color.web("#818cf8"),
-                    javafx.scene.text.Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 11.5));
-            javafx.scene.text.TextFlow commentFlow = com.leaderboard.util.EmojiParser.createEmojiTextFlow(
-                    comment, 11, Color.web("#e4e4e7"), javafx.scene.text.Font.font("Segoe UI", 11));
+            // Use custom components for nickname and chat comments
+            NameGroupView nameFlow = new NameGroupView(nickname, 11.5, Color.web("#818cf8"), true);
+            if (badgeUrls != null) {
+                for (String badgeUrl : badgeUrls) {
+                    nameFlow.addBadge(badgeUrl, 13); // Cache & render badge next to nickname
+                }
+            }
+            EmojiTextFlow commentFlow = new EmojiTextFlow(comment, 11, Color.web("#e4e4e7"), false);
 
             textContainer.getChildren().addAll(nameFlow, commentFlow);
             bubble.getChildren().addAll(avatarContainer, textContainer);
@@ -170,8 +177,8 @@ public class LiveChatOverlay extends Stage {
             chatContainer.getChildren().add(bubble);
             bubbleList.add(bubble);
 
-            // Prune excess messages (Keep max 7 bubbles like in Swing)
-            if (bubbleList.size() > 7) {
+            // Prune excess messages (Keep max 100 bubbles for scrolling)
+            if (bubbleList.size() > 100) {
                 HBox oldest = bubbleList.remove(0);
 
                 // Fade out animation for oldest bubble before removing it
@@ -202,5 +209,40 @@ public class LiveChatOverlay extends Stage {
 
     public void dispose() {
         close();
+    }
+
+    private void setupScrollbarFadeEffect(ScrollPane scrollPane) {
+        scrollPane.skinProperty().addListener((obs, old, newVal) -> {
+            if (newVal != null) {
+                javafx.scene.Node sbNode = scrollPane.lookup(".scroll-bar:vertical");
+                if (sbNode instanceof ScrollBar scrollBar) {
+                    scrollBar.setOpacity(0.0);
+
+                    PauseTransition delay = new PauseTransition(Duration.seconds(1.5));
+                    FadeTransition fadeOut = new FadeTransition(Duration.millis(300), scrollBar);
+                    fadeOut.setToValue(0.0);
+
+                    delay.setOnFinished(e -> fadeOut.play());
+
+                    scrollPane.vvalueProperty().addListener((obsVal, oldVal, newValVal) -> {
+                        fadeOut.stop();
+                        scrollBar.setOpacity(1.0);
+                        delay.playFromStart();
+                    });
+
+                    scrollPane.setOnMouseMoved(e -> {
+                        fadeOut.stop();
+                        scrollBar.setOpacity(1.0);
+                        delay.playFromStart();
+                    });
+
+                    scrollPane.setOnScroll(e -> {
+                        fadeOut.stop();
+                        scrollBar.setOpacity(1.0);
+                        delay.playFromStart();
+                    });
+                }
+            }
+        });
     }
 }

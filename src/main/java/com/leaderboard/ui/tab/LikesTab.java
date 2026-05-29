@@ -1,6 +1,6 @@
 package com.leaderboard.ui.tab;
 
-import com.leaderboard.model.Liker;
+import com.leaderboard.model.TikTokUser;
 import com.leaderboard.ui.DashboardLayout;
 import com.leaderboard.ui.DashboardStage;
 import com.leaderboard.ui.Dialogs;
@@ -11,7 +11,6 @@ import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -22,14 +21,16 @@ import javafx.util.Duration;
 import org.kordamp.ikonli.javafx.FontIcon;
 import org.kordamp.ikonli.feather.Feather;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Refactored LikesTab extending BaseDataTab.
- * Seamlessly integrates the premium Bento Goal bar via the buildHeaderExtension hook.
+ * LikesTab displaying top likers and bento progress goal bar.
+ * Extends BaseDataTab utilizing the unified TikTokUser domain entity.
  */
-public class LikesTab extends BaseDataTab<Liker> {
+public class LikesTab extends BaseDataTab<TikTokUser> {
     private TextField txtLikeTarget;
     private final Label lblTotalLikes;
     private final Label lblActiveLikersVal;
@@ -66,7 +67,6 @@ public class LikesTab extends BaseDataTab<Liker> {
 
     @Override
     protected Node buildHeaderExtension() {
-        // Single-Row Premium Bento Bar (All elements aligned horizontally in 1 line)
         HBox goalBar = new HBox(15);
         goalBar.setAlignment(Pos.CENTER_LEFT);
         goalBar.setPadding(new Insets(10, 16, 10, 16));
@@ -78,7 +78,6 @@ public class LikesTab extends BaseDataTab<Liker> {
                 "-fx-border-width: 1px;"
         );
 
-        // 1. Goal Settings controls (Left-aligned)
         Label lblTargetTitle = new Label(I18n.get("likes.goal.label"));
         lblTargetTitle.setStyle("-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #71717a;");
 
@@ -97,7 +96,6 @@ public class LikesTab extends BaseDataTab<Liker> {
         DashboardLayout.applyPrimaryButton(btnUpdateTarget);
         btnUpdateTarget.setOnAction(e -> updateLikeTarget());
 
-        // 2. Sleek Progress Bar (Middle, auto-stretches to fill space)
         progressBar = new ProgressBar(0.0);
         progressBar.setPrefHeight(10);
         progressBar.setMaxWidth(Double.MAX_VALUE);
@@ -107,10 +105,11 @@ public class LikesTab extends BaseDataTab<Liker> {
             "-fx-control-inner-background: #18181b;" +
             "-fx-background-color: transparent;"
         );
-        progressBar.getStylesheets().add(getClass().getResource("/css/progressbar.css") != null ? 
-            getClass().getResource("/css/progressbar.css").toExternalForm() : "");
+        var pbCss = getClass().getResource("/css/progressbar.css");
+        if (pbCss != null) {
+            progressBar.getStylesheets().add(pbCss.toExternalForm());
+        }
 
-        // 3. Progress percentage & remaining status (Right-aligned)
         HBox progressLabelsBox = new HBox(8);
         progressLabelsBox.setAlignment(Pos.CENTER_LEFT);
 
@@ -132,21 +131,21 @@ public class LikesTab extends BaseDataTab<Liker> {
 
     @Override
     protected void setupTableColumns() {
-        TableColumn<Liker, Integer> colRank = new TableColumn<>(I18n.get("likes.col.rank"));
+        TableColumn<TikTokUser, Integer> colRank = new TableColumn<>(I18n.get("likes.col.rank"));
         colRank.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getRank()).asObject());
         colRank.setPrefWidth(60);
         colRank.setStyle("-fx-alignment: CENTER; -fx-text-fill: #818cf8; -fx-font-weight: bold;");
 
-        TableColumn<Liker, String> colId = new TableColumn<>(I18n.get("likes.col.id"));
+        TableColumn<TikTokUser, String> colId = new TableColumn<>(I18n.get("likes.col.id"));
         colId.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getUniqueId()));
         colId.setPrefWidth(160);
 
-        TableColumn<Liker, String> colNick = new TableColumn<>(I18n.get("likes.col.nick"));
+        TableColumn<TikTokUser, String> colNick = new TableColumn<>(I18n.get("likes.col.nick"));
         colNick.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getNickname()));
         colNick.setPrefWidth(220);
 
-        TableColumn<Liker, Integer> colLikesCount = new TableColumn<>(I18n.get("likes.col.likes"));
-        colLikesCount.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getLikes()).asObject());
+        TableColumn<TikTokUser, Integer> colLikesCount = new TableColumn<>(I18n.get("likes.col.likes"));
+        colLikesCount.setCellValueFactory(cell -> new SimpleIntegerProperty(cell.getValue().getLikesSent()).asObject());
         colLikesCount.setPrefWidth(160);
         colLikesCount.setStyle("-fx-alignment: CENTER; -fx-text-fill: #f43f5e; -fx-font-weight: bold;");
 
@@ -154,7 +153,7 @@ public class LikesTab extends BaseDataTab<Liker> {
     }
 
     @Override
-    protected boolean matchesSearch(Liker l, String query) {
+    protected boolean matchesSearch(TikTokUser l, String query) {
         return l.getUniqueId().toLowerCase().contains(query) || 
                l.getNickname().toLowerCase().contains(query);
     }
@@ -253,27 +252,27 @@ public class LikesTab extends BaseDataTab<Liker> {
 
     private void doRefreshLikerTableData() {
         pendingRefresh = false;
-        List<Liker> source;
+        List<TikTokUser> source;
         synchronized (DataManager.class) {
             source = new ArrayList<>(DataManager.getLikers());
         }
 
-        // --- Incremental update to prevent flicker ---
-        java.util.Map<String, Liker> currentMap = new java.util.HashMap<>();
-        for (Liker l : masterList) {
+        Map<String, TikTokUser> currentMap = new HashMap<>();
+        for (TikTokUser l : masterList) {
             currentMap.put(l.getUniqueId().toLowerCase(), l);
         }
 
         int rank = 1;
-        for (Liker fresh : source) {
+        for (TikTokUser fresh : source) {
             fresh.setRank(rank++);
             String key = fresh.getUniqueId().toLowerCase();
-            Liker existing = currentMap.get(key);
+            TikTokUser existing = currentMap.get(key);
             if (existing != null) {
                 existing.setRank(fresh.getRank());
-                existing.setLikes(fresh.getLikes());
+                existing.setLikesSent(fresh.getLikesSent());
                 existing.setNickname(fresh.getNickname());
                 existing.setAvatarUrl(fresh.getAvatarUrl());
+                existing.setBadgeUrls(fresh.getBadgeUrls());
                 currentMap.remove(key);
             } else {
                 masterList.add(fresh);
@@ -284,7 +283,13 @@ public class LikesTab extends BaseDataTab<Liker> {
             masterList.removeIf(l -> currentMap.containsKey(l.getUniqueId().toLowerCase()));
         }
 
-        FXCollections.sort(masterList);
+        // Re-sort descending by likes count
+        masterList.sort((u1, u2) -> {
+            int diff = Integer.compare(u2.getLikesSent(), u1.getLikesSent());
+            if (diff != 0) return diff;
+            return u1.getNickname().compareToIgnoreCase(u2.getNickname());
+        });
+
         tableView.refresh();
 
         if (lblActiveLikersVal != null) {
@@ -293,7 +298,7 @@ public class LikesTab extends BaseDataTab<Liker> {
     }
 
     private void deleteSelectedLiker() {
-        Liker selected = tableView.getSelectionModel().getSelectedItem();
+        TikTokUser selected = tableView.getSelectionModel().getSelectedItem();
         if (selected == null) {
             Dialogs.warning(parent, I18n.get("dialog.warning"), I18n.get("likes.warn.select"));
             return;
@@ -301,9 +306,12 @@ public class LikesTab extends BaseDataTab<Liker> {
 
         if (Dialogs.confirm(parent, I18n.get("likes.confirm.delete.title"), I18n.get("likes.confirm.delete.msg", selected.getUniqueId()), I18n.get("likes.confirm.delete.btn"))) {
             synchronized (DataManager.class) {
-                List<Liker> list = DataManager.getLikers();
-                list.removeIf(l -> l.getUniqueId().equalsIgnoreCase(selected.getUniqueId()));
-                DataManager.save();
+                TikTokUser user = DataManager.findOrCreateUser(selected);
+                if (user != null) {
+                    user.setLikesSent(0);
+                    DataManager.getUsers().removeIf(u -> u.getGiftPoints() <= 0 && u.getLikesSent() <= 0 && u.getTeamName() == null && !u.isSubscriber());
+                    DataManager.save();
+                }
             }
             refreshLikerTableData();
             parent.updateTopLikeOverlay();
@@ -313,7 +321,10 @@ public class LikesTab extends BaseDataTab<Liker> {
     private void resetLikers() {
         if (Dialogs.confirm(parent, I18n.get("likes.confirm.reset.title"), I18n.get("likes.confirm.reset.msg"), I18n.get("likes.confirm.reset.btn"))) {
             synchronized (DataManager.class) {
-                DataManager.getLikers().clear();
+                for (TikTokUser u : DataManager.getUsers()) {
+                    u.setLikesSent(0);
+                }
+                DataManager.getUsers().removeIf(u -> u.getGiftPoints() <= 0 && u.getLikesSent() <= 0 && u.getTeamName() == null && !u.isSubscriber());
                 DataManager.save();
             }
             refreshLikerTableData();
@@ -322,15 +333,15 @@ public class LikesTab extends BaseDataTab<Liker> {
     }
 
     private void addManualLikes() {
-        java.util.Optional<String> idResult = Dialogs.input(parent, I18n.get("likes.manual.title"), I18n.get("likes.manual.id.prompt"), I18n.get("likes.manual.id.label"), "");
+        Optional<String> idResult = Dialogs.input(parent, I18n.get("likes.manual.title"), I18n.get("likes.manual.id.prompt"), I18n.get("likes.manual.id.label"), "");
         if (idResult.isEmpty() || idResult.get().trim().isEmpty()) return;
         String uniqueId = idResult.get().trim();
 
-        java.util.Optional<String> nickResult = Dialogs.input(parent, I18n.get("likes.manual.title"), I18n.get("likes.manual.nick.prompt"), I18n.get("likes.manual.nick.label"), uniqueId);
+        Optional<String> nickResult = Dialogs.input(parent, I18n.get("likes.manual.title"), I18n.get("likes.manual.nick.prompt"), I18n.get("likes.manual.nick.label"), uniqueId);
         String nickname = nickResult.orElse("").trim();
         if (nickname.isEmpty()) nickname = uniqueId;
 
-        java.util.Optional<String> likesResult = Dialogs.input(parent, I18n.get("likes.manual.title"), I18n.get("likes.manual.likes.prompt"), I18n.get("likes.manual.likes.label"), "100");
+        Optional<String> likesResult = Dialogs.input(parent, I18n.get("likes.manual.title"), I18n.get("likes.manual.likes.prompt"), I18n.get("likes.manual.likes.label"), "100");
         if (likesResult.isEmpty() || likesResult.get().trim().isEmpty()) return;
 
         int likes;
@@ -346,19 +357,9 @@ public class LikesTab extends BaseDataTab<Liker> {
         final int finalLikes = likes;
 
         synchronized (DataManager.class) {
-            List<Liker> list = DataManager.getLikers();
-            java.util.Optional<Liker> existing = list.stream()
-                    .filter(l -> l.getUniqueId().equalsIgnoreCase(finalUniqueId))
-                    .findFirst();
-
-            if (existing.isPresent()) {
-                existing.get().addLikes(finalLikes);
-                existing.get().setNickname(finalNickname);
-            } else {
-                list.add(new Liker(finalUniqueId, finalNickname, null, Math.max(0, finalLikes)));
-            }
-
-            Collections.sort(list);
+            TikTokUser incoming = new TikTokUser(finalUniqueId, finalNickname, null);
+            TikTokUser user = DataManager.findOrCreateUser(incoming);
+            user.addLikesSent(finalLikes);
             DataManager.save();
         }
 

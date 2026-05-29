@@ -1,17 +1,20 @@
 package com.leaderboard.ui.overlay;
 
-import com.leaderboard.model.Liker;
+import com.leaderboard.model.TikTokUser;
+import com.leaderboard.ui.component.AvatarView;
+import com.leaderboard.ui.component.NameGroupView;
 import com.leaderboard.util.DataManager;
 import com.leaderboard.util.IconManager;
+import javafx.animation.FadeTransition;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.ScrollBar;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -23,6 +26,10 @@ import javafx.util.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * TopLikeOverlay OBS Overlay Stage displaying top 10 likers.
+ * Rebuilt using the unified TikTokUser domain entity.
+ */
 public class TopLikeOverlay extends Stage {
     private static final String FONT_FAMILY = "-fx-font-family: 'Segoe UI', system-ui;";
     private static final String HEART_SVG = "M 11 4 C 11 4 7 0 3 0 C 0 0 0 4 0 6 C 0 11 6 17 11 21 C 16 17 22 11 22 6 C 22 4 22 0 19 0 C 15 0 11 4 11 4 Z";
@@ -37,28 +44,24 @@ public class TopLikeOverlay extends Stage {
         setTitle("Top Thả Tim"); // Title needed for OBS Window Capture detection
         initStyle(StageStyle.TRANSPARENT);
 
-        // Load application window icon
         IconManager.applyAppIcon(this);
 
-        // Main Glass Panel Container
         AnchorPane root = new AnchorPane();
         root.setPrefSize(360, 660);
         root.setStyle(
-            "-fx-background-color: rgba(9, 9, 11, 0.75);" + // Slate-dark Vercel dark mode
+            "-fx-background-color: rgba(9, 9, 11, 0.75);" + // Slate-dark glassmorphism
             "-fx-background-radius: 16px;" +
             "-fx-border-color: rgba(255, 255, 255, 0.06);" +
             "-fx-border-radius: 16px;" +
             "-fx-border-width: 1px;"
         );
 
-        // Premium soft drop shadow
         DropShadow shadow = new DropShadow();
         shadow.setColor(Color.web("#000000", 0.35));
         shadow.setRadius(12);
         shadow.setOffsetY(3);
         root.setEffect(shadow);
 
-        // 1. Header Bar
         AnchorPane header = new AnchorPane();
         header.setPrefSize(358, 50);
         header.setStyle(
@@ -69,7 +72,6 @@ public class TopLikeOverlay extends Stage {
         AnchorPane.setLeftAnchor(header, 1.0);
         AnchorPane.setRightAnchor(header, 1.0);
 
-        // SVG Heart next to title - Soft Crimson Rose (#f43f5e)
         SVGPath titleHeart = new SVGPath();
         titleHeart.setContent(HEART_SVG);
         titleHeart.setFill(Color.web("#f43f5e"));
@@ -107,28 +109,45 @@ public class TopLikeOverlay extends Stage {
 
         header.getChildren().addAll(titleHeart, lblTitle, lblLiveBadge);
 
-        // Divider
         Region headerDivider = new Region();
         headerDivider.setPrefSize(360, 1);
         headerDivider.setStyle("-fx-background-color: rgba(255, 255, 255, 0.05);");
         AnchorPane.setTopAnchor(headerDivider, 50.0);
 
-        // 2. Rows VBox Container
-        rowsContainer = new VBox(6); // Gap of 6px between cards
+        rowsContainer = new VBox(6);
         rowsContainer.setPadding(new Insets(10, 15, 10, 15));
-        rowsContainer.setPrefWidth(360);
-        AnchorPane.setTopAnchor(rowsContainer, 60.0);
-        AnchorPane.setLeftAnchor(rowsContainer, 0.0);
-        AnchorPane.setRightAnchor(rowsContainer, 0.0);
 
-        root.getChildren().addAll(header, headerDivider, rowsContainer);
+        ScrollPane scrollPane = new ScrollPane(rowsContainer);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setStyle(
+                "-fx-background: transparent;" +
+                "-fx-background-color: transparent;" +
+                "-fx-border-color: transparent;"
+        );
+        scrollPane.skinProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                javafx.scene.Node viewport = scrollPane.lookup(".viewport");
+                if (viewport != null) {
+                    viewport.setStyle("-fx-background-color: transparent;");
+                }
+            }
+        });
 
-        // Scene Configuration
+        AnchorPane.setTopAnchor(scrollPane, 60.0);
+        AnchorPane.setLeftAnchor(scrollPane, 0.0);
+        AnchorPane.setRightAnchor(scrollPane, 0.0);
+        AnchorPane.setBottomAnchor(scrollPane, 15.0);
+
+        setupScrollbarFadeEffect(scrollPane);
+
+        root.getChildren().addAll(header, headerDivider, scrollPane);
+
         Scene scene = new Scene(root);
         scene.setFill(Color.TRANSPARENT);
         setScene(scene);
 
-        // Allow free resizing and dragging
         com.leaderboard.util.ResizeHelper.addResizeListener(this, 280, 250, Double.MAX_VALUE, Double.MAX_VALUE);
 
         updateLeaderboard();
@@ -140,13 +159,12 @@ public class TopLikeOverlay extends Stage {
     }
 
     private void smartUpdate() {
-        List<Liker> list;
+        List<TikTokUser> list;
         synchronized (DataManager.class) {
             list = new ArrayList<>(DataManager.getLikers());
         }
-        int limit = Math.min(list.size(), 10);
+        int limit = Math.min(list.size(), 100);
 
-        // Build current snapshot
         List<String> currentIds = new ArrayList<>(limit);
         for (int i = 0; i < limit; i++) {
             currentIds.add(list.get(i).getUniqueId().toLowerCase());
@@ -161,25 +179,24 @@ public class TopLikeOverlay extends Stage {
         }
     }
 
-    private void updateRowsInPlace(List<Liker> list, int limit) {
+    private void updateRowsInPlace(List<TikTokUser> list, int limit) {
         List<javafx.scene.Node> rows = rowsContainer.getChildren();
         for (int i = 0; i < limit && i < rows.size(); i++) {
-            Liker l = list.get(i);
+            TikTokUser l = list.get(i);
             HBox card = (HBox) rows.get(i);
             List<javafx.scene.Node> cells = card.getChildren();
-            // Points label is second-to-last (before coinStack/heartStack)
             int pointsIdx = cells.size() - 2;
             if (pointsIdx >= 0 && cells.get(pointsIdx) instanceof Label) {
-                ((Label) cells.get(pointsIdx)).setText(String.format("%,d", l.getLikes()));
+                ((Label) cells.get(pointsIdx)).setText(String.format("%,d", l.getLikesSent()));
             }
         }
     }
 
-    private void rebuildRows(List<Liker> list, int limit) {
+    private void rebuildRows(List<TikTokUser> list, int limit) {
         rowsContainer.getChildren().clear();
 
         for (int i = 0; i < limit; i++) {
-            Liker l = list.get(i);
+            TikTokUser l = list.get(i);
             int rank = i + 1;
             l.setRank(rank);
 
@@ -188,46 +205,43 @@ public class TopLikeOverlay extends Stage {
         }
     }
 
-    private HBox createRowCard(Liker l, int rank) {
+    private HBox createRowCard(TikTokUser l, int rank) {
         boolean isSpotlight = rank <= 3;
         
         HBox card = new HBox(12);
         card.setAlignment(Pos.CENTER_LEFT);
         
-        // Colors & Configs
         String accentHex;
         double cardHeight;
         double avatarSize = isSpotlight ? (rank == 1 ? 40 : 36) : 0;
 
         if (rank == 1) {
-            accentHex = "#fbbf24"; // Soft Gold
+            accentHex = "#fbbf24";
             cardHeight = 56;
         } else if (rank == 2) {
-            accentHex = "#cbd5e1"; // Soft Silver
+            accentHex = "#cbd5e1";
             cardHeight = 50;
         } else if (rank == 3) {
-            accentHex = "#d97706"; // Soft Bronze/Amber
+            accentHex = "#d97706";
             cardHeight = 50;
         } else {
-            accentHex = "#71717a"; // Muted Slate-gray
+            accentHex = "#71717a";
             cardHeight = 38;
         }
 
         card.setPrefHeight(cardHeight);
         card.setMinHeight(cardHeight);
 
-        // Container custom styling
         if (isSpotlight) {
             card.setPadding(new Insets(5, 12, 5, 12));
             card.setStyle(
-                "-fx-background-color: rgba(24, 24, 27, 0.5);" + // Slate-dark spotlight card
+                "-fx-background-color: rgba(24, 24, 27, 0.5);" +
                 "-fx-background-radius: 10px;" +
-                "-fx-border-color: rgba(255, 255, 255, 0.08);" + // Sleek, clean gray metal border
+                "-fx-border-color: rgba(255, 255, 255, 0.08);" +
                 "-fx-border-radius: 10px;" +
                 "-fx-border-width: 1px;"
             );
 
-            // 1. Float Rank Badge Layout using a StackPane
             StackPane badgeStack = new StackPane();
             badgeStack.setPrefSize(20, 20);
             badgeStack.setMinSize(20, 20);
@@ -242,38 +256,18 @@ public class TopLikeOverlay extends Stage {
             );
             badgeStack.getChildren().addAll(badgeBg, lblBadgeRank);
 
-            // 2. Circular Image Avatar
-            StackPane avatarStack = new StackPane();
-            avatarStack.setPrefSize(avatarSize, avatarSize);
-            avatarStack.setMinSize(avatarSize, avatarSize);
+            AvatarView avatarStack = new AvatarView(l.getAvatarUrl(), avatarSize, Color.web("#ffffff", 0.12), 1.2);
 
-            Circle clipCircle = new Circle(avatarSize / 2, avatarSize / 2, avatarSize / 2);
-            ImageView avatarImg = new ImageView();
-            avatarImg.setFitWidth(avatarSize);
-            avatarImg.setFitHeight(avatarSize);
-            avatarImg.setClip(clipCircle);
-
-            if (l.getAvatarUrl() != null && !l.getAvatarUrl().isEmpty()) {
-                Image img = new Image(l.getAvatarUrl(), avatarSize, avatarSize, true, true, true);
-                avatarImg.setImage(img);
-            } else {
-                avatarImg.setImage(IconManager.getAppIcon());
-            }
-
-            Circle avatarBorder = new Circle(avatarSize / 2, avatarSize / 2, avatarSize / 2);
-            avatarBorder.setFill(Color.TRANSPARENT);
-            avatarBorder.setStroke(Color.web("#ffffff", 0.12));
-            avatarBorder.setStrokeWidth(1.2);
-            avatarStack.getChildren().addAll(avatarImg, avatarBorder);
-
-            // 3. Name Group
             VBox nameGroup = new VBox(1);
             HBox.setHgrow(nameGroup, Priority.ALWAYS);
             nameGroup.setAlignment(Pos.CENTER_LEFT);
 
-            javafx.scene.text.TextFlow nickFlow = com.leaderboard.util.EmojiParser.createEmojiTextFlow(
-                l.getNickname(), 12, Color.web("#e4e4e7"), javafx.scene.text.Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 12)
-            );
+            NameGroupView nickFlow = new NameGroupView(l.getNickname(), 12, Color.web("#e4e4e7"), true);
+            if (l.getBadgeUrls() != null) {
+                for (String badgeUrl : l.getBadgeUrls()) {
+                    nickFlow.addBadge(badgeUrl, 14);
+                }
+            }
 
             Label lblUser = new Label(l.getNickname().equals(l.getUniqueId()) ? "" : "@" + l.getUniqueId());
             lblUser.setStyle(
@@ -284,8 +278,7 @@ public class TopLikeOverlay extends Stage {
             
             nameGroup.getChildren().addAll(nickFlow, lblUser);
 
-            // 4. Likes display
-            Label lblLikes = new Label(String.format("%,d", l.getLikes()));
+            Label lblLikes = new Label(String.format("%,d", l.getLikesSent()));
             lblLikes.setStyle(
                 "-fx-text-fill: #e4e4e7;" +
                 "-fx-font-weight: bold;" +
@@ -293,7 +286,6 @@ public class TopLikeOverlay extends Stage {
                 FONT_FAMILY
             );
 
-            // Crimson Rose Heart Icon Stack
             StackPane heartIconStack = new StackPane();
             heartIconStack.setPrefSize(14, 14);
             SVGPath rowHeart = new SVGPath();
@@ -306,7 +298,6 @@ public class TopLikeOverlay extends Stage {
             card.getChildren().addAll(badgeStack, avatarStack, nameGroup, lblLikes, heartIconStack);
 
         } else {
-            // COMPACT CARD (Ranks 4-10)
             card.setPadding(new Insets(4, 10, 4, 10));
             card.setStyle(
                 "-fx-background-color: rgba(24, 24, 27, 0.5);" +
@@ -316,7 +307,6 @@ public class TopLikeOverlay extends Stage {
                 "-fx-border-width: 1px;"
             );
 
-            // 1. Rank Label
             Label lblRank = new Label(String.valueOf(rank));
             lblRank.setPrefWidth(16);
             lblRank.setAlignment(Pos.CENTER);
@@ -327,14 +317,16 @@ public class TopLikeOverlay extends Stage {
                 FONT_FAMILY
             );
 
-            // 2. Name Group
             VBox nameGroup = new VBox(0);
             HBox.setHgrow(nameGroup, Priority.ALWAYS);
             nameGroup.setAlignment(Pos.CENTER_LEFT);
 
-            javafx.scene.text.TextFlow nickFlow = com.leaderboard.util.EmojiParser.createEmojiTextFlow(
-                l.getNickname(), 11, Color.web("#e4e4e7"), javafx.scene.text.Font.font("Segoe UI", javafx.scene.text.FontWeight.BOLD, 11)
-            );
+            NameGroupView nickFlow = new NameGroupView(l.getNickname(), 11, Color.web("#e4e4e7"), true);
+            if (l.getBadgeUrls() != null) {
+                for (String badgeUrl : l.getBadgeUrls()) {
+                    nickFlow.addBadge(badgeUrl, 13);
+                }
+            }
             
             Label lblUser = new Label(l.getNickname().equals(l.getUniqueId()) ? "" : "@" + l.getUniqueId());
             lblUser.setStyle(
@@ -345,8 +337,7 @@ public class TopLikeOverlay extends Stage {
             
             nameGroup.getChildren().addAll(nickFlow, lblUser);
 
-            // 3. Likes Label
-            Label lblLikes = new Label(String.format("%,d", l.getLikes()));
+            Label lblLikes = new Label(String.format("%,d", l.getLikesSent()));
             lblLikes.setStyle(
                 "-fx-text-fill: #71717a;" +
                 "-fx-font-weight: bold;" +
@@ -354,7 +345,6 @@ public class TopLikeOverlay extends Stage {
                 FONT_FAMILY
             );
 
-            // Smaller Crimson Heart
             StackPane heartIconStack = new StackPane();
             heartIconStack.setPrefSize(10, 10);
             SVGPath rowHeart = new SVGPath();
@@ -372,5 +362,40 @@ public class TopLikeOverlay extends Stage {
 
     public void dispose() {
         close();
+    }
+
+    private void setupScrollbarFadeEffect(ScrollPane scrollPane) {
+        scrollPane.skinProperty().addListener((obs, old, newVal) -> {
+            if (newVal != null) {
+                javafx.scene.Node sbNode = scrollPane.lookup(".scroll-bar:vertical");
+                if (sbNode instanceof ScrollBar scrollBar) {
+                    scrollBar.setOpacity(0.0);
+
+                    PauseTransition delay = new PauseTransition(Duration.seconds(1.5));
+                    FadeTransition fadeOut = new FadeTransition(Duration.millis(300), scrollBar);
+                    fadeOut.setToValue(0.0);
+
+                    delay.setOnFinished(e -> fadeOut.play());
+
+                    scrollPane.vvalueProperty().addListener((obsVal, oldVal, newValVal) -> {
+                        fadeOut.stop();
+                        scrollBar.setOpacity(1.0);
+                        delay.playFromStart();
+                    });
+
+                    scrollPane.setOnMouseMoved(e -> {
+                        fadeOut.stop();
+                        scrollBar.setOpacity(1.0);
+                        delay.playFromStart();
+                    });
+
+                    scrollPane.setOnScroll(e -> {
+                        fadeOut.stop();
+                        scrollBar.setOpacity(1.0);
+                        delay.playFromStart();
+                    });
+                }
+            }
+        });
     }
 }
